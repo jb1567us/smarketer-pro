@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Describe Your Project Idea</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 1.5rem; background: #f5f5f5; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 1.5rem 2rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    h1 { margin-top: 0; }
+    textarea {
+      width: 100%; padding: 0.75rem; border-radius: 4px; border: 1px solid #ccc;
+      min-height: 200px; resize: vertical; font-family: inherit; font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 1rem; padding: 0.6rem 1.4rem; border-radius: 999px;
+      border: none; background: #1976d2; color: #fff; font-weight: 600;
+      cursor: pointer; font-size: 0.95rem;
+    }
+    button:hover { background: #1565c0; }
+    .small { font-size: 0.85rem; color: #666; }
+    .flash { padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; background: #ffebee; color: #b71c1c; font-size: 0.9rem; }
+    .flash.success { background: #e8f5e9; color: #1b5e20; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Start a New Project</h1>
+    <p class="small">
+      Describe your idea in natural language. The system will:
+    </p>
+    <ol class="small">
+      <li>Generate a virtual team of roles (Product, Backend, Frontend, etc.).</li>
+      <li>Create a set of high-value questions per role.</li>
+      <li>Then guide you to the Q&amp;A screen to answer them.</li>
+    </ol>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post">
+      <label for="idea_text"><strong>Your project idea</strong></label>
+      <textarea id="idea_text" name="idea_text" placeholder="Example: I want a SaaS that helps small restaurants discover where their ideal customers are hanging out online and offline...">{{ idea_text }}</textarea>
+
+      <button type="submit">Generate Team &amp; Questions</button>
+      <p class="small">
+        This will save <code>idea.txt</code> and write
+        <code>artifacts/team_and_questions_v0.1.json</code> and
+        <code>artifacts/intake_answers_v0.1.json</code>.
+      </p>
+    </form>
+  </div>
+</body>
+</html>

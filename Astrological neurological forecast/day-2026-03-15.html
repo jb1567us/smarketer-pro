@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>March 15, 2026 • Destiny Almanac Daily</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --bg-alt: #151821;
+      --text: #f5f7fb;
+      --muted: #a3a8c3;
+      --accent: #e2b857;
+      --accent-soft: rgba(226, 184, 87, 0.12);
+      --border: #292d3b;
+      --card-bg: #151821;
+      --shadow: 0 18px 35px rgba(0, 0, 0, 0.5);
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      --font-display: "Georgia", "Times New Roman", serif;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #2a213b 0, #050308 60%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      margin-bottom: 20px;
+    }
+
+    .back-link {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .title-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .meta-row {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .pill strong {
+      color: var(--accent);
+    }
+
+    .day-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr);
+      gap: 16px;
+      margin-top: 18px;
+      margin-bottom: 22px;
+    }
+
+    @media (max-width: 800px) {
+      .day-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 6px;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .quick-points {
+      padding-left: 18px;
+      margin: 4px 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .quick-points li {
+      margin-bottom: 4px;
+    }
+
+    .energy-bar {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .energy-bar span {
+      display: inline-block;
+      min-width: 90px;
+    }
+
+    .bar {
+      display: inline-block;
+      height: 4px;
+      border-radius: 999px;
+      background: #06060a;
+      overflow: hidden;
+      vertical-align: middle;
+      margin-left: 4px;
+      width: 140px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e2b857, #ff7a5c);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .detail-card {
+      background: linear-gradient(135deg, #1b1524, #090910);
+      border-radius: 16px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.45);
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .detail-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .detail-card p {
+      margin: 3px 0 6px;
+    }
+
+    .bullet-list {
+      padding-left: 18px;
+      margin: 2px 0 4px;
+    }
+
+    .bullet-list li {
+      margin-bottom: 3px;
+    }
+
+    .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+
+    .journal-prompt {
+      margin: 3px 0;
+      padding-left: 10px;
+      border-left: 2px solid var(--accent-soft);
+      font-style: italic;
+      font-size: 0.88rem;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .tag {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <a href="index.html#year-2026" class="back-link">
+        ← Back to 2026 Overview
+      </a>
+      <div class="title-row">
+        <div>
+          <h1>March 15, 2026</h1>
+          <div class="subtitle">Power Surge Day • Personal Year 5 • Freedom & Expansion</div>
+        </div>
+      </div>
+      <div class="meta-row">
+        <div class="pill"><strong>Month Theme:</strong> Power & Bold Decisions</div>
+        <div class="pill"><strong>Day Focus:</strong> Taking the Braver Path</div>
+        <div class="pill"><strong>Best Use:</strong> Strategic risks • Negotiation • Launching actions</div>
+      </div>
+    </header>
+
+    <section class="day-layout">
+      <!-- Left: Overview & Arcs -->
+      <article class="card">
+        <h2>Daily Overview</h2>
+        <p class="tagline">
+          Today intensifies the 2026 expansion energy: this is a day to move,
+          decide, and claim space, as long as your body and intuition both say “yes.”
+        </p>
+        <ul class="quick-points">
+          <li>Clarity favors action over endless contemplation.</li>
+          <li>Conversations about money, projects, or boundaries are powered up.</li>
+          <li>Old fear-based patterns may flare briefly as you step into more visibility.</li>
+        </ul>
+        <div class="energy-bar">
+          <span>Emotional</span>
+          <div class="bar"><div class="bar-fill" style="width:75%;"></div></div>
+        </div>
+        <div class="energy-bar">
+          <span>Spiritual</span>
+          <div class="bar"><div class="bar-fill" style="width:85%;"></div></div>
+        </div>
+        <div class="energy-bar">
+          <span>Financial</span>
+          <div class="bar"><div class="bar-fill" style="width:80%;"></div></div>
+        </div>
+        <div class="tag-row">
+          <span class="tag">Courage</span>
+          <span class="tag">Alignment</span>
+          <span class="tag">Decision Day</span>
+          <span class="tag">Breakthrough</span>
+        </div>
+      </article>
+
+      <!-- Right: Key Turning Points -->
+      <aside class="card">
+        <h2>Key Turning Points Today</h2>
+        <p><strong>Morning (6–11am):</strong> Best window for planning, outlining, or negotiating terms. Mental clarity is higher before emotional noise builds.</p>
+        <p><strong>Midday (11am–3pm):</strong> Action window. Send the emails, make the calls, hit “publish,” schedule the meeting, make the ask.</p>
+        <p><strong>Evening (after 7pm):</strong> Integration time. Reflect on what you did differently today and what that says about who you’re becoming.</p>
+        <p class="tagline">
+          If a decision has been looping in your mind for weeks, today wants a concrete move,
+          even if it’s just the first visible step.
+        </p>
+      </aside>
+    </section>
+
+    <section class="detail-grid">
+      <!-- Emotional Weather -->
+      <div class="detail-card">
+        <div class="detail-title">Emotional Weather</div>
+        <p>You may feel an underlying charge: a mix of excitement, impatience, and a little anxiety about getting it “right.” This is normal when you’re stepping into more power.</p>
+        <p>Expect small spikes of irritation if others move slowly or don’t match your pace. Underneath that is a deeper desire to stop wasting time and live more honestly.</p>
+        <div class="label">Best Emotional Moves</div>
+        <ul class="bullet-list">
+          <li>Channel impatience into focused action, not conflict.</li>
+          <li>Use irritation as a signal: “Where am I ready to stop tolerating this?”</li>
+          <li>Pause for 3 deep breaths before sending any emotionally charged message.</li>
+        </ul>
+      </div>
+
+      <!-- Spiritual & Synchronicities -->
+      <div class="detail-card">
+        <div class="detail-title">Spiritual & Synchronicities</div>
+        <p>Today carries “yes/no” polarity. You might see clear signs—doors that open easily and doors that feel strangely jammed.</p>
+        <p>Instead of forcing jammed doors, treat resistance as information. The universe is more responsive than usual when you say: “Show me the most aligned path.”</p>
+        <div class="label">Watch For</div>
+        <ul class="bullet-list">
+          <li>Repeating numbers or phrases around decisions you’re weighing.</li>
+          <li>Unexpected invitations or conversations that point to a bolder route.</li>
+          <li>Physical sensations (tight chest, open breath) when you imagine each option.</li>
+        </ul>
+      </div>
+
+      <!-- Money / Work -->
+      <div class="detail-card">
+        <div class="detail-title">Money & Work Focus</div>
+        <p>This is a day to move one concrete piece of the financial puzzle, not just think about it. It favors:</p>
+        <ul class="bullet-list">
+          <li>Proposing new terms or rates.</li>
+          <li>Launching or announcing something you’ve already prepared.</li>
+          <li>Following up on a warm opportunity that’s been sitting in your inbox.</li>
+        </ul>
+        <div class="label">Cautions</div>
+        <ul class="bullet-list">
+          <li>Avoid “all or nothing” decisions driven by anger or pride.</li>
+          <li>Double-check details in contracts, invoices, or agreements before finalizing.</li>
+        </ul>
+      </div>
+
+      <!-- Ritual & Practices -->
+      <div class="detail-card">
+        <div class="detail-title">Ritual & Practice for March 15</div>
+        <p><strong>Morning Power Alignment (10–15 min):</strong></p>
+        <ul class="bullet-list">
+          <li>Stand or sit tall, feet on the floor, spine straight.</li>
+          <li>Place a hand on your chest and one on your solar plexus (upper stomach).</li>
+          <li>Say out loud three times: “Today I choose the braver aligned action, not the familiar safe one.”</li>
+        </ul>
+        <p><strong>Decision Altar:</strong></p>
+        <ul class="bullet-list">
+          <li>Write your biggest current decision on a small piece of paper.</li>
+          <li>Place it under a candle or next to a stone/object that represents courage.</li>
+          <li>Light the candle and sit for 3 minutes imagining the version of you who has already made the aligned choice.</li>
+        </ul>
+      </div>
+
+      <!-- Do / Avoid Checklist -->
+      <div class="detail-card">
+        <div class="detail-title">Do / Avoid Checklist</div>
+        <div class="label">Do Today</div>
+        <ul class="bullet-list">
+          <li>Send one message or make one call you’ve been postponing.</li>
+          <li>Make at least one small “brave choice” (pricing, boundaries, visibility).</li>
+          <li>Write down any big ideas that come—capture first, refine later.</li>
+        </ul>
+        <div class="label">Avoid Today</div>
+        <ul class="bullet-list">
+          <li>Picking fights just to release tension.</li>
+          <li>Deciding from fear of missing out instead of grounded intuition.</li>
+          <li>Overloading your schedule with more commitments than you can honor.</li>
+        </ul>
+      </div>
+
+      <!-- Journal & Reflection -->
+      <div class="detail-card">
+        <div class="detail-title">Journal & Reflection</div>
+        <p class="journal-prompt">
+          “If I trusted my future completely, what decision would I make today?”
+        </p>
+        <p class="journal-prompt">
+          “Where am I still acting like the smaller past version of me, and what would my current self do instead?”
+        </p>
+        <p class="journal-prompt">
+          “What did I say or do today that proves I’m ready for more responsibility, visibility, or abundance?”
+        </p>
+        <div class="label">Evening Check-In</div>
+        <p>Before bed, ask yourself:</p>
+        <ul class="bullet-list">
+          <li>What was the bravest thing I did today?</li>
+          <li>Where did I feel most in my power?</li>
+          <li>What would I repeat if I could replay this day, and what would I release?</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

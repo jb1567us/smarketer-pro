@@ -1,0 +1,699 @@
+/*
+Theme Name: ESM Portfolio
+Theme URI: https://lookoverhere.xyz/esm
+Author: Elliot Spencer Morgan
+Description: Mobile-centric portfolio theme for Elliot Spencer Morgan
+Version: 1.0
+Text Domain: esm-portfolio
+*/
+
+/* CSS Variables */
+:root {
+    --primary-color: #000000;
+    --secondary-color: #666666;
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #e0e0e0;
+    --mobile-margin: 16px;
+    --tablet-margin: 24px;
+    --desktop-margin: 32px;
+}
+
+/* Reset and Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    -webkit-text-size-adjust: 100%; /* Prevent font scaling in landscape */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+}
+
+body {
+    background: #ffffff;
+    color: #333333;
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased; /* Better font rendering */
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+/* Header - Transparent with increased height */
+.site-header {
+    background: transparent;
+    padding: 1rem 16px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    height: 400px; /* Increased to accommodate 300px logo + title */
+    -webkit-transform: translateZ(0); /* Hardware acceleration for Safari */
+    transform: translateZ(0);
+}
+
+.site-header.scrolled {
+    background: #ffffff;
+    background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transform: translateY(-350px); /* Hide most of header when scrolled */
+    -webkit-transform: translateY(-350px);
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin: 0 auto;
+    max-width: 1200px;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+/* Brand Container - Centered with proper spacing */
+.brand-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    transition: all 0.3s ease;
+    height: 100%;
+    gap: 1rem; /* Consistent spacing between title and logo */
+}
+
+.site-header.scrolled .brand-container {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Site Title - Doubled in size and properly positioned */
+.site-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    text-align: center;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    order: 1; /* Ensure title comes first */
+    margin: 0; /* Remove margins, use gap instead */
+}
+
+.site-title a {
+    color: #000000;
+    font-family: 'Playfair Display', serif;
+    text-decoration: none;
+}
+
+/* Site Logo - 300px height */
+.site-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    order: 2; /* Ensure logo comes after title */
+}
+
+.logo-link {
+    display: block;
+    text-decoration: none;
+}
+
+.site-logo-image {
+    display: block;
+    height: 300px; /* Your requested 300px */
+    transition: opacity 0.3s ease;
+    width: auto;
+    max-width: 100%; /* Prevent overflow on mobile */
+    -webkit-user-drag: none; /* Prevent image dragging in Safari */
+    -webkit-touch-callout: none; /* Disable callout */
+}
+
+.logo-link:hover .site-logo-image {
+    opacity: 0.8;
+}
+
+/* Hamburger Menu - Fixed in top right corner */
+.menu-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    position: fixed; /* Changed from relative to fixed */
+    top: 1rem; /* Position from top */
+    right: 1rem; /* Position from right */
+    z-index: 1001;
+    transition: all 0.3s ease;
+    -webkit-appearance: none; /* Remove default Safari styles */
+    -webkit-tap-highlight-color: transparent;
+}
+
+.hamburger {
+    background: #000000;
+    height: 2px;
+    position: relative;
+    transition: all 0.3s ease;
+    width: 25px;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+.hamburger::before,
+.hamburger::after {
+    background: #000000;
+    content: '';
+    height: 2px;
+    left: 0;
+    position: absolute;
+    transition: all 0.3s ease;
+    width: 25px;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+.hamburger::before {
+    top: -8px;
+    -webkit-transform: translateY(-8px);
+    transform: translateY(-8px);
+}
+
+.hamburger::after {
+    top: 8px;
+    -webkit-transform: translateY(8px);
+    transform: translateY(8px);
+}
+
+.menu-toggle.active .hamburger {
+    background: transparent;
+}
+
+.menu-toggle.active .hamburger::before {
+    top: 0;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+}
+
+.menu-toggle.active .hamburger::after {
+    top: 0;
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    align-items: center;
+    background: #ffffff;
+    background: rgba(255, 255, 255, 0.98);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    justify-content: center;
+    position: fixed;
+    right: -100%;
+    top: 0;
+    transition: right 0.3s ease;
+    width: 100%;
+    z-index: 999;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+}
+
+.mobile-menu.active {
+    right: 0;
+}
+
+.mobile-menu ul {
+    list-style: none;
+    text-align: center;
+}
+
+.mobile-menu li {
+    margin: 2rem 0;
+}
+
+.mobile-menu a {
+    color: #000000;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    text-decoration: none;
+    transition: color 0.3s ease;
+    -webkit-tap-highlight-color: rgba(0,0,0,0.1); /* Better tap feedback */
+}
+
+.mobile-menu a:hover {
+    color: #666666;
+}
+
+/* Main Content - Increased margin for larger header */
+.site-main {
+    margin-top: 400px; /* Match header height */
+}
+
+/* Homepage Styles */
+.homepage-container {
+    margin: 0;
+    max-width: 100%;
+    padding: 0 16px;
+}
+
+.artwork-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.artwork-item {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.artwork-link {
+    color: inherit;
+    display: block;
+    text-decoration: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+}
+
+.artwork-image-container {
+    height: calc(100vh - 400px - 32px); /* Account for larger header */
+    height: calc(100dvh - 400px - 32px); /* Fallback for dynamic viewport */
+    margin: 16px 0;
+    overflow: hidden;
+    width: 100%;
+    min-height: 300px; /* Ensure minimum height */
+    -webkit-transform: translateZ(0); /* Hardware acceleration */
+    transform: translateZ(0);
+}
+
+.artwork-image {
+    background: #f8f8f8;
+    display: block;
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+    -webkit-user-drag: none; /* Prevent image dragging */
+    -webkit-touch-callout: none; /* Disable callout */
+}
+
+.artwork-info {
+    background: #ffffff;
+    margin-top: -1.5rem;
+    padding: 0.5rem 16px 2rem;
+}
+
+.artwork-title {
+    color: #000000;
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin: 0;
+    text-align: center;
+}
+
+/* Archive/Index Page */
+.artwork-archive {
+    margin: 0;
+    max-width: 100%;
+    padding: 0 16px;
+}
+
+.artwork-archive .artwork-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.artwork-archive .artwork-item {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.artwork-archive .artwork-link {
+    color: inherit;
+    display: block;
+    text-decoration: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+}
+
+.artwork-archive .artwork-image-container {
+    height: calc(100vh - 400px - 32px);
+    height: calc(100dvh - 400px - 32px);
+    margin: 16px 0;
+    overflow: hidden;
+    width: 100%;
+    min-height: 300px;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+.artwork-archive .artwork-image {
+    background: #f8f8f8;
+    display: block;
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+}
+
+.artwork-archive .artwork-info {
+    background: #ffffff;
+    margin-top: -1.5rem;
+    padding: 0.5rem 16px 2rem;
+}
+
+.artwork-archive .artwork-title {
+    color: #000000;
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin: 0;
+    text-align: center;
+}
+
+/* Pagination */
+.pagination {
+    background: #ffffff;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 16px;
+}
+
+.nav-links {
+    display: flex;
+}
+
+.nav-links a,
+.nav-links span {
+    border: 1px solid #e0e0e0;
+    color: #333333;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.nav-links a + a,
+.nav-links span + span {
+    margin-left: 1rem;
+}
+
+.nav-links a:hover {
+    background: #000000;
+    border-color: #000000;
+    color: white;
+}
+
+.nav-links .current {
+    background: #000000;
+    border-color: #000000;
+    color: white;
+}
+
+/* No Artworks Message */
+.no-artworks {
+    background: #ffffff;
+    padding: 4rem 16px;
+    text-align: center;
+}
+
+.no-artworks p {
+    color: #666666;
+    font-size: 1.2rem;
+}
+
+/* Pages */
+.page-content {
+    margin: 0 auto;
+    max-width: 600px;
+    padding: 2rem 16px;
+}
+
+.page-heading {
+    font-size: 2.5rem;
+    font-weight: 400;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.page-text {
+    font-size: 1.1rem;
+    font-weight: 300;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+}
+
+.statement-heading {
+    color: #666666;
+    font-size: 2rem;
+    font-weight: 400;
+    margin: 3rem 0 1.5rem;
+}
+
+.contact-details {
+    margin-top: 2rem;
+}
+
+.contact-details p {
+    margin-bottom: 1rem;
+}
+
+.contact-details strong {
+    font-weight: 400;
+}
+
+/* Single Post Pages */
+.artwork-post {
+    margin: 0 auto;
+    max-width: 1000px;
+    padding: 2rem 16px;
+}
+
+.artwork-post .artwork-image {
+    height: auto;
+    margin-bottom: 2rem;
+    width: 100%;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+}
+
+.artwork-info-post {
+    text-align: center;
+}
+
+.artwork-post-heading {
+    font-size: 2rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+}
+
+.view-original {
+    border: 1px solid #666666;
+    color: #666666;
+    display: inline-block;
+    font-weight: 300;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.view-original:hover {
+    background: #666666;
+    color: white;
+}
+
+/* Footer */
+.site-footer {
+    background: #ffffff;
+    color: #666666;
+    font-weight: 300;
+    padding: 2rem 16px;
+    text-align: center;
+}
+
+/* Utility Classes */
+.sr-only {
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+/* Tablet Styles */
+@media screen and (min-width: 768px) {
+    .site-header {
+        padding: 1rem 24px;
+        height: 400px;
+    }
+    
+    .menu-toggle {
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .homepage-container {
+        padding: 0 24px;
+    }
+    
+    .artwork-image-container {
+        height: calc(100vh - 400px - 48px);
+        height: calc(100dvh - 400px - 48px);
+        margin: 24px 0;
+    }
+    
+    .artwork-info {
+        margin-top: -2rem;
+        padding: 0.5rem 24px 2.5rem;
+    }
+    
+    .artwork-title {
+        font-size: 2rem;
+    }
+    
+    .artwork-archive {
+        padding: 0 24px;
+    }
+    
+    .artwork-archive .artwork-image-container {
+        height: calc(100vh - 400px - 48px);
+        height: calc(100dvh - 400px - 48px);
+        margin: 24px 0;
+    }
+    
+    .artwork-archive .artwork-info {
+        margin-top: -2rem;
+        padding: 0.5rem 24px 2.5rem;
+    }
+    
+    .artwork-archive .artwork-title {
+        font-size: 2rem;
+    }
+    
+    .page-content {
+        padding: 2rem 24px;
+    }
+    
+    .page-heading {
+        font-size: 3rem;
+    }
+    
+    .pagination {
+        padding: 2rem 24px;
+    }
+    
+    .site-footer {
+        padding: 2rem 24px;
+    }
+}
+
+/* Desktop Styles */
+@media screen and (min-width: 1024px) {
+    .site-header {
+        padding: 1rem 32px;
+        height: 400px;
+    }
+    
+    .menu-toggle {
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .homepage-container {
+        padding: 0 32px;
+    }
+    
+    .artwork-image-container {
+        height: calc(100vh - 400px - 64px);
+        height: calc(100dvh - 400px - 64px);
+        margin: 32px 0;
+    }
+    
+    .artwork-info {
+        margin-top: -2rem;
+        padding: 0.5rem 32px 3rem;
+    }
+    
+    .artwork-archive {
+        padding: 0 32px;
+    }
+    
+    .artwork-archive .artwork-image-container {
+        height: calc(100vh - 400px - 64px);
+        height: calc(100dvh - 400px - 64px);
+        margin: 32px 0;
+    }
+    
+    .artwork-archive .artwork-info {
+        margin-top: -2rem;
+        padding: 0.5rem 32px 3rem;
+    }
+    
+    .page-content {
+        padding: 2rem 32px;
+    }
+    
+    .pagination {
+        padding: 2rem 32px;
+    }
+    
+    .site-footer {
+        padding: 2rem 32px;
+    }
+}
+
+/* Large Desktop Styles */
+@media screen and (min-width: 1200px) {
+    .artwork-list {
+        margin: 0 auto;
+        max-width: 1200px;
+    }
+
+    .artwork-archive .artwork-list {
+        margin: 0 auto;
+        max-width: 1200px;
+    }
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .artwork-image-container {
+        height: -webkit-calc(100vh - 400px - 32px);
+    }
+    
+    .artwork-archive .artwork-image-container {
+        height: -webkit-calc(100vh - 400px - 32px);
+    }
+    
+    @media screen and (min-width: 768px) {
+        .artwork-image-container {
+            height: -webkit-calc(100vh - 400px - 48px);
+        }
+        
+        .artwork-archive .artwork-image-container {
+            height: -webkit-calc(100vh - 400px - 48px);
+        }
+    }
+    
+    @media screen and (min-width: 1024px) {
+        .artwork-image-container {
+            height: -webkit-calc(100vh - 400px - 64px);
+        }
+        
+        .artwork-archive .artwork-image-container {
+            height: -webkit-calc(100vh - 400px - 64px);
+        }
+    }
+}
