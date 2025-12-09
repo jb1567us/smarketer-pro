@@ -1,0 +1,347 @@
+/*
+Theme Name: ESM Portfolio
+Theme URI: https://lookoverhere.xyz/esm
+Author: Elliot Spencer Morgan
+Description: Mobile-centric portfolio theme for Elliot Spencer Morgan
+Version: 1.0
+Text Domain: esm-portfolio
+*/
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
+
+:root {
+    --primary-color: #000000;
+    --secondary-color: #666666;
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --border-color: #e0e0e0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background: var(--background-color);
+    font-weight: 300;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+/* Header - Transparent */
+.site-header {
+    background: transparent;
+    padding: 1rem 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transition: background-color 0.3s ease;
+}
+
+.site-header.scrolled {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.site-title {
+    font-size: 1.25rem;
+    font-weight: 400;
+}
+
+.site-title a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-family: 'Playfair Display', serif;
+}
+
+/* Hamburger Menu */
+.menu-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    z-index: 1001;
+}
+
+.hamburger {
+    width: 25px;
+    height: 2px;
+    background: var(--primary-color);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.hamburger::before,
+.hamburger::after {
+    content: '';
+    position: absolute;
+    width: 25px;
+    height: 2px;
+    background: var(--primary-color);
+    left: 0;
+    transition: all 0.3s ease;
+}
+
+.hamburger::before {
+    top: -8px;
+}
+
+.hamburger::after {
+    top: 8px;
+}
+
+.menu-toggle.active .hamburger {
+    background: transparent;
+}
+
+.menu-toggle.active .hamburger::before {
+    transform: rotate(45deg);
+    top: 0;
+}
+
+.menu-toggle.active .hamburger::after {
+    transform: rotate(-45deg);
+    top: 0;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: right 0.3s ease;
+    z-index: 999;
+}
+
+.mobile-menu.active {
+    right: 0;
+}
+
+.mobile-menu ul {
+    list-style: none;
+    text-align: center;
+}
+
+.mobile-menu li {
+    margin: 2rem 0;
+}
+
+.mobile-menu a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-family: 'Playfair Display', serif;
+    transition: color 0.3s ease;
+}
+
+.mobile-menu a:hover {
+    color: var(--secondary-color);
+}
+
+/* Homepage */
+.homepage-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.artwork-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.artwork-item {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.artwork-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.artwork-image-container {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.artwork-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.artwork-info {
+    padding: 2rem;
+    background: var(--background-color);
+}
+
+.artwork-title {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    font-weight: 400;
+    margin: 0;
+    text-align: center;
+}
+
+/* Pages */
+.page-content {
+    padding: 6rem 2rem 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.page-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-weight: 400;
+}
+
+.about-page p,
+.contact-page p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    font-weight: 300;
+}
+
+.statement-section h2 {
+    font-size: 2rem;
+    margin: 3rem 0 1.5rem;
+    color: var(--secondary-color);
+    font-weight: 400;
+}
+
+.contact-details {
+    margin-top: 2rem;
+}
+
+.contact-details p {
+    margin-bottom: 1rem;
+}
+
+.contact-details strong {
+    font-weight: 400;
+}
+
+/* Single Post Pages */
+.artwork-post {
+    padding: 6rem 2rem 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.artwork-post .artwork-image {
+    width: 100%;
+    height: auto;
+    margin-bottom: 2rem;
+}
+
+.artwork-info-post {
+    text-align: center;
+}
+
+.artwork-info-post h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 400;
+}
+
+.view-original {
+    display: inline-block;
+    color: var(--secondary-color);
+    text-decoration: none;
+    border: 1px solid var(--secondary-color);
+    padding: 0.75rem 1.5rem;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+    font-weight: 300;
+}
+
+.view-original:hover {
+    background: var(--secondary-color);
+    color: white;
+}
+
+/* Footer */
+.site-footer {
+    background: var(--background-color);
+    color: var(--secondary-color);
+    text-align: center;
+    padding: 2rem;
+    font-weight: 300;
+}
+
+/* Utility Classes */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Desktop Styles */
+@media (min-width: 768px) {
+    .artwork-info {
+        padding: 3rem;
+    }
+    
+    .artwork-title {
+        font-size: 2rem;
+    }
+    
+    .page-content {
+        padding: 8rem 2rem 2rem;
+    }
+    
+    .page-content h1 {
+        font-size: 3rem;
+    }
+}
+
+/* Large Desktop Styles */
+@media (min-width: 1200px) {
+    .artwork-list {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+}
