@@ -1,0 +1,123 @@
+Step 1: Init Data
+
+window.MASS_DATA = [];
+
+Step 2: Append Data Chunk 1
+
+window.MASS_DATA = window.MASS_DATA.concat([{"id": 1109, "title": "A Day at the Lake Painting", "slug": "a_day_at_the_lakePainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-lake/1295487/6105151/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/A_Day_at_the_LakePainting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "A Day at the Lake"}, {"id": 1108, "title": "A day at the park Painting", "slug": "a_day_at_the_parkPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-park/1295487/6105309/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/A_day_at_the_ParkPainting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "A day at the park"}, {"id": 1107, "title": "A day at the beach Painting", "slug": "a_day_at_the_beachPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-beach/1295487/6105263/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/A_day_at_the_BeachPainting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "A day at the beach"}, {"id": 1106, "title": "Gold Series 011 Painting", "slug": "gold_series_011Painting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-011/1295487/6131379/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Gold_Series_011Painting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "Gold Series 011"}, {"id": 1105, "title": "Gold Series 010 Painting", "slug": "gold_series_010Painting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-010/1295487/6131393/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Gold_Series_010Painting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "Gold Series 010"}, {"id": 1104, "title": "Gold Series 009 Painting", "slug": "gold_series_009Painting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-009/1295487/6131427/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Gold_Series_009Painting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "Gold Series 009"}, {"id": 1103, "title": "Gold Series 008 Painting", "slug": "gold_series_008Painting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-008/1295487/6131441/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Gold_Series_008Painting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "Gold Series 008"}, {"id": 1102, "title": "Gold Series 007 Painting", "slug": "gold_series_007Painting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-007/1295487/6131477/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Gold_Series_007Painting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "Gold Series 007"}, {"id": 1101, "title": "Red Planet Painting", "slug": "red_planetPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Red-Planet/1295487/6131365/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Red_PlanetPainting.jpg", "date": "2025-09-25T15:30:02", "price": "990", "width": "48", "height": "48", "medium": "Oil", "year": "2018", "cleanTitle": "Red Planet"}, {"id": 1100, "title": "Portal Painting", "slug": "portalPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal/1295487/6483753/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/PortalPainting.jpg", "date": "2025-09-25T15:30:02", "price": "970", "width": "48", "height": "48", "medium": "Oil", "year": "2019", "cleanTitle": "Portal"}, {"id": 108, "title": "Portal 2 Painting", "slug": "portal_2Painting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-2/1295487/8146546/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Portal_2Painting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 125, "title": "Abstract Landscape Painting", "slug": "abstract_landscapePainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Abstract-Landscape/1295487/8123730/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Abstract_LandscapePainting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 110, "title": "self portrait 1 Painting", "slug": "self_portrait_1Painting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Self-Portrait-1/1295487/8125469/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/self_portrait_1Painting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 102, "title": "Convergence Painting", "slug": "convergencePainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Convergence/1295487/8754060/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/ConvergencePainting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 106, "title": "Puzzled Painting", "slug": "puzzledPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzled/1295487/8146584/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/PuzzledPainting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 104, "title": "Finger print Painting", "slug": "finger_printPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Finger-Print/1295487/8754025/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Finger_printPainting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 105, "title": "Sheet Music Painting", "slug": "sheet_musicPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Sheet-Music/1295487/8146759/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Sheet_MusicPainting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 103, "title": "Meeting in the Middle Painting", "slug": "meeting_in_the_middlePainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Meeting-In-The-Middle/1295487/8754042/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Meeting_in_the_MiddlePainting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}, {"id": 101, "title": "Caviar Painting", "slug": "caviarPainting", "saatchi_url": "https://www.saatchiart.com/art/Painting-Caviar/1295487/12292979/view", "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/CaviarPainting.jpg", "date": "2025-09-25T15:30:02", "scrape_failed": true}]);
+
+Step N: Set Template
+
+window.layoutTemplate = `<!-- wp:html --><!-- Premium Artwork Page Styles --><style> /* Font Imports */ @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap'); /* Container Reset */ .artwork-page-container { font-family: 'Inter', sans-serif; color: #2c3e50; max-width: 100%; margin: 0 auto; line-height: 1.6; } /* Typography */ .artwork-header { text-align: center; margin-bottom: 2rem; } .artwork-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 400; color: #1a1a1a; } .artwork-price { font-size: 1.25rem; color: #666; font-weight: 300; } /* Image Styling - Breakout */ .artwork-hero-image { width: 100vw; max-width: 100vw; margin-left: 50%; transform: translateX(-50%); height: auto; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); margin-bottom: 2.5rem; /* Limit max width on very large screens */ @media (min-width: 800px) { max-width: 800px; } } /* Action Buttons */ .artwork-actions { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem; } .btn-premium { display: flex; justify-content: center; align-items: center; padding: 1rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: 500; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.9rem; } .btn-saatchi { background-color: #1a1a1a; color: #ffffff !important; border: 1px solid #1a1a1a; } .btn-saatchi:hover { background-color: #333; transform: translateY(-1px); } .btn-trade { background-color: transparent; color: #1a1a1a !important; border: 1px solid #1a1a1a; } .btn-trade:hover { background-color: #f8f9fa; color: #000 !important; } /* Details Card */ .details-card { background-color: #ffffff; padding: 0; margin-bottom: 2.5rem; border-top: 1px solid #eee; border-bottom: 1px solid #eee; } .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; } .detail-item { display: flex; flex-direction: column; padding: 1rem; border-right: 1px solid #eee; border-bottom: 1px solid #eee; } .detail-item:nth-child(2n) { border-right: none; } .detail-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: #1a1a1a; margin-bottom: 0.35rem; font-weight: 700; } .detail-value { font-weight: 400; color: #1a1a1a; font-size: 1.1rem; font-family: 'Playfair Display', serif; } /* Content Sections */ .artwork-description { font-size: 1.05rem; margin-bottom: 3rem; color: #4a4a4a; } .section-divider { height: 1px; background: #e0e0e0; margin: 3rem 0; border: none; } /* Designer Specs Box */ .designer-specs-premium { border: 1px solid #e0e0e0; padding: 2rem; border-radius: 8px; background: #fff; position: relative; overflow: hidden; } .designer-specs-premium::before { content: "TRADE ONLY"; position: absolute; top: 1rem; right: 1rem; font-size: 0.6rem; font-weight: 700; border: 1px solid #1a1a1a; padding: 0.25rem 0.5rem; border-radius: 2px; } .specs-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 1.5rem; } .specs-list { list-style: none; padding: 0; margin: 0; } .specs-list li { padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; } .specs-list li:last-child { border-bottom: none; } .check-icon { color: #27ae60; margin-right: 0.75rem; } </style><!-- VisualArtwork Schema --><script type="application/ld+json"> { "@context": "https://schema.org", "@type": "VisualArtwork", "name": "{{TITLE}}", "artMedium": "{{MEDIUM}}", "artform": "Painting", "artworkSurface": "Canvas", "artist": { "@type": "Person", "@id": "https://elliotspencermorgan.com/about#artist", "name": "Elliot Spencer Morgan" }, "height": {"@type": "Distance", "value": "48", "unitCode": "INH"}, "width": {"@type": "Distance", "value": "48", "unitCode": "INH"}, "depth": {"@type": "Distance", "value": "1.5", "unitCode": "INH"}, "artEdition": "1", "image": "{{IMAGE_URL}}", "dateCreated": "2024", "offers": { "@type": "Offer", "availability": "https://schema.org/InStock", "price": "{{PRICE}}", "priceCurrency": "USD" } } </script><div class="artwork-page-container"><!-- Header --><header class="artwork-header"><h1 class="artwork-title">{{TITLE}}</h1><div class="artwork-price">\${{PRICE}}</div></header><!-- Main Image --><img src="{{IMAGE_URL}}" alt="{{TITLE}} - Mixed media abstract painting" class="artwork-hero-image"><!-- Actions --><div class="artwork-actions"><a href="{{SAATCHI_URL}}" class="btn-premium btn-saatchi" onclick="gtag('event', 'saatchi_click', {'artwork': '{{TITLE}}'});"> Purchase on Saatchi Art </a><a href="/trade" class="btn-premium btn-trade" onclick="gtag('event', 'trade_click', {'artwork': '{{TITLE}}'});"> Request Trade Pricing </a></div><!-- Details Card --><div class="details-card"><div class="details-grid"><div class="detail-item"><span class="detail-label">Medium</span><span class="detail-value">{{MEDIUM}}</span></div><div class="detail-item"><span class="detail-label">Dimensions</span><span class="detail-value">{{DIMENSIONS}}</span></div><div class="detail-item"><span class="detail-label">Year</span><span class="detail-value">{{YEAR}}</span></div><div class="detail-item"><span class="detail-label">Authenticity</span><span class="detail-value">Signed Original</span></div></div></div><!-- Description --><div class="artwork-description"><h3>About the Work</h3><p>A striking contemporary abstract piece featuring intricate compositions in {{COLOR_DESC}}. The layered technique creates depth and visual rhythm.</p><p><em>Dimensions available upon request. Custom framing options available for trade partners.</em></p></div><hr class="section-divider"><!-- Designer Specs (Premium Box) --><div class="designer-specs-premium" {{TAGS_DATA}}><h3 class="specs-title">Designer Specifications</h3><ul class="specs-list"><li><span class="check-icon">✓</span><strong>Installation:</strong> Wired & Ready to Hang</li><li><span class="check-icon">✓</span><strong>Weight:</strong> 5 lbs (Lightweight)</li><li><span class="check-icon">✓</span><strong>Framing:</strong> {{FRAMING}}</li><li><span class="check-icon">✓</span><strong>Lead Time:</strong> Ships in 5-7 Days</li><!-- Visible Tags for Reference --><li style="border-bottom: none; padding-top: 1rem; margin-top: 0.5rem; border-top: 1px dashed #eee;"><span style="font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-right: 0.5rem;">Tags:</span><span style="font-size: 0.85rem; color: #666;">{{TAGS_DISPLAY}}</span></li></ul><div style="margin-top: 1.5rem; display: flex; gap: 1rem;"><a href="#" style="font-size: 0.9rem; color: #666; text-decoration: none; border-bottom: 1px dotted #999;">Download Spec Sheet</a></div></div><hr class="section-divider"><!-- Artist Short Bio --><div style="display: flex; align-items: center; gap: 1rem; margin-top: 2rem;"><div style="width: 60px; height: 60px; background: #eee; border-radius: 50%;"></div><div><h4 style="margin: 0; font-family: 'Playfair Display', serif;">Elliot Spencer Morgan</h4><p style="margin: 0; font-size: 0.9rem; color: #666;">Austin, TX</p></div><a href="/about" style="margin-left: auto; text-decoration: none; font-size: 0.9rem; font-weight: 600;">View Profile →</a></div></div><!-- /wp:html -->`;
+
+Step N+1: Run Logic
+
+async function processMassBatch() {
+        if (typeof wp === 'undefined' || !wp.data) {
+            console.error("wp.data not available");
+            return "Error: wp.data missing";
+        }
+
+        const stats = { created: 0, updated: 0, skipped: 0, errors: 0 };
+        const log = [];
+
+        console.log(`Starting mass creation for ${artworkData.length} items...`);
+
+        // Chunking to avoid rate limits
+        const chunkSize = 1; // 1 item per batch to be safe and observe logs
+        // Actually, let's do 1 but run fast.
+
+        for (const item of window.MASS_DATA) {
+            try {
+                // Enrich data
+                const title = item.cleanTitle || item.title.replace(/ Painting$/i, '');
+                // Handle "cleanTitle" if missing in JSON (some failed items might have it or not)
+                const finalTitle = title;
+
+                const slug = item.slug ? item.slug.replace(/Painting$/i, '') : finalTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                const price = item.price || DEFAULT_PRICE;
+                // Construct dims string
+                let dims = DEFAULT_DIMS;
+                if (item.width && item.height) {
+                    dims = `${item.height}" × ${item.width}"`; // H x W
+                } else if (item.dimensions) {
+                    dims = item.dimensions;
+                }
+
+                const medium = item.medium || DEFAULT_MEDIUM;
+                const year = item.year || DEFAULT_YEAR;
+                const framing = DEFAULT_FRAMING;
+                const colorDesc = DEFAULT_COLOR_DESC;
+
+                // Tags
+                const tagsDisplay = `${medium}, Abstract, Contemporary`;
+                const tagsData = `data-style="abstract" data-medium="${medium.toLowerCase()}"`;
+
+                // Prepare Content
+                let content = window.layoutTemplate
+                    .replace(/{{TITLE}}/g, finalTitle)
+                    .replace(/{{IMAGE_URL}}/g, item.image_url) // We have image_url from the initial scan!
+                    .replace(/{{PRICE}}/g, price)
+                    .replace(/{{MEDIUM}}/g, medium)
+                    .replace(/{{DIMENSIONS}}/g, dims)
+                    .replace(/{{YEAR}}/g, year)
+                    .replace(/{{COLOR_DESC}}/g, colorDesc)
+                    .replace(/{{FRAMING}}/g, framing)
+                    .replace(/{{TAGS_DISPLAY}}/g, tagsDisplay)
+                    .replace(/{{TAGS_DATA}}/g, tagsData)
+                    .replace(/{{SAATCHI_URL}}/g, item.saatchi_url);
+
+                // Check existing page
+                console.log(`Processing: ${finalTitle}`);
+
+                const existingPages = await wp.apiFetch({ path: `/wp/v2/pages?search=${encodeURIComponent(finalTitle)}` });
+                let pageIdToUpdate = null;
+                if (existingPages && existingPages.length > 0) {
+                    const match = existingPages.find(p => p.title.rendered === finalTitle);
+                    if (match) pageIdToUpdate = match.id;
+                }
+
+                if (pageIdToUpdate) {
+                    console.log(`Updating existing page ${pageIdToUpdate}...`);
+                    await wp.apiFetch({
+                        path: `/wp/v2/pages/${pageIdToUpdate}`,
+                        method: 'PUT',
+                        data: {
+                            content: content
+                            // Don't change slug for existing pages to keep links working? 
+                            // Actually, user wants "clean URL structure". 
+                            // But usually best to preserve if it exists.
+                        }
+                    });
+                    stats.updated++;
+                } else {
+                    console.log(`Creating new page...`);
+                    const newPage = await wp.apiFetch({
+                        path: '/wp/v2/pages',
+                        method: 'POST',
+                        data: {
+                            title: finalTitle,
+                            content: content,
+                            status: 'publish',
+                            slug: slug
+                        }
+                    });
+                    console.log(`Created: ${newPage.link}`);
+                    stats.created++;
+                }
+
+                // Wait 1s between items
+                await new Promise(r => setTimeout(r, 1000));
+
+            } catch (err) {
+                console.error(`Error processing ${item.title}:`, err);
+                stats.errors++;
+            }
+        }
+
+        console.log("Mass Creation Complete:", stats);
+        console.log("DATA_START");
+        console.log(JSON.stringify(stats));
+        console.log("DATA_END");
+    }
+processMassBatch();

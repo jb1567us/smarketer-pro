@@ -1,0 +1,785 @@
+[
+    {
+        "id": 3,
+        "title": "Privacy Policy",
+        "slug": "privacy-policy",
+        "link": "https://elliotspencermorgan.com/?page_id=3",
+        "saatchi_url": null,
+        "image_url": null,
+        "type": "page"
+    },
+    {
+        "id": 1585,
+        "title": "Caviar",
+        "slug": "caviar",
+        "link": "https://elliotspencermorgan.com/caviar/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Caviar/1295487/12292979/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/CaviarPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1601,
+        "title": "Waves",
+        "slug": "waves",
+        "link": "https://elliotspencermorgan.com/waves/",
+        "saatchi_url": null,
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/wavesPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1602,
+        "title": "Blue Storm",
+        "slug": "blue-storm",
+        "link": "https://elliotspencermorgan.com/blue-storm/",
+        "saatchi_url": null,
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Blue_StormPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1605,
+        "title": "Blue Glacier",
+        "slug": "blue-glacier",
+        "link": "https://elliotspencermorgan.com/blue-glacier/",
+        "saatchi_url": null,
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Blue_GlacierPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1606,
+        "title": "Golden Rule",
+        "slug": "golden-rule",
+        "link": "https://elliotspencermorgan.com/golden-rule/",
+        "saatchi_url": null,
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Golden_RulePainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1607,
+        "title": "Transformation",
+        "slug": "transformation",
+        "link": "https://elliotspencermorgan.com/transformation/",
+        "saatchi_url": null,
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/TransformationPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1608,
+        "title": "Bloom",
+        "slug": "bloom",
+        "link": "https://elliotspencermorgan.com/bloom/",
+        "saatchi_url": null,
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/BloomPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1629,
+        "title": "Convergence",
+        "slug": "convergence",
+        "link": "https://elliotspencermorgan.com/convergence/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Convergence/1295487/8754060/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/ConvergencePainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1630,
+        "title": "Puzzled",
+        "slug": "puzzled",
+        "link": "https://elliotspencermorgan.com/puzzled/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzled/1295487/8146584/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/PuzzledPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1674,
+        "title": "Portal",
+        "slug": "portal",
+        "link": "https://elliotspencermorgan.com/portal/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal/1295487/6483753/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/PortalPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1696,
+        "title": "A Day at the Lake",
+        "slug": "a_day_at_the_lake",
+        "link": "https://elliotspencermorgan.com/?page_id=1696",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-lake/1295487/6105151/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/A_Day_at_the_LakePainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1697,
+        "title": "A day at the park",
+        "slug": "a_day_at_the_park",
+        "link": "https://elliotspencermorgan.com/?page_id=1697",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-park/1295487/6105309/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/A_day_at_the_ParkPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1698,
+        "title": "A day at the beach",
+        "slug": "a_day_at_the_beach",
+        "link": "https://elliotspencermorgan.com/?page_id=1698",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-beach/1295487/6105263/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/A_day_at_the_BeachPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1699,
+        "title": "Gold Series 011",
+        "slug": "gold_series_011",
+        "link": "https://elliotspencermorgan.com/?page_id=1699",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-011/1295487/6131379/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_011Painting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1700,
+        "title": "Gold Series 010",
+        "slug": "gold_series_010",
+        "link": "https://elliotspencermorgan.com/?page_id=1700",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-010/1295487/6131393/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_010Painting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1701,
+        "title": "Gold Series 009",
+        "slug": "gold_series_009",
+        "link": "https://elliotspencermorgan.com/?page_id=1701",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-009/1295487/6131427/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_009Painting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1702,
+        "title": "Gold Series 008",
+        "slug": "gold_series_008",
+        "link": "https://elliotspencermorgan.com/?page_id=1702",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-008/1295487/6131441/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_008Painting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1703,
+        "title": "Gold Series 007",
+        "slug": "gold_series_007",
+        "link": "https://elliotspencermorgan.com/?page_id=1703",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-007/1295487/6131477/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_007Painting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1704,
+        "title": "Red Planet",
+        "slug": "red_planet",
+        "link": "https://elliotspencermorgan.com/red_planet/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Red-Planet/1295487/6131365/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Red_PlanetPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1706,
+        "title": "Portal 2",
+        "slug": "portal_2",
+        "link": "https://elliotspencermorgan.com/portal_2/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-2/1295487/8146546/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_2Painting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1707,
+        "title": "Abstract Landscape",
+        "slug": "abstract_landscape",
+        "link": "https://elliotspencermorgan.com/abstract_landscape/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Abstract-Landscape/1295487/8123730/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Abstract_LandscapePainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1708,
+        "title": "self portrait 1",
+        "slug": "self_portrait_1",
+        "link": "https://elliotspencermorgan.com/self_portrait_1/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Self-Portrait-1/1295487/8125469/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/self_portrait_1Painting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1709,
+        "title": "Finger print",
+        "slug": "finger_print",
+        "link": "https://elliotspencermorgan.com/finger_print/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Finger-Print/1295487/8754025/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Finger_printPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1710,
+        "title": "Sheet Music",
+        "slug": "sheet_music",
+        "link": "https://elliotspencermorgan.com/sheet_music/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Sheet-Music/1295487/8146759/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Sheet_MusicPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1711,
+        "title": "Meeting in the Middle",
+        "slug": "meeting_in_the_middle",
+        "link": "https://elliotspencermorgan.com/meeting_in_the_middle/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Meeting-In-The-Middle/1295487/8754042/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Meeting_in_the_MiddlePainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 1764,
+        "title": "Caviar Painting",
+        "slug": "caviarpainting",
+        "link": "https://elliotspencermorgan.com/caviarpainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Caviar/1295487/12292979/view",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/CaviarPainting.jpg",
+        "type": "page"
+    },
+    {
+        "id": 101,
+        "title": "Caviar Painting",
+        "slug": "caviarPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/caviarPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Caviar/1295487/12292979/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/CaviarPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 102,
+        "title": "Convergence Painting",
+        "slug": "convergencePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/convergencePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Convergence/1295487/8754060/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/ConvergencePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 103,
+        "title": "Meeting in the Middle Painting",
+        "slug": "meeting_in_the_middlePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/meeting_in_the_middlePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Meeting-In-The-Middle/1295487/8754042/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Meeting_in_the_MiddlePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 104,
+        "title": "Finger print Painting",
+        "slug": "finger_printPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/finger_printPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Finger-Print/1295487/8754025/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Finger_printPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 105,
+        "title": "Sheet Music Painting",
+        "slug": "sheet_musicPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/sheet_musicPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Sheet-Music/1295487/8146759/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Sheet_MusicPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 106,
+        "title": "Puzzled Painting",
+        "slug": "puzzledPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/puzzledPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzled/1295487/8146584/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/PuzzledPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 107,
+        "title": "Heart Work Painting",
+        "slug": "heart_workPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/heart_workPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Heart-Work/1295487/8146572/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Heart_WorkPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 108,
+        "title": "Portal 2 Painting",
+        "slug": "portal_2Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/portal_2Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-2/1295487/8146546/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Portal_2Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 109,
+        "title": "Portal 1 Painting",
+        "slug": "portal_1Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/portal_1Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-1/1295487/8146533/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Portal_1Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 110,
+        "title": "self portrait 1 Painting",
+        "slug": "self_portrait_1Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/self_portrait_1Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Self-Portrait-1/1295487/8125469/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/self_portrait_1Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 111,
+        "title": "Morning Joe Painting",
+        "slug": "morning_joePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/morning_joePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Morning-Joe/1295487/8125458/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Morning_JoePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 112,
+        "title": "Unity Painting",
+        "slug": "unityPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/unityPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Unity/1295487/8125409/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/UnityPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 113,
+        "title": "Dog on a bike Painting",
+        "slug": "dog_on_a_bikePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/dog_on_a_bikePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Dog-On-A-Bike/1295487/8125271/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Dog_on_a_bikePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 114,
+        "title": "Water People Painting",
+        "slug": "water_peoplePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/water_peoplePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Water-People/1295487/7363373/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Water_PeoplePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 115,
+        "title": "Towers Painting",
+        "slug": "towersPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/towersPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Towers/1295487/7363345/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/TowersPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 116,
+        "title": "Granular Painting",
+        "slug": "granularPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/granularPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Granular/1295487/7363339/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/GranularPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 117,
+        "title": "Puzzle 2 Painting",
+        "slug": "puzzle_2Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/puzzle_2Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzle-2/1295487/7363331/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Puzzle_2Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 118,
+        "title": "Puzzle 1 Painting",
+        "slug": "puzzle_1Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/puzzle_1Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzle-1/1295487/7363317/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Puzzle_1Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 119,
+        "title": "Trichome Painting",
+        "slug": "trichomePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/trichomePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Trichome/1295487/7363313/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/TrichomePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 120,
+        "title": "Trichomes Painting",
+        "slug": "trichomesPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/trichomesPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Trichomes/1295487/7363299/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/TrichomesPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 121,
+        "title": "Grill Painting",
+        "slug": "grillPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/grillPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Grill/1295487/6783253/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/GrillPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 122,
+        "title": "Quilted Painting",
+        "slug": "quiltedPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/quiltedPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Quilted/1295487/6783247/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/QuiltedPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 123,
+        "title": "Interactions Painting",
+        "slug": "interactionsPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/interactionsPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Interactions/1295487/6783239/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/InteractionsPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 124,
+        "title": "Rush Painting",
+        "slug": "rushPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/rushPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Rush/1295487/6783231/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/RushPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 125,
+        "title": "Yorkie Painting",
+        "slug": "yorkiepainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/yorkiepainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Yorkie/1295487/6783225/view",
+        "image_url": null,
+        "type": "post"
+    },
+    {
+        "id": 126,
+        "title": "Night Sky Painting",
+        "slug": "night_skyPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/night_skyPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Night-Sky/1295487/6783211/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Night_SkyPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 127,
+        "title": "Bold Painting",
+        "slug": "boldPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/boldPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Bold/1295487/6783203/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/BoldPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 128,
+        "title": "Climbing Painting",
+        "slug": "climbingPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/climbingPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Climbing/1295487/6783197/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/ClimbingPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 129,
+        "title": "Dance Painting",
+        "slug": "dancePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/dancePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Dance/1295487/6783193/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/DancePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 130,
+        "title": "Smoke Painting",
+        "slug": "smokePainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/smokePainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Smoke/1295487/6783181/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/SmokePainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 131,
+        "title": "Motion Painting",
+        "slug": "motionPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/motionPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Motion/1295487/6783137/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/MotionPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 132,
+        "title": "Listening Painting",
+        "slug": "listeningPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/listeningPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Listening/1295487/6783125/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/ListeningPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 133,
+        "title": "Synapses Painting",
+        "slug": "synapsesPainting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/synapsesPainting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Synapses/1295487/6783101/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/SynapsesPainting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 134,
+        "title": "Microscope 7 Painting",
+        "slug": "microscope_7Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/microscope_7Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-7/1295487/6782897/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Microscope_7Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 135,
+        "title": "Microscope 6 Painting",
+        "slug": "microscope_6Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/microscope_6Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-6/1295487/6782859/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Microscope_6Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 136,
+        "title": "Microscope 5 Painting",
+        "slug": "microscope_5Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/microscope_5Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-5/1295487/6782839/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Microscope_5Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 137,
+        "title": "Microscope 4 Painting",
+        "slug": "microscope_4Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/microscope_4Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-4/1295487/6782817/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Microscope_4Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 138,
+        "title": "Microscope 3 Painting",
+        "slug": "microscope_3Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/microscope_3Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-3/1295487/6782785/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Microscope_3Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 139,
+        "title": "Microscope 2 Painting",
+        "slug": "microscope_2Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/microscope_2Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-2/1295487/6782755/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Microscope_2Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 140,
+        "title": "Microscope 1 Painting",
+        "slug": "microscope_1Painting",
+        "link": "https://elliotspencermorgan.com/2025/09/25/microscope_1Painting/",
+        "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-1/1295487/6782739/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Microscope_1Painting.jpg",
+        "type": "post"
+    },
+    {
+        "id": 141,
+        "title": "Floating 6 - Rabbit Sculpture",
+        "slug": "floating_6_-_rabbitSculpture",
+        "link": "https://elliotspencermorgan.com/2025/09/25/floating_6_-_rabbitSculpture/",
+        "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-6-Rabbit/1295487/6627463/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Floating_6_-_RabbitSculpture.jpg",
+        "type": "post"
+    },
+    {
+        "id": 142,
+        "title": "Floating 5 - Moth Sculpture",
+        "slug": "floating_5_-_mothSculpture",
+        "link": "https://elliotspencermorgan.com/2025/09/25/floating_5_-_mothSculpture/",
+        "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-5-Moth/1295487/6627457/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Floating_5_-_MothSculpture.jpg",
+        "type": "post"
+    },
+    {
+        "id": 143,
+        "title": "Floating 4 - Vines Sculpture",
+        "slug": "floating_4_-_vinesSculpture",
+        "link": "https://elliotspencermorgan.com/2025/09/25/floating_4_-_vinesSculpture/",
+        "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-4-Vines/1295487/6627447/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Floating_4_-_VinesSculpture.jpg",
+        "type": "post"
+    },
+    {
+        "id": 144,
+        "title": "Floating 3 - Tree Sculpture",
+        "slug": "floating_3_-_treeSculpture",
+        "link": "https://elliotspencermorgan.com/2025/09/25/floating_3_-_treeSculpture/",
+        "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-3-Tree/1295487/6627443/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Floating_3_-_TreeSculpture.jpg",
+        "type": "post"
+    },
+    {
+        "id": 145,
+        "title": "Floating 2 - Butterfly Sculpture",
+        "slug": "floating_2_-_butterflySculpture",
+        "link": "https://elliotspencermorgan.com/2025/09/25/floating_2_-_butterflySculpture/",
+        "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-2-Butterfly/1295487/6627437/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Floating_2_-_ButterflySculpture.jpg",
+        "type": "post"
+    },
+    {
+        "id": 146,
+        "title": "Floating 1 - Cicada Sculpture",
+        "slug": "floating_1_-_cicadaSculpture",
+        "link": "https://elliotspencermorgan.com/2025/09/25/floating_1_-_cicadaSculpture/",
+        "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-1-Cicada/1295487/6627409/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Floating_1_-_CicadaSculpture.jpg",
+        "type": "post"
+    },
+    {
+        "id": 147,
+        "title": "Purple Night - Mulch Series Collage",
+        "slug": "purple_night_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/purple_night_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Purple-Night-Mulch-Series/1295487/6583797/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Purple_Night_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 148,
+        "title": "City at Night - Mulch Series Collage",
+        "slug": "city_at_night_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/city_at_night_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-City-At-Night-Mulch-Series/1295487/6583787/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/City_at_Night_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 149,
+        "title": "Purple 1 - Mulch Series Collage",
+        "slug": "purple_1_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/purple_1_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Purple-1-Mulch-Series/1295487/6583781/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Purple_1_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 150,
+        "title": "Close up - Mulch Series Collage",
+        "slug": "close_up_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/close_up_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Close-Up-Mulch-Series/1295487/6583777/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Close_up_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 151,
+        "title": "Society - Mulch Series Collage",
+        "slug": "society_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/society_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Society-Mulch-Series/1295487/6583753/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Society_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 152,
+        "title": "Pieces of Red Collage",
+        "slug": "pieces_of_redCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/pieces_of_redCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Pieces-Of-Red/1295487/6583729/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Pieces_of_RedCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 153,
+        "title": "Red and Black - Mulch Series Collage",
+        "slug": "red_and_black_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/red_and_black_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Red-And-Black-Mulch-Series/1295487/6583709/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Red_and_Black_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 154,
+        "title": "Paper Peace Collage",
+        "slug": "paper_peaceCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/paper_peaceCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Paper-Peace/1295487/6583693/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Paper_PeaceCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 155,
+        "title": "Honeycomb - Mulch Series Collage",
+        "slug": "honeycomb_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/honeycomb_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Honeycomb-Mulch-Series/1295487/6583683/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Honeycomb_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 156,
+        "title": "Wild Zebra 2 - Mulch Series Collage",
+        "slug": "wild_zebra_2_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/wild_zebra_2_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Wild-Zebra-2-Mulch-Series/1295487/6583651/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Wild_Zebra_2_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 157,
+        "title": "Wild Zebra 1 - Mulch Series Collage",
+        "slug": "wild_zebra_1_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/wild_zebra_1_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Wild-Zebra-1-Mulch-Series/1295487/6583633/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Wild_Zebra_1_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 158,
+        "title": "Work Party - Mulch Series Collage",
+        "slug": "work_party_-_mulch_seriesCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/work_party_-_mulch_seriesCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Work-Party-Mulch-Series/1295487/6583609/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Work_Party_-_Mulch_SeriesCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 159,
+        "title": "Business Mulch Collage",
+        "slug": "business_mulchCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/business_mulchCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Business-Mulch/1295487/6583595/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Business_MulchCollage.jpg",
+        "type": "post"
+    },
+    {
+        "id": 160,
+        "title": "Office Work Mulch Collage",
+        "slug": "office_work_mulchCollage",
+        "link": "https://elliotspencermorgan.com/2025/09/25/office_work_mulchCollage/",
+        "saatchi_url": "https://www.saatchiart.com/art/Collage-Office-Work-Mulch/1295487/6583581/view",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/11/Office_Work_MulchCollage.jpg",
+        "type": "post"
+    }
+]
