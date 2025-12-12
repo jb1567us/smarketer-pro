@@ -71,50 +71,112 @@ window.processMassBatch = async function() {
             };
 
             // SMART TAGS GENERATOR
-            const generateSmartTags = (i, safeTitle) => {
-                let t = new Set();
-                const titleForSearch = safeTitle || i.title;
-
-                // 1. ADD VISUAL MAP TAGS FIRST (If available)
-                if (visualTags[titleForSearch]) {
-                     visualTags[titleForSearch].split(',').forEach(s => t.add(s.trim()));
-                } else {
-                    // Check Case Insensitive
-                    const titleKey = Object.keys(visualTags).find(k => k.toLowerCase() === titleForSearch.toLowerCase());
-                    if (titleKey) visualTags[titleKey].split(',').forEach(s => t.add(s.trim()));
-                }
-
-                // 2. ALWAYS CALCULATE SIZE & FORMAT (User requirement: Size must be present)
-                const w = parseInt(i.width || 0);
-                const h = parseInt(i.height || 0);
-                if (w >= 48 || h >= 48) { t.add('Large'); t.add('Statement Piece'); t.add('Oversized'); }
-                if (w > 0 && w === h) t.add('Square');
-                else if (w > h) t.add('Landscape Format');
-                else if (h > w) t.add('Portrait Format');
-
-                // 3. BASE TAGS (Styles & Medium)
-                if (i.styles) i.styles.split(',').forEach(s => t.add(s.trim()));
-                if (i.medium) t.add(i.medium);
-                t.add('Contemporary Art');
-                t.add('Modern');
-
-                // 4. COLOR & THEME INFERENCE (from Title)
+            function generateSmartTags(i) {
+                const t = new Set();
+                const titleForSearch = i.cleanTitle || i.title;
                 const titleLower = titleForSearch.toLowerCase();
                 
-                if (titleLower.includes('red') || titleLower.includes('planet') || titleLower.includes('mars')) { t.add('Red'); t.add('Warm Tones'); }
-                if (titleLower.includes('gold') || titleLower.includes('sun')) { t.add('Gold'); t.add('Yellow'); t.add('Metallic'); t.add('Shimmer'); t.add('Series'); }
-                if (titleLower.includes('series')) { t.add('Collection'); t.add('Continuity'); }
-                if (titleLower.includes('blue') || titleLower.includes('lake') || titleLower.includes('sea') || titleLower.includes('beach') || titleLower.includes('water') || titleLower.includes('portal')) { t.add('Blue'); t.add('Cool Tones'); }
-                if (titleLower.includes('green') || titleLower.includes('park') || titleLower.includes('garden')) { t.add('Green'); t.add('Nature'); }
-                if (titleLower.includes('caviar')) { t.add('Black'); t.add('Dark'); t.add('Monochrome'); }
-                if (titleLower.includes('sheet music')) { t.add('Black & White'); t.add('Music'); }
-                if (titleLower.includes('finger print')) { t.add('Identity'); t.add('Abstract'); }
-                if (titleLower.includes('puzzled')) { t.add('Geometric'); t.add('Complexity'); }
+                // 1. STYLE & MEDIUM (From Metadata)
+                if (i.styles) {
+                    i.styles.split(',').forEach(s => t.add(s.trim()));
+                }
+                if (i.mediumsDetailed) {
+                     i.mediumsDetailed.split(',').forEach(s => t.add(s.trim()));
+                } else if (i.medium) {
+                    t.add(i.medium);
+                }
+
+                // 2. DIMENSION Based Tags
+                const w = parseFloat(i.width || 0);
+                const h = parseFloat(i.height || 0);
+                if (w > 0 && h > 0) {
+                    if (w >= 48 || h >= 48) { t.add('Large'); t.add('Statement Piece'); t.add('Oversized'); }
+                    if (Math.abs(w - h) < 1) t.add('Square'); // Tolerance for float
+                    else if (w > h) t.add('Landscape Format');
+                    else if (h > w) t.add('Portrait Format');
+                }
+
+                 // 3. ARTWORK TYPE DETECTION (Robust)
+                let typeDetected = false;
+                const typeKeywords = ['painting', 'sculpture', 'collage', 'drawing', 'print', 'digital art', 'photography', 'installation'];
+                
+                typeKeywords.forEach(type => {
+                    if (titleLower.includes(type)) {
+                        t.add(type.charAt(0).toUpperCase() + type.slice(1));
+                        typeDetected = true;
+                    }
+                });
+                
+                // Fallback type if possible
+                if (!typeDetected) {
+                    if (i.medium && i.medium.toLowerCase().includes('canvas')) t.add('Painting');
+                    else if (i.medium && i.medium.toLowerCase().includes('paper')) t.add('Work on Paper');
+                    else t.add('Painting'); // Default
+                }
+
+                 // 4. COLOR & THEME INFERENCE (Expanded)
+                const colorMap = {
+                    'red': ['Red', 'Warm Tones', 'Bold'],
+                    'crimson': ['Red', 'Deep Red'],
+                    'blue': ['Blue', 'Cool Tones', 'Calm'],
+                    'navy': ['Blue', 'Dark'],
+                    'turquoise': ['Turquoise', 'Blue-Green', 'Vibrant'],
+                    'gold': ['Gold', 'Metallic', 'Yellow', 'Warm Tones', 'Luxury'],
+                    'yellow': ['Yellow', 'Bright', 'Sunny'],
+                    'green': ['Green', 'Nature', 'Organic'],
+                    'purple': ['Purple', 'Royalty', 'Mysterious'],
+                    'black': ['Black', 'Dark', 'Monochrome', 'Minimalist'],
+                    'white': ['White', 'Light', 'Minimalist'],
+                    'silver': ['Silver', 'Metallic', 'Cool Tones'],
+                    'orange': ['Orange', 'Citrus', 'Warm Tones'],
+                    'pink': ['Pink', 'Soft', 'Playful'],
+                    'brown': ['Brown', 'Earth Tones', 'Natural'],
+                    'grey': ['Grey', 'Neutral'],
+                    'gray': ['Grey', 'Neutral']
+                };
+
+                Object.keys(colorMap).forEach(key => {
+                    if (titleLower.includes(key)) {
+                        colorMap[key].forEach(tag => t.add(tag));
+                    }
+                });
+
+                // Theme keywords
+                if (titleLower.includes('lake') || titleLower.includes('sea') || titleLower.includes('beach') || titleLower.includes('water') || titleLower.includes('ocean')) { t.add('Water'); t.add('Nature'); t.add('Landscape'); }
+                if (titleLower.includes('mountain') || titleLower.includes('hill') || titleLower.includes('valley')) { t.add('Mountain'); t.add('Landscape'); t.add('Nature'); }
+                if (titleLower.includes('tree') || titleLower.includes('forest') || titleLower.includes('plant') || titleLower.includes('flower') || titleLower.includes('bloom')) { t.add('Botanical'); t.add('Nature'); t.add('Floral'); }
+                if (titleLower.includes('city') || titleLower.includes('urban') || titleLower.includes('building') || titleLower.includes('street')) { t.add('Urban'); t.add('Cityscape'); t.add('Architecture'); }
+                if (titleLower.includes('abstract')) { t.add('Abstract'); t.add('Non-Objective'); }
+                if (titleLower.includes('geometric') || titleLower.includes('shape') || titleLower.includes('cube') || titleLower.includes('circle')) { t.add('Geometric'); t.add('Structured'); }
+                if (titleLower.includes('portrait') || titleLower.includes('face') || titleLower.includes('figure')) { t.add('Portrait'); t.add('Figurative'); }
+                if (titleLower.includes('animal') || titleLower.includes('bird') || titleLower.includes('dog') || titleLower.includes('cat') || titleLower.includes('fish')) { t.add('Animals'); t.add('Wildlife'); }
+                if (titleLower.includes('music') || titleLower.includes('song') || titleLower.includes('dance')) { t.add('Music'); t.add('Rhythm'); t.add('Performing Arts'); }
+
+                // 5. Title Keywords (Smart Extraction - excluding stop words)
+                const stopWords = ['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'series', 'painting', 'sculpture', 'collage', '001', '002', '003', '004', '005', '006', '007', '008', '009', '010', '011', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                titleLower.split(/[^a-z0-9]+/).forEach(word => {
+                    if (word.length > 3 && !stopWords.includes(word)) {
+                        // Capitalize first letter
+                        t.add(word.charAt(0).toUpperCase() + word.slice(1));
+                    }
+                });
+
+                // 6. DETECTED COLORS (From Image Analysis)
+                if (i.detected_colors && Array.isArray(i.detected_colors)) {
+                    i.detected_colors.forEach(c => t.add(c));
+                    if (i.detected_colors.length > 3) t.add('Colorful');
+                    if (i.detected_colors.length > 1) t.add('Multicolored');
+                }
+
+                // 7. Base Tags
+                t.add('Contemporary Art');
+                t.add('Fine Art');
+                t.add('Elliot Spencer Morgan');
 
                 return Array.from(t).join(', ');
-            };
+            }
 
-            let tags = generateSmartTags(item, cleanTitle);
+            let tags = generateSmartTags(item);
 
             // COMPILE TEMPLATE
             let content = window.layoutTemplate
@@ -135,17 +197,43 @@ window.processMassBatch = async function() {
 
             console.log(`Processing: ${cleanTitle}`);
 
-            // SEARCH FOR EXISTING PAGE (Status=ANY to find drafts)
-            const existingPages = await wp.apiFetch({ path: `/wp/v2/pages?search=${encodeURIComponent(cleanTitle)}&per_page=5&status=any` });
-            let pageIdToUpdate = null;
-            
-            if (existingPages && existingPages.length > 0) {
-                 // Fuzzy match: exact clean title OR exact full title
-                 const match = existingPages.find(p => 
-                    p.title.rendered.toLowerCase() === cleanTitle.toLowerCase() || 
-                    p.title.rendered.toLowerCase() === finalTitle.toLowerCase()
-                 );
-                 if (match) pageIdToUpdate = match.id;
+            // 1. Try by WordPress ID (Safest)
+            if (item.wordpress_id) {
+                console.log(`Checking ID ${item.wordpress_id}...`);
+                try {
+                     const directCheck = await wp.apiFetch({ path: `/wp/v2/pages/${item.wordpress_id}` });
+                     if (directCheck && directCheck.id) {
+                         pageIdToUpdate = directCheck.id;
+                     }
+                } catch (e) {
+                    console.log(`ID ${item.wordpress_id} not found, falling back to search.`);
+                }
+            }
+
+            // 2. Fallback to Search (if no ID or ID failed)
+            if (!pageIdToUpdate) {
+                // Search for pages with similar title
+                const existingPages = await wp.apiFetch({ path: `/wp/v2/pages?search=${encodeURIComponent(cleanTitle)}&per_page=10&status=any` });
+                
+                if (existingPages && existingPages.length > 0) {
+                     // PRIORITIZE SLUG MATCH
+                     const slugMatch = existingPages.find(p => p.slug === slug);
+                     if (slugMatch) {
+                         pageIdToUpdate = slugMatch.id;
+                         console.log(`Matched by Slug: ${slug}`);
+                     } else {
+                         // Fallback to Accurate Title Match
+                         const titleMatch = existingPages.find(p => 
+                            p.title.rendered.toLowerCase().trim() === cleanTitle.toLowerCase().trim() || 
+                            p.title.rendered.toLowerCase().trim() === finalTitle.toLowerCase().trim() ||
+                            p.title.rendered.includes(cleanTitle) // Looser check?
+                         );
+                         if (titleMatch) { 
+                            pageIdToUpdate = titleMatch.id;
+                            console.log(`Matched by Title: ${titleMatch.title.rendered}`);
+                         }
+                     }
+                }
             }
 
             if (pageIdToUpdate) {

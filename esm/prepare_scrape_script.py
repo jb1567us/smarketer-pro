@@ -72,6 +72,7 @@ js_content = f"""
             extracted.year = extractLabel("Year Created");
             extracted.styles = extractLabel("Styles");
             extracted.mediumsDetailed = extractLabel("Mediums");
+            extracted.dimensions = extractLabel("Size"); // CRITICAL FIX
             extracted.frame = extractLabel("Frame");
             extracted.readyToHang = extractLabel("Ready to Hang");
             extracted.packaging = extractLabel("Packaging");
