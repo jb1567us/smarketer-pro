@@ -204,7 +204,60 @@ def files_cat(remote_path: str):
     except Exception as e:
          console.print(f"[red]Error:[/red] {e}")
 
+@app.command()
+def files_download(remote_path: str, local_path: str):
+    """Download a remote file to local machine."""
+    client = get_client()
+    mgr = FileManager(client)
+    try:
+        console.print(f"Downloading [bold]{remote_path}[/bold]...")
+        mgr.download_file(remote_path, local_path)
+        console.print(f"[green]Saved to {local_path}[/green]")
+    except ValueError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+    except Exception as e:
+        console.print(f"[red]Download failed:[/red] {e}")
+
+@app.command()
+def files_compress(sources: str, dest: str, type: str = "zip"):
+    """
+    Compress files/folders. 
+    Usage: files-compress "folder1,file2.txt" public_html/archive.zip
+    """
+    client = get_client()
+    mgr = FileManager(client)
+    try:
+        source_list = [s.strip() for s in sources.split(",")]
+        mgr.compress_files(source_list, dest, type)
+        console.print(f"[green]Compressed to {dest}[/green]")
+    except Exception as e:
+        console.print(f"[red]Failed:[/red] {e}")
+
+@app.command()
+def files_extract(source: str, dest: str):
+    """Extract an archive to a destination."""
+    client = get_client()
+    mgr = FileManager(client)
+    try:
+        mgr.extract_files(source, dest)
+        console.print(f"[green]Extracted {source} to {dest}[/green]")
+    except Exception as e:
+        console.print(f"[red]Failed:[/red] {e}")
+
+@app.command()
+def files_chmod(path: str, perms: str):
+    """Change permissions (e.g. 0755)."""
+    client = get_client()
+    mgr = FileManager(client)
+    try:
+        mgr.change_permissions(path, perms)
+        console.print(f"[green]Changed permissions of {path} to {perms}[/green]")
+    except Exception as e:
+        console.print(f"[red]Failed:[/red] {e}")
+
 if __name__ == "__main__":
     app()
+
+
 
 

@@ -35,14 +35,42 @@ class CPanelClient:
 
     def list_domains(self):
         """List all domains associated with the account."""
-        return self.call_uapi("DomainInfo", "list_domains")
+        data = self.call_uapi("DomainInfo", "list_domains")
+        
+        # UAPI DomainInfo::list_domains returns a dict separated by type
+        # { "main_domain": {...}, "addon_domains": [...], ... }
+        if isinstance(data, dict):
+            domains = []
+            # Main domain is usually a dict
+            if "main_domain" in data and isinstance(data["main_domain"], dict):
+                domains.append(data["main_domain"])
+            
+            # Others are lists
+            for key in ["addon_domains", "parked_domains", "sub_domains"]:
+                if key in data and isinstance(data[key], list):
+                    domains.extend(data[key])
+            return domains
+            
+        # Fallback if it is a list or other
+        if isinstance(data, list):
+            return data
+            
+        # If it's a string (unexpected) or None, return empty
+        if isinstance(data, str):
+            # Debug: print("Warning: UAPI returned string:", data)
+            return []
+            
+        return []
 
     def get_disk_usage(self):
         """Get disk usage information."""
-        # Using Email module as proxy or specific quota module might be needed depending on needs
-        # FileInfo is robust.
-        # But 'Quota' module is standard.
-        return self.call_uapi("Quota", "get_quota_info")
+        data = self.call_uapi("Quota", "get_quota_info")
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict):
+            # Sometimes wrapped or single item?
+            return [data]
+        return []
 
     def list_wp_instances(self):
         """

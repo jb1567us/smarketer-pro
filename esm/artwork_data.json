@@ -1,133 +1,5 @@
 [
     {
-        "id": 1696,
-        "title": "A Day at the Lake",
-        "slug": "a_day_at_the_lake",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-lake/1295487/6105151/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/A_Day_at_the_LakePainting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "A Day at the Lake",
-        "link": "https://elliotspencermorgan.com/?page_id=1696",
-        "type": "page"
-    },
-    {
-        "id": 1697,
-        "title": "A day at the park",
-        "slug": "a_day_at_the_park",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-park/1295487/6105309/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/A_day_at_the_ParkPainting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "A day at the park",
-        "link": "https://elliotspencermorgan.com/?page_id=1697",
-        "type": "page"
-    },
-    {
-        "id": 1698,
-        "title": "A day at the beach",
-        "slug": "a_day_at_the_beach",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-A-day-at-the-beach/1295487/6105263/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/A_day_at_the_BeachPainting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "A day at the beach",
-        "link": "https://elliotspencermorgan.com/?page_id=1698",
-        "type": "page"
-    },
-    {
-        "id": 1699,
-        "title": "Gold Series 011",
-        "slug": "gold_series_011",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-011/1295487/6131379/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_011Painting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "Gold Series 011",
-        "link": "https://elliotspencermorgan.com/?page_id=1699",
-        "type": "page"
-    },
-    {
-        "id": 1700,
-        "title": "Gold Series 010",
-        "slug": "gold_series_010",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-010/1295487/6131393/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_010Painting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "Gold Series 010",
-        "link": "https://elliotspencermorgan.com/?page_id=1700",
-        "type": "page"
-    },
-    {
-        "id": 1701,
-        "title": "Gold Series 009",
-        "slug": "gold_series_009",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-009/1295487/6131427/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_009Painting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "Gold Series 009",
-        "link": "https://elliotspencermorgan.com/?page_id=1701",
-        "type": "page"
-    },
-    {
-        "id": 1702,
-        "title": "Gold Series 008",
-        "slug": "gold_series_008",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-008/1295487/6131441/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_008Painting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "Gold Series 008",
-        "link": "https://elliotspencermorgan.com/?page_id=1702",
-        "type": "page"
-    },
-    {
-        "id": 1703,
-        "title": "Gold Series 007",
-        "slug": "gold_series_007",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Series-007/1295487/6131477/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GOLD_SERIES_007Painting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "price": "990",
-        "width": "48",
-        "height": "48",
-        "medium": "Oil",
-        "year": "2018",
-        "cleanTitle": "Gold Series 007",
-        "link": "https://elliotspencermorgan.com/?page_id=1703",
-        "type": "page"
-    },
-    {
         "id": 1704,
         "title": "Red Planet",
         "slug": "red_planet",
@@ -142,14 +14,21 @@
         "cleanTitle": "Red Planet",
         "link": "https://elliotspencermorgan.com/red_planet/",
         "type": "page",
-        "wordpress_id": 1704
+        "wordpress_id": 1704,
+        "detected_colors": [
+            "Red",
+            "Orange",
+            "Brown",
+            "Black"
+        ],
+        "styles": "Abstract, Expressionism, Texture, Geometric"
     },
     {
         "id": 1674,
         "title": "Portal",
         "slug": "portal-2",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal/1295487/6483753/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/PortalPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/PortalPainting.jpg",
         "date": "2025-09-25T15:30:02",
         "price": "970",
         "width": "38.5",
@@ -157,8 +36,8 @@
         "medium": "Oil",
         "year": "2019",
         "cleanTitle": "Portal",
-        "styles": "Abstract, Art Deco, Expressionism, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Oil, Paper",
+        "styles": "Abstract, Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Oil,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -169,7 +48,7 @@
         "depth": "0.1",
         "wordpress_id": 1927,
         "detected_colors": [
-            "Black",
+            "Red",
             "Brown",
             "Grey"
         ]
@@ -179,12 +58,12 @@
         "title": "Portal 2",
         "slug": "portal_2-2",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-2/1295487/8146546/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_2Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Portal_2Painting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Conceptual, Fine Art",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Fine Art, Conceptual, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -198,34 +77,22 @@
         "wordpress_id": 1928,
         "detected_colors": [
             "Gold",
-            "Black",
-            "Grey",
-            "Pink"
+            "Brown",
+            "Pink",
+            "Grey"
         ]
-    },
-    {
-        "id": 1707,
-        "title": "Abstract Landscape",
-        "slug": "abstract_landscape",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Abstract-Landscape/1295487/8123730/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Abstract_LandscapePainting.jpg",
-        "date": "2025-09-25T15:30:02",
-        "scrape_failed": true,
-        "link": "https://elliotspencermorgan.com/abstract_landscape/",
-        "type": "page",
-        "wordpress_id": 1707
     },
     {
         "id": 1708,
         "title": "self portrait 1",
         "slug": "self_portrait_1",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Self-Portrait-1/1295487/8125469/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/self_portrait_1Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/self_portrait_1Painting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -239,7 +106,8 @@
         "wordpress_id": 1708,
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -247,12 +115,12 @@
         "title": "Convergence",
         "slug": "convergence",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Convergence/1295487/8754060/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/ConvergencePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ConvergencePainting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2021",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Conceptual, Expressionism",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Expressionism, Conceptual, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -265,8 +133,9 @@
         "depth": "1",
         "wordpress_id": 1629,
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Brown",
+            "Grey",
+            "Silver"
         ]
     },
     {
@@ -274,12 +143,12 @@
         "title": "Puzzled",
         "slug": "puzzled",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzled/1295487/8146584/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/PuzzledPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/PuzzledPainting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Structured, Fine Art, Geometric, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -293,8 +162,8 @@
         "wordpress_id": 1630,
         "detected_colors": [
             "Gold",
-            "Black",
-            "Grey"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -302,12 +171,12 @@
         "title": "Finger print",
         "slug": "finger_print",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Finger-Print/1295487/8754025/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Finger_printPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Finger_printPainting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2021",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Conceptual, Expressionism",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Expressionism, Conceptual, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Crate",
@@ -320,8 +189,9 @@
         "depth": "1",
         "wordpress_id": 1709,
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Grey",
+            "Brown",
+            "Silver"
         ]
     },
     {
@@ -329,12 +199,12 @@
         "title": "Sheet Music",
         "slug": "sheet_music",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Sheet-Music/1295487/8146759/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Sheet_MusicPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Sheet_MusicPainting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Fine Art, Art Deco, Pop Art",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Abstract, Abstract Expressionism, Pop Art, Fine Art, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -356,12 +226,12 @@
         "title": "Meeting in the Middle",
         "slug": "meeting_in_the_middle",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Meeting-In-The-Middle/1295487/8754042/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Meeting_in_the_MiddlePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Meeting_in_the_MiddlePainting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2021",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Conceptual, Expressionism",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Expressionism, Conceptual, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Crate",
@@ -374,8 +244,10 @@
         "depth": "1",
         "wordpress_id": 1711,
         "detected_colors": [
+            "Grey",
+            "Brown",
             "Black",
-            "Grey"
+            "Silver"
         ]
     },
     {
@@ -383,12 +255,12 @@
         "title": "Caviar",
         "slug": "caviarpainting",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Caviar/1295487/12292979/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/CaviarPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/CaviarPainting.jpg",
         "date": "2025-09-25T15:30:02",
         "scrape_failed": true,
         "year": "2024",
-        "styles": "Abstract, Contemporary, Black & White, Pop Art, Geometric",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Black & White, Contemporary, Abstract, Pop Art, Geometric",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "No",
         "packaging": "Ships Rolled in a Tube",
@@ -401,8 +273,10 @@
         "depth": "0.1",
         "wordpress_id": 1764,
         "detected_colors": [
-            "White",
-            "Grey"
+            "Beige",
+            "Grey",
+            "Silver",
+            "Brown"
         ]
     },
     {
@@ -411,11 +285,11 @@
         "slug": "heart_workpainting",
         "link": "https://elliotspencermorgan.com/heart_workpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Heart-Work/1295487/8146572/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Heart_WorkPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Heart_WorkPainting.jpg",
         "type": "post",
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Art Deco",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -427,35 +301,8 @@
         "wordpress_id": 1852,
         "detected_colors": [
             "Gold",
-            "Black",
+            "Brown",
             "Grey"
-        ]
-    },
-    {
-        "id": 109,
-        "title": "Portal 1 Painting",
-        "slug": "portal_1painting-3",
-        "link": "https://elliotspencermorgan.com/portal_1painting-3/",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-1/1295487/8146533/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_1Painting.jpg",
-        "type": "post",
-        "year": "2020",
-        "styles": "Modern, Abstract, Abstract Expressionism, Conceptual, Fine Art",
-        "mediumsDetailed": "Paint, Paper",
-        "frame": "Not Framed",
-        "readyToHang": "Not Applicable",
-        "packaging": "Ships Rolled in a Tube",
-        "shippingFrom": "United States.",
-        "dimensions": "17.5 W x 23 H x 0.1 D in",
-        "width": "17.5",
-        "height": "23",
-        "depth": "0.1",
-        "wordpress_id": 1945,
-        "detected_colors": [
-            "Gold",
-            "Black",
-            "Grey",
-            "Pink"
         ]
     },
     {
@@ -464,11 +311,11 @@
         "slug": "morning_joepainting",
         "link": "https://elliotspencermorgan.com/morning_joepainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Morning-Joe/1295487/8125458/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Morning_JoePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Morning_JoePainting.jpg",
         "type": "post",
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -480,7 +327,8 @@
         "wordpress_id": 1854,
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -489,11 +337,11 @@
         "slug": "unitypainting",
         "link": "https://elliotspencermorgan.com/unitypainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Unity/1295487/8125409/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/UnityPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/UnityPainting.jpg",
         "type": "post",
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -505,7 +353,7 @@
         "wordpress_id": 1855,
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown"
         ]
     },
     {
@@ -514,11 +362,11 @@
         "slug": "dog_on_a_bikepainting",
         "link": "https://elliotspencermorgan.com/dog_on_a_bikepainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Dog-On-A-Bike/1295487/8125271/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Dog_on_a_bikePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Dog_on_a_bikePainting.jpg",
         "type": "post",
         "year": "2020",
-        "styles": "Abstract, Fine Art, Modern, Art Deco, Abstract Expressionism",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -530,8 +378,8 @@
         "wordpress_id": 1856,
         "detected_colors": [
             "Gold",
-            "Black",
-            "Brown"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -540,11 +388,11 @@
         "slug": "water_peoplepainting",
         "link": "https://elliotspencermorgan.com/water_peoplepainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Water-People/1295487/7363373/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Water_PeoplePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Water_PeoplePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Crate",
@@ -555,8 +403,10 @@
         "depth": "0.5",
         "wordpress_id": 1857,
         "detected_colors": [
+            "Grey",
+            "Brown",
             "Black",
-            "Grey"
+            "Silver"
         ]
     },
     {
@@ -565,11 +415,11 @@
         "slug": "towerspainting",
         "link": "https://elliotspencermorgan.com/towerspainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Towers/1295487/7363345/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/TowersPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/TowersPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -580,9 +430,10 @@
         "depth": "1",
         "wordpress_id": 1858,
         "detected_colors": [
-            "Black",
+            "Brown",
+            "Grey",
             "Beige",
-            "Grey"
+            "Black"
         ]
     },
     {
@@ -591,11 +442,11 @@
         "slug": "granularpainting",
         "link": "https://elliotspencermorgan.com/granularpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Granular/1295487/7363339/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GranularPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GranularPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Abstract, Abstract Expressionism, Structured, Fine Art, Geometric, Modern",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -607,7 +458,9 @@
         "wordpress_id": 1859,
         "detected_colors": [
             "Black",
-            "Grey"
+            "Grey",
+            "Silver",
+            "Brown"
         ]
     },
     {
@@ -616,11 +469,11 @@
         "slug": "puzzle_2painting",
         "link": "https://elliotspencermorgan.com/puzzle_2painting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzle-2/1295487/7363331/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Puzzle_2Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/PuzzlePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Art Deco, Abstract Expressionism, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Abstract, Abstract Expressionism, Structured, Fine Art, Geometric, Modern",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -631,8 +484,10 @@
         "depth": "0.5",
         "wordpress_id": 1860,
         "detected_colors": [
+            "Grey",
+            "Brown",
             "Black",
-            "Grey"
+            "Silver"
         ]
     },
     {
@@ -641,11 +496,11 @@
         "slug": "puzzle_1painting",
         "link": "https://elliotspencermorgan.com/puzzle_1painting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzle-1/1295487/7363317/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Puzzle_1Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Puzzle_1Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Art Deco, Abstract Expressionism, Fine Art, Figurative",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Figurative, Abstract, Abstract Expressionism, Structured, Fine Art, Geometric",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -656,8 +511,10 @@
         "depth": "0.5",
         "wordpress_id": 1861,
         "detected_colors": [
+            "Grey",
             "Black",
-            "Grey"
+            "Brown",
+            "Silver"
         ]
     },
     {
@@ -666,11 +523,11 @@
         "slug": "trichomepainting",
         "link": "https://elliotspencermorgan.com/trichomepainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Trichome/1295487/7363313/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/TrichomePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/TrichomePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Pastel, Wood, Steel",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Pastel,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Crate",
@@ -681,9 +538,9 @@
         "depth": "1",
         "wordpress_id": 1862,
         "detected_colors": [
-            "Black",
             "Grey",
-            "Pink"
+            "Brown",
+            "Silver"
         ]
     },
     {
@@ -692,11 +549,11 @@
         "slug": "trichomespainting",
         "link": "https://elliotspencermorgan.com/trichomespainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Trichomes/1295487/7363299/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/TrichomesPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/TrichomePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract Expressionism, Abstract, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Pastel, Ink, Wood, Steel",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Pastel,\u00a0Ink,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Crate",
@@ -707,9 +564,9 @@
         "depth": "1",
         "wordpress_id": 1863,
         "detected_colors": [
-            "Black",
             "Brown",
-            "Grey"
+            "Grey",
+            "Black"
         ]
     },
     {
@@ -718,11 +575,11 @@
         "slug": "grillpainting",
         "link": "https://elliotspencermorgan.com/grillpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Grill/1295487/6783253/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/GrillPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GrillPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -734,7 +591,7 @@
         "wordpress_id": 1864,
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown"
         ]
     },
     {
@@ -743,11 +600,11 @@
         "slug": "quiltedpainting",
         "link": "https://elliotspencermorgan.com/quiltedpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Quilted/1295487/6783247/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/QuiltedPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/QuiltedPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -768,11 +625,11 @@
         "slug": "interactionspainting",
         "link": "https://elliotspencermorgan.com/interactionspainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Interactions/1295487/6783239/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/InteractionsPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/InteractionsPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -784,7 +641,7 @@
         "wordpress_id": 1866,
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown"
         ]
     },
     {
@@ -793,11 +650,11 @@
         "slug": "rushpainting",
         "link": "https://elliotspencermorgan.com/rushpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Rush/1295487/6783231/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/RushPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/RushPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -809,8 +666,8 @@
         "wordpress_id": 1867,
         "detected_colors": [
             "Gold",
-            "Black",
-            "Brown"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -819,11 +676,11 @@
         "slug": "yorkiepainting",
         "link": "https://elliotspencermorgan.com/yorkiepainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Yorkie/1295487/6783225/view",
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6783225/5852863-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/YorkiePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -835,6 +692,7 @@
         "wordpress_id": 1868,
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -844,11 +702,11 @@
         "slug": "night_skypainting",
         "link": "https://elliotspencermorgan.com/night_skypainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Night-Sky/1295487/6783211/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Night_SkyPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Night_SkyPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -869,11 +727,11 @@
         "slug": "boldpainting-4",
         "link": "https://elliotspencermorgan.com/boldpainting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Bold/1295487/6783203/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/BoldPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/BoldPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -885,7 +743,7 @@
         "wordpress_id": 2036,
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown"
         ]
     },
     {
@@ -894,11 +752,11 @@
         "slug": "climbingpainting",
         "link": "https://elliotspencermorgan.com/climbingpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Climbing/1295487/6783197/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/ClimbingPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ClimbingPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -910,6 +768,7 @@
         "wordpress_id": 1871,
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -919,11 +778,11 @@
         "slug": "dancepainting",
         "link": "https://elliotspencermorgan.com/dancepainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Dance/1295487/6783193/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/DancePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/DancePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -935,8 +794,9 @@
         "wordpress_id": 1872,
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black",
-            "Brown"
+            "Grey"
         ]
     },
     {
@@ -945,11 +805,11 @@
         "slug": "smokepainting",
         "link": "https://elliotspencermorgan.com/smokepainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Smoke/1295487/6783181/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/SmokePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/SmokePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Organic, Luxury, Abstract, Abstract Expressionism, Fluid, Fine Art, Modern",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -961,8 +821,8 @@
         "wordpress_id": 1873,
         "detected_colors": [
             "Gold",
-            "Black",
-            "Brown"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -971,11 +831,11 @@
         "slug": "motionpainting",
         "link": "https://elliotspencermorgan.com/motionpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Motion/1295487/6783137/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/MotionPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/MotionPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -987,7 +847,7 @@
         "wordpress_id": 1874,
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown"
         ]
     },
     {
@@ -996,11 +856,11 @@
         "slug": "listeningpainting",
         "link": "https://elliotspencermorgan.com/listeningpainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Listening/1295487/6783125/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/ListeningPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ListeningPainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -1021,11 +881,11 @@
         "slug": "synapsespainting",
         "link": "https://elliotspencermorgan.com/synapsespainting/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Synapses/1295487/6783101/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/SynapsesPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/SynapsePainting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships Rolled in a Tube",
@@ -1037,6 +897,7 @@
         "wordpress_id": 1876,
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -1046,11 +907,11 @@
         "slug": "microscope_7painting-4",
         "link": "https://elliotspencermorgan.com/microscope_7painting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-7/1295487/6782897/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Microscope_7Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Microscope_7Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood, Steel",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1061,9 +922,10 @@
         "depth": "1",
         "wordpress_id": 2043,
         "detected_colors": [
-            "Black",
+            "Brown",
             "Grey",
-            "Pink"
+            "Black",
+            "Silver"
         ]
     },
     {
@@ -1072,11 +934,11 @@
         "slug": "microscope_6painting-4",
         "link": "https://elliotspencermorgan.com/microscope_6painting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-6/1295487/6782859/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Microscope_6Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Microscope_6Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood, Steel",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1087,9 +949,10 @@
         "depth": "1",
         "wordpress_id": 2044,
         "detected_colors": [
-            "Black",
+            "Brown",
             "Grey",
-            "Pink"
+            "Silver",
+            "Black"
         ]
     },
     {
@@ -1098,11 +961,11 @@
         "slug": "microscope_5painting-4",
         "link": "https://elliotspencermorgan.com/microscope_5painting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-5/1295487/6782839/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Microscope_5Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Microscope_5Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood, Steel",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1113,7 +976,9 @@
         "depth": "1",
         "wordpress_id": 2045,
         "detected_colors": [
+            "Brown",
             "Black",
+            "Silver",
             "Grey"
         ]
     },
@@ -1123,11 +988,11 @@
         "slug": "microscope_4painting-4",
         "link": "https://elliotspencermorgan.com/microscope_4painting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-4/1295487/6782817/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Microscope_4Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Microscope_4Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood, Steel",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1138,9 +1003,9 @@
         "depth": "1",
         "wordpress_id": 2046,
         "detected_colors": [
-            "Gold",
-            "Black",
-            "Grey"
+            "Brown",
+            "Grey",
+            "Gold"
         ]
     },
     {
@@ -1149,11 +1014,11 @@
         "slug": "microscope_3painting-4",
         "link": "https://elliotspencermorgan.com/microscope_3painting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-3/1295487/6782785/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Microscope_3Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Microscope_3Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood, Steel",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1164,8 +1029,10 @@
         "depth": "1",
         "wordpress_id": 2047,
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Brown",
+            "Grey",
+            "Silver",
+            "Black"
         ]
     },
     {
@@ -1174,11 +1041,11 @@
         "slug": "microscope_2painting-4",
         "link": "https://elliotspencermorgan.com/microscope_2painting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-2/1295487/6782755/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Microscope_2Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Microscope_2Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Oil, Wood, Steel",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Oil,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1189,6 +1056,7 @@
         "depth": "1",
         "wordpress_id": 2048,
         "detected_colors": [
+            "Brown",
             "Black",
             "Grey"
         ]
@@ -1199,11 +1067,11 @@
         "slug": "microscope_1painting-4",
         "link": "https://elliotspencermorgan.com/microscope_1painting-4/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Microscope-1/1295487/6782739/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Microscope_1Painting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Microscope_1Painting.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Wood, Steel",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Wood,\u00a0Steel",
         "frame": "Black",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1215,7 +1083,9 @@
         "wordpress_id": 2049,
         "detected_colors": [
             "Black",
-            "Grey"
+            "Grey",
+            "Brown",
+            "Silver"
         ]
     },
     {
@@ -1224,10 +1094,10 @@
         "slug": "floating_6_-_rabbitSculpture",
         "link": "https://elliotspencermorgan.com/2025/09/25/floating_6_-_rabbitSculpture/",
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-6-Rabbit/1295487/6627463/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Floating_6_-_RabbitSculpture.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Floating_6_-_RabbitSculpture.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1238,9 +1108,10 @@
         "height": "26.5",
         "depth": "0.5",
         "detected_colors": [
-            "White",
-            "Brown",
-            "Pink"
+            "Beige",
+            "Red",
+            "Silver",
+            "Brown"
         ]
     },
     {
@@ -1249,10 +1120,10 @@
         "slug": "floating_5_-_mothSculpture",
         "link": "https://elliotspencermorgan.com/2025/09/25/floating_5_-_mothSculpture/",
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-5-Moth/1295487/6627457/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Floating_5_-_MothSculpture.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Floating_5_-_MothSculpture.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1263,10 +1134,10 @@
         "height": "19",
         "depth": "0.5",
         "detected_colors": [
-            "White",
-            "Brown",
-            "Grey",
-            "Pink"
+            "Beige",
+            "Red",
+            "Silver",
+            "Brown"
         ]
     },
     {
@@ -1275,10 +1146,10 @@
         "slug": "floating_4_-_vinesSculpture",
         "link": "https://elliotspencermorgan.com/2025/09/25/floating_4_-_vinesSculpture/",
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-4-Vines/1295487/6627447/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Floating_4_-_VinesSculpture.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Floating_4_-_VinesSculpture.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1290,7 +1161,9 @@
         "depth": "0.5",
         "detected_colors": [
             "White",
-            "Brown"
+            "Beige",
+            "Brown",
+            "Silver"
         ]
     },
     {
@@ -1299,10 +1172,10 @@
         "slug": "floating_3_-_treeSculpture",
         "link": "https://elliotspencermorgan.com/2025/09/25/floating_3_-_treeSculpture/",
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-3-Tree/1295487/6627443/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Floating_3_-_TreeSculpture.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Floating_3_-_TreeSculpture.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Fine Art, Modern",
         "mediumsDetailed": null,
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1313,9 +1186,10 @@
         "height": "23",
         "depth": "0.5",
         "detected_colors": [
-            "White",
-            "Grey",
-            "Brown"
+            "Beige",
+            "Brown",
+            "Silver",
+            "Red"
         ]
     },
     {
@@ -1324,10 +1198,10 @@
         "slug": "floating_2_-_butterflySculpture",
         "link": "https://elliotspencermorgan.com/2025/09/25/floating_2_-_butterflySculpture/",
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-2-Butterfly/1295487/6627437/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Floating_2_-_ButterflySculpture.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Floating_2_-_ButterflySculpture.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1338,9 +1212,10 @@
         "height": "18.5",
         "depth": "5",
         "detected_colors": [
+            "Red",
             "White",
-            "Brown",
-            "Pink"
+            "Silver",
+            "Beige"
         ]
     },
     {
@@ -1349,10 +1224,10 @@
         "slug": "floating_1_-_cicadaSculpture",
         "link": "https://elliotspencermorgan.com/2025/09/25/floating_1_-_cicadaSculpture/",
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Floating-1-Cicada/1295487/6627409/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Floating_1_-_CicadaSculpture.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Floating_1_-_CicadaSculpture.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Art Deco, Fine Art, Modern, Abstract Expressionism",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1363,9 +1238,10 @@
         "height": "19",
         "depth": "0.5",
         "detected_colors": [
-            "White",
+            "Beige",
             "Brown",
-            "Pink"
+            "Silver",
+            "Grey"
         ]
     },
     {
@@ -1377,8 +1253,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Purple_Night_-_Mulch_SeriesCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Acrylic,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1388,35 +1264,10 @@
         "height": "16",
         "depth": "1",
         "detected_colors": [
-            "Black",
-            "Grey",
-            "Pink"
-        ]
-    },
-    {
-        "id": 148,
-        "title": "City at Night - Mulch Series Collage",
-        "slug": "city_at_night_-_mulch_seriesCollage",
-        "link": "https://elliotspencermorgan.com/2025/09/25/city_at_night_-_mulch_seriesCollage/",
-        "saatchi_url": "https://www.saatchiart.com/art/Collage-City-At-Night-Mulch-Series/1295487/6583787/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/City_at_Night_-_Mulch_SeriesCollage.jpg",
-        "type": "post",
-        "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
-        "frame": "Not Framed",
-        "readyToHang": "Not Applicable",
-        "packaging": "Ships in a Box",
-        "shippingFrom": "United States.",
-        "dimensions": "16 W x 16 H x 1 D in",
-        "width": "16",
-        "height": "16",
-        "depth": "1",
-        "detected_colors": [
-            "Black",
             "Brown",
+            "Silver",
             "Grey",
-            "Pink"
+            "Black"
         ]
     },
     {
@@ -1428,8 +1279,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Purple_1_-_Mulch_SeriesCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Acrylic,\u00a0Wood",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1439,36 +1290,9 @@
         "height": "16",
         "depth": "1",
         "detected_colors": [
-            "Black",
             "Brown",
             "Grey",
-            "Pink"
-        ]
-    },
-    {
-        "id": 150,
-        "title": "Close up - Mulch Series Collage",
-        "slug": "close_up_-_mulch_seriesCollage",
-        "link": "https://elliotspencermorgan.com/2025/09/25/close_up_-_mulch_seriesCollage/",
-        "saatchi_url": "https://www.saatchiart.com/art/Collage-Close-Up-Mulch-Series/1295487/6583777/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Close_up_-_Mulch_SeriesCollage.jpg",
-        "type": "post",
-        "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
-        "frame": "Not Framed",
-        "readyToHang": "Not Applicable",
-        "packaging": "Ships in a Box",
-        "shippingFrom": "United States.",
-        "dimensions": "12 W x 12 H x 1 D in",
-        "width": "12",
-        "height": "12",
-        "depth": "1",
-        "detected_colors": [
-            "Beige",
-            "Grey",
-            "Black",
-            "Brown",
+            "Silver",
             "Pink"
         ]
     },
@@ -1478,11 +1302,11 @@
         "slug": "society_-_mulch_seriesCollage",
         "link": "https://elliotspencermorgan.com/2025/09/25/society_-_mulch_seriesCollage/",
         "saatchi_url": "https://www.saatchiart.com/art/Collage-Society-Mulch-Series/1295487/6583753/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Society_-_Mulch_SeriesCollage.jpg",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/09/Society_-_Mulch_SeriesCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Acrylic,\u00a0Wood",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1492,10 +1316,10 @@
         "height": "12.5",
         "depth": "1",
         "detected_colors": [
-            "Black",
-            "Beige",
             "Grey",
-            "Pink"
+            "Brown",
+            "Silver",
+            "Gold"
         ]
     },
     {
@@ -1507,8 +1331,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Pieces_of_RedCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Acrylic,\u00a0Wood",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1519,35 +1343,9 @@
         "depth": "1",
         "wordpress_id": 1895,
         "detected_colors": [
-            "Beige",
-            "Grey",
-            "Black",
             "Brown",
-            "Pink"
-        ]
-    },
-    {
-        "id": 153,
-        "title": "Red and Black - Mulch Series Collage",
-        "slug": "red_and_black_-_mulch_seriesCollage",
-        "link": "https://elliotspencermorgan.com/2025/09/25/red_and_black_-_mulch_seriesCollage/",
-        "saatchi_url": "https://www.saatchiart.com/art/Collage-Red-And-Black-Mulch-Series/1295487/6583709/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Red_and_Black_-_Mulch_SeriesCollage.jpg",
-        "type": "post",
-        "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
-        "frame": "Other",
-        "readyToHang": "Not Applicable",
-        "packaging": "Ships in a Box",
-        "shippingFrom": "United States.",
-        "dimensions": "7.8 W x 22.8 H x 1 D in",
-        "width": "7.8",
-        "height": "22.8",
-        "depth": "1",
-        "detected_colors": [
+            "Silver",
             "Black",
-            "Brown",
             "Grey"
         ]
     },
@@ -1560,8 +1358,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Paper_PeaceCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1572,7 +1370,8 @@
         "depth": "1",
         "wordpress_id": 1897,
         "detected_colors": [
-            "Black",
+            "Silver",
+            "Brown",
             "Grey",
             "Pink"
         ]
@@ -1583,11 +1382,11 @@
         "slug": "honeycomb_-_mulch_seriesCollage",
         "link": "https://elliotspencermorgan.com/2025/09/25/honeycomb_-_mulch_seriesCollage/",
         "saatchi_url": "https://www.saatchiart.com/art/Collage-Honeycomb-Mulch-Series/1295487/6583683/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Honeycomb_-_Mulch_SeriesCollage.jpg",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/09/Honeycomb_-_Mulch_SeriesCollage.jpg",
         "type": "post",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1597,8 +1396,9 @@
         "height": "23",
         "depth": "1",
         "detected_colors": [
-            "Black",
             "Grey",
+            "Brown",
+            "Silver",
             "Pink"
         ]
     },
@@ -1611,8 +1411,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Wild_Zebra_2_-_Mulch_SeriesCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1622,9 +1422,10 @@
         "height": "26.5",
         "depth": "1",
         "detected_colors": [
-            "Black",
+            "Brown",
             "Grey",
-            "Pink"
+            "Silver",
+            "Black"
         ]
     },
     {
@@ -1636,8 +1437,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Wild_Zebra_1_-_Mulch_SeriesCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1647,8 +1448,9 @@
         "height": "26.5",
         "depth": "1",
         "detected_colors": [
-            "Black",
+            "Brown",
             "Grey",
+            "Silver",
             "Pink"
         ]
     },
@@ -1661,8 +1463,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Work_Party_-_Mulch_SeriesCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1673,7 +1475,9 @@
         "depth": "1",
         "detected_colors": [
             "Black",
-            "Grey"
+            "Silver",
+            "Grey",
+            "Brown"
         ]
     },
     {
@@ -1682,11 +1486,11 @@
         "slug": "business_mulchcollage",
         "link": "https://elliotspencermorgan.com/business_mulchcollage/",
         "saatchi_url": "https://www.saatchiart.com/art/Collage-Business-Mulch/1295487/6583595/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Business_MulchCollage.jpg",
+        "image_url": "https://lookoverhere.xyz/esm/wp-content/uploads/2025/09/Business_MulchCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Expressionism, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Abstract, Expressionism, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "frame": "Other",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1697,9 +1501,10 @@
         "depth": "1",
         "wordpress_id": 1902,
         "detected_colors": [
-            "Black",
+            "Silver",
+            "Brown",
             "Grey",
-            "Pink"
+            "Black"
         ]
     },
     {
@@ -1711,8 +1516,8 @@
         "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Office_Work_MulchCollage.jpg",
         "type": "post",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Pop Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Modern, Abstract, Abstract Expressionism, Pop Art",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "frame": "Brown",
         "readyToHang": "Not Applicable",
         "packaging": "Ships in a Box",
@@ -1723,10 +1528,10 @@
         "depth": "1",
         "wordpress_id": 1903,
         "detected_colors": [
-            "Black",
+            "Silver",
             "Brown",
             "Grey",
-            "Pink"
+            "Black"
         ]
     },
     {
@@ -1740,77 +1545,18 @@
         "wordpress_id": 2070
     },
     {
-        "id": 162,
-        "title": "Portal 006 Painting",
-        "slug": "portal_006painting",
-        "link": "https://elliotspencermorgan.com/portal_006painting/",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-006/1295487/6158145/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_006Painting.jpg",
-        "type": "post",
-        "wordpress_id": 1905
-    },
-    {
-        "id": 163,
-        "title": "Portal 005 Painting",
-        "slug": "portal_005painting",
-        "link": "https://elliotspencermorgan.com/portal_005painting/",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-005/1295487/6158109/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_005Painting.jpg",
-        "type": "post",
-        "wordpress_id": 1906
-    },
-    {
-        "id": 164,
-        "title": "Portal 004 Painting",
-        "slug": "portal_004painting",
-        "link": "https://elliotspencermorgan.com/portal_004painting/",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-004/1295487/6158097/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_004Painting.jpg",
-        "type": "post",
-        "wordpress_id": 1907
-    },
-    {
-        "id": 165,
-        "title": "Portal 003 Painting",
-        "slug": "portal_003painting",
-        "link": "https://elliotspencermorgan.com/portal_003painting/",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-003/1295487/6158079/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_003Painting.jpg",
-        "type": "post",
-        "wordpress_id": 1908
-    },
-    {
-        "id": 166,
-        "title": "Portal 002 Painting",
-        "slug": "portal_002painting",
-        "link": "https://elliotspencermorgan.com/portal_002painting/",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-002/1295487/6158067/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_002Painting.jpg",
-        "type": "post",
-        "wordpress_id": 1909
-    },
-    {
-        "id": 167,
-        "title": "Portal 001 Painting",
-        "slug": "portal_001painting",
-        "link": "https://elliotspencermorgan.com/portal_001painting/",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Portal-001/1295487/6158055/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Portal_001Painting.jpg",
-        "type": "post",
-        "wordpress_id": 1910
-    },
-    {
         "id": 240,
         "title": "Blue Glacier Painting",
         "slug": "blue-glacier",
         "link": "https://elliotspencermorgan.com/blue-glacier/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Blue-Glacier/1295487/6105345/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Blue_GlacierPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_GlacierPainting.jpg",
         "type": "post",
         "wordpress_id": 1605,
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Grey",
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -1839,14 +1585,16 @@
         "slug": "waves",
         "link": "https://elliotspencermorgan.com/waves/",
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Waves/1295487/6105315/view",
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/wavesPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/wavesPainting.jpg",
         "type": "post",
         "wordpress_id": 1601,
         "detected_colors": [
-            "Black",
-            "Grey",
-            "Pink"
-        ]
+            "Pink",
+            "Brown",
+            "Silver",
+            "Black"
+        ],
+        "styles": "Organic, Fluid"
     },
     {
         "id": "new_0",
@@ -1854,8 +1602,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Meeting-in-the-Middle/1295487/8754042/view",
         "type": "new_from_saatchi",
         "year": "2021",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Conceptual, Expressionism",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Expressionism, Conceptual, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "dimensions": "16 W x 28 H x 1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1867,10 +1615,12 @@
         "link": "https://elliotspencermorgan.com/meeting_in_the_middle/",
         "slug": "meeting_in_the_middle",
         "wordpress_id": 1711,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/8754042/7817537-HSC00923-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Meeting_in_the_MiddlePainting.jpg",
         "detected_colors": [
+            "Grey",
+            "Brown",
             "Black",
-            "Grey"
+            "Silver"
         ]
     },
     {
@@ -1879,8 +1629,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Finger-print/1295487/8754025/view",
         "type": "new_from_saatchi",
         "year": "2021",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Conceptual, Expressionism",
-        "mediumsDetailed": "Ink, Wood",
+        "styles": "Expressionism, Conceptual, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Wood",
         "dimensions": "48 W x 96 H x 1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1892,10 +1642,11 @@
         "link": "https://elliotspencermorgan.com/finger_print/",
         "slug": "finger_print",
         "wordpress_id": 1709,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/8754025/7817520-MTDTSFUJ-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Finger_printPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Grey",
+            "Brown",
+            "Silver"
         ]
     },
     {
@@ -1904,8 +1655,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-self-portrait-1/1295487/8125469/view",
         "type": "new_from_saatchi",
         "year": "2020",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1917,10 +1668,11 @@
         "link": "https://elliotspencermorgan.com/self_portrait_1/",
         "slug": "self_portrait_1",
         "wordpress_id": 1708,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/8125469/7191935-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/self_portrait_1Painting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -1929,8 +1681,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Dog-on-a-bike/1295487/8125271/view",
         "type": "new_from_saatchi",
         "year": "2020",
-        "styles": "Abstract, Fine Art, Modern, Art Deco, Abstract Expressionism",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1942,11 +1694,11 @@
         "link": "https://elliotspencermorgan.com/dog_on_a_bikepainting/",
         "slug": "dog_on_a_bikepainting",
         "wordpress_id": 1856,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/8125271/7191737-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Dog_on_a_bikePainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
-            "Brown"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -1955,8 +1707,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Collage-City-at-Night-Mulch-Series/1295487/6583787/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Acrylic,\u00a0Wood",
         "dimensions": "16 W x 16 H x 1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1970,9 +1722,10 @@
         "wordpress_id": 2077,
         "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6583787/5653457-HSC00001-7.jpg",
         "detected_colors": [
+            "Silver",
             "Black",
-            "Grey",
-            "Pink"
+            "Brown",
+            "Grey"
         ]
     },
     {
@@ -1981,8 +1734,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Collage-Close-up-Mulch-Series/1295487/6583777/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Wood, Acrylic",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Wood,\u00a0Acrylic",
         "dimensions": "12 W x 12 H x 1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -1996,37 +1749,10 @@
         "wordpress_id": 2078,
         "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6583777/5653447-HSC00001-7.jpg",
         "detected_colors": [
-            "Black",
             "Brown",
             "Grey",
-            "Pink"
-        ]
-    },
-    {
-        "id": "new_6",
-        "title": "Pieces of Red",
-        "saatchi_url": "https://www.saatchiart.com/art/Collage-Pieces-of-Red/1295487/6583729/view",
-        "type": "new_from_saatchi",
-        "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
-        "dimensions": "7.9 W x 28.8 H x 1 D in",
-        "frame": "Other",
-        "readyToHang": "Not Applicable",
-        "packaging": "Ships in a Box",
-        "shippingFrom": "United States.",
-        "width": "7.9",
-        "height": "28.8",
-        "depth": "1",
-        "link": "https://elliotspencermorgan.com/pieces_of_redcollage/",
-        "slug": "pieces_of_redcollage",
-        "wordpress_id": 1895,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6583729/5653399-HSC00001-7.jpg",
-        "detected_colors": [
-            "Black",
-            "Brown",
-            "Grey",
-            "Pink"
+            "Silver",
+            "White"
         ]
     },
     {
@@ -2035,8 +1761,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Collage-Red-and-Black-Mulch-Series/1295487/6583709/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Paper, Acrylic, Wood",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Paper,\u00a0Acrylic,\u00a0Wood",
         "dimensions": "7.8 W x 22.8 H x 1 D in",
         "frame": "Other",
         "readyToHang": "Not Applicable",
@@ -2050,10 +1776,10 @@
         "wordpress_id": 2080,
         "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6583709/5653379-HSC00001-7.jpg",
         "detected_colors": [
-            "Black",
             "Brown",
             "Grey",
-            "Pink"
+            "Black",
+            "Silver"
         ]
     },
     {
@@ -2062,7 +1788,7 @@
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Jaguar/1295487/6513325/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "dimensions": "20 W x 30 H x 2 D in",
         "frame": "Not Framed",
@@ -2075,11 +1801,10 @@
         "link": "https://elliotspencermorgan.com/jaguar/",
         "slug": "jaguar",
         "wordpress_id": 2081,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513325/5583001-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/JaguarSculpture.jpg",
         "detected_colors": [
             "Beige",
-            "White",
-            "Grey",
+            "Brown",
             "Black",
             "Pink"
         ]
@@ -2090,7 +1815,7 @@
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-Megapixels/1295487/6513307/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "dimensions": "18 W x 30 H x 2 D in",
         "frame": "Not Framed",
@@ -2103,12 +1828,12 @@
         "link": "https://elliotspencermorgan.com/megapixels/",
         "slug": "megapixels",
         "wordpress_id": 2082,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513307/5582983-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/MegapixelsSculpture-672x1024.jpg",
         "detected_colors": [
+            "Silver",
             "Black",
-            "White",
-            "Grey",
-            "Pink"
+            "Beige",
+            "Brown"
         ]
     },
     {
@@ -2117,7 +1842,7 @@
         "saatchi_url": "https://www.saatchiart.com/art/Sculpture-ESM-S17/1295487/6513257/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
         "mediumsDetailed": null,
         "dimensions": "21 W x 29.5 H x 2 D in",
         "frame": "Not Framed",
@@ -2130,12 +1855,12 @@
         "link": "https://elliotspencermorgan.com/esm-s17/",
         "slug": "esm-s17",
         "wordpress_id": 2083,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513257/5582933-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ESM_S17Sculpture.jpg",
         "detected_colors": [
             "Black",
             "Beige",
-            "Grey",
-            "Pink"
+            "Pink",
+            "Silver"
         ]
     },
     {
@@ -2144,8 +1869,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Fire-Flow/1295487/6513221/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Acrylic, Paper",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Acrylic,\u00a0Paper",
         "dimensions": "17.3 W x 23.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2157,10 +1882,11 @@
         "link": "https://elliotspencermorgan.com/fire-flow/",
         "slug": "fire-flow",
         "wordpress_id": 2084,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513221/5582897-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Fire_FlowPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown",
+            "Grey"
         ]
     },
     {
@@ -2169,8 +1895,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Owls-in-Fall/1295487/6513209/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Modern, Abstract, Art Deco, Abstract Expressionism, Fine Art",
-        "mediumsDetailed": "Ink, Acrylic, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Ink,\u00a0Acrylic,\u00a0Paper",
         "dimensions": "17.5 W x 25.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2182,10 +1908,11 @@
         "link": "https://elliotspencermorgan.com/owls-in-fall/",
         "slug": "owls-in-fall",
         "wordpress_id": 2085,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513209/5582885-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Owls_in_FallPainting.jpg",
         "detected_colors": [
             "Gold",
             "Brown",
+            "Silver",
             "Grey"
         ]
     },
@@ -2195,8 +1922,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Connectivity/1295487/6513163/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 25.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2208,9 +1935,10 @@
         "link": "https://elliotspencermorgan.com/connectivity/",
         "slug": "connectivity",
         "wordpress_id": 2086,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513163/5582839-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ConnectivityPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2220,8 +1948,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Atomic-Flow/1295487/6513149/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 25.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2233,9 +1961,10 @@
         "link": "https://elliotspencermorgan.com/atomic-flow/",
         "slug": "atomic-flow",
         "wordpress_id": 2087,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513149/5582825-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Atomic_FlowPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2245,8 +1974,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Trees/1295487/6513127/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 25.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2258,10 +1987,11 @@
         "link": "https://elliotspencermorgan.com/trees/",
         "slug": "trees",
         "wordpress_id": 2088,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513127/5582803-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/TreesPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown",
+            "Grey"
         ]
     },
     {
@@ -2270,8 +2000,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Animal-Kingdom/1295487/6513109/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "25.3 W x 17.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2283,10 +2013,11 @@
         "link": "https://elliotspencermorgan.com/animal-kingdom/",
         "slug": "animal-kingdom",
         "wordpress_id": 2089,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513109/5582785-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Animal_KingdomPainting.jpg",
         "detected_colors": [
+            "Brown",
             "Gold",
-            "Black",
+            "Silver",
             "Grey"
         ]
     },
@@ -2296,8 +2027,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Clean-Hands/1295487/6513085/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Fine Art, Conceptual, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Conceptual, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "25.3 W x 17.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2309,10 +2040,11 @@
         "link": "https://elliotspencermorgan.com/clean-hands/",
         "slug": "clean-hands",
         "wordpress_id": 2090,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513085/5582761-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Clean_HandsPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Grey"
+            "Grey",
+            "Brown"
         ]
     },
     {
@@ -2321,8 +2053,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Reflection/1295487/6513075/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "25.3 W x 17.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2334,12 +2066,12 @@
         "link": "https://elliotspencermorgan.com/reflection/",
         "slug": "reflection",
         "wordpress_id": 2091,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6513075/5582751-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ReflectionPainting.jpg",
         "detected_colors": [
-            "Gold",
-            "Black",
             "Grey",
-            "Pink"
+            "Brown",
+            "Gold",
+            "Silver"
         ]
     },
     {
@@ -2348,8 +2080,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Eggs-and-Eyes/1295487/6492629/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Modern, Fine Art",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2361,12 +2093,12 @@
         "link": "https://elliotspencermorgan.com/eggs-and-eyes/",
         "slug": "eggs-and-eyes",
         "wordpress_id": 2092,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492629/5562307-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Eggs_and_EyesPainting.jpg",
         "detected_colors": [
             "Gold",
             "Black",
             "Brown",
-            "Pink"
+            "Silver"
         ]
     },
     {
@@ -2375,8 +2107,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Moon-Dance/1295487/6492627/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Airbrush, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Airbrush,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2388,10 +2120,11 @@
         "link": "https://elliotspencermorgan.com/moon-dance/",
         "slug": "moon-dance",
         "wordpress_id": 2093,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492627/5562305-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Moon_DancePainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -2400,8 +2133,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Floating-Leaves/1295487/6492617/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2413,9 +2146,10 @@
         "link": "https://elliotspencermorgan.com/floating-leaves/",
         "slug": "floating-leaves",
         "wordpress_id": 2094,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492617/5562295-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Floating_LeavesPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2425,8 +2159,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Arrowheads/1295487/6492613/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2438,9 +2172,10 @@
         "link": "https://elliotspencermorgan.com/arrowheads/",
         "slug": "arrowheads",
         "wordpress_id": 2095,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492613/5562291-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ArrowheadsPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2450,8 +2185,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-campground/1295487/6492597/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2463,35 +2198,11 @@
         "link": "https://elliotspencermorgan.com/campground/",
         "slug": "campground",
         "wordpress_id": 2096,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492597/5562275-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/campgroundPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
-        ]
-    },
-    {
-        "id": "new_24",
-        "title": "Puzzle",
-        "saatchi_url": "https://www.saatchiart.com/art/Painting-Puzzle/1295487/6492595/view",
-        "type": "new_from_saatchi",
-        "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
-        "dimensions": "17.5 W x 23 H x 0.1 D in",
-        "frame": "Not Framed",
-        "readyToHang": "Not Applicable",
-        "packaging": "Ships Rolled in a Tube",
-        "shippingFrom": "United States.",
-        "width": "17.5",
-        "height": "23",
-        "depth": "0.1",
-        "link": "https://elliotspencermorgan.com/puzzle/",
-        "slug": "puzzle",
-        "wordpress_id": 2097,
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/PuzzlePainting.jpg",
-        "detected_colors": [
-            "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -2500,8 +2211,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Streams-and-Ponds/1295487/6492583/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2513,10 +2224,12 @@
         "link": "https://elliotspencermorgan.com/streams-and-ponds/",
         "slug": "streams-and-ponds",
         "wordpress_id": 2098,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492583/5562261-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Streams_and_PondsPainting.jpg",
         "detected_colors": [
+            "Brown",
             "Gold",
-            "Black"
+            "Black",
+            "Grey"
         ]
     },
     {
@@ -2525,8 +2238,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Cluster-of-Caps/1295487/6492577/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2538,10 +2251,10 @@
         "link": "https://elliotspencermorgan.com/cluster-of-caps/",
         "slug": "cluster-of-caps",
         "wordpress_id": 2099,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492577/5562255-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Cluster_of_CapsPainting.jpg",
         "detected_colors": [
+            "Brown",
             "Gold",
-            "Black",
             "Grey"
         ]
     },
@@ -2551,8 +2264,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Duck-pond/1295487/6492573/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2564,9 +2277,10 @@
         "link": "https://elliotspencermorgan.com/duck-pond/",
         "slug": "duck-pond",
         "wordpress_id": 2100,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492573/5562251-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Duck_pondPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2576,8 +2290,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Creek-Bottom/1295487/6492497/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Pop Art",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Abstract, Abstract Expressionism, Pop Art, Fine Art, Luxury, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2589,8 +2303,9 @@
         "link": "https://elliotspencermorgan.com/creek-bottom/",
         "slug": "creek-bottom",
         "wordpress_id": 2101,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492497/5562175-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Creek_BottomPainting.jpg",
         "detected_colors": [
+            "Brown",
             "Gold",
             "Black"
         ]
@@ -2601,8 +2316,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Organic-Mushrooms/1295487/6492491/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Airbrush, Paper",
+        "styles": "Organic, Luxury, Abstract, Abstract Expressionism, Fluid, Fine Art, Modern",
+        "mediumsDetailed": "Airbrush,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2614,10 +2329,11 @@
         "link": "https://elliotspencermorgan.com/organic-mushrooms/",
         "slug": "organic-mushrooms",
         "wordpress_id": 2102,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492491/5562169-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Organic_MushroomsPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -2626,8 +2342,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Stones/1295487/6492487/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2639,9 +2355,10 @@
         "link": "https://elliotspencermorgan.com/stones/",
         "slug": "stones",
         "wordpress_id": 2103,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492487/5562165-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/StonesPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2651,8 +2368,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Cubes/1295487/6492481/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Structured, Fine Art, Geometric, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2664,10 +2381,10 @@
         "link": "https://elliotspencermorgan.com/cubes/",
         "slug": "cubes",
         "wordpress_id": 2104,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492481/5562159-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/CubesPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
+            "Brown",
             "Grey"
         ]
     },
@@ -2677,8 +2394,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Seed-pods/1295487/6492463/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2690,9 +2407,10 @@
         "link": "https://elliotspencermorgan.com/seed-pods/",
         "slug": "seed-pods",
         "wordpress_id": 2105,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492463/5562141-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Seed_podsPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2702,8 +2420,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Excited-Bird/1295487/6492447/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2715,11 +2433,11 @@
         "link": "https://elliotspencermorgan.com/excited-bird/",
         "slug": "excited-bird",
         "wordpress_id": 2106,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492447/5562125-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Excited_BirdPainting-600x800.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
-            "Grey"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -2728,8 +2446,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Mushroom-Exclamation/1295487/6492441/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2741,9 +2459,10 @@
         "link": "https://elliotspencermorgan.com/mushroom-exclamation/",
         "slug": "mushroom-exclamation",
         "wordpress_id": 2107,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492441/5562119-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Mushroom_ExclamationPainting-600x800.jpg",
         "detected_colors": [
             "Gold",
+            "Black",
             "Brown"
         ]
     },
@@ -2753,8 +2472,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Snake-and-Rocks/1295487/6492431/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2766,11 +2485,11 @@
         "link": "https://elliotspencermorgan.com/snake-and-rocks/",
         "slug": "snake-and-rocks",
         "wordpress_id": 2108,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492431/5562109-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Snake_and_RocksPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
-            "Brown"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -2779,8 +2498,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Shapeshifter/1295487/6492415/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2792,9 +2511,10 @@
         "link": "https://elliotspencermorgan.com/shapeshifter/",
         "slug": "shapeshifter",
         "wordpress_id": 2109,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492415/5562093-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ShapeshifterPainting.jpg",
         "detected_colors": [
             "Gold",
+            "Brown",
             "Black"
         ]
     },
@@ -2804,8 +2524,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Coiled-Snake/1295487/6492413/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2817,11 +2537,11 @@
         "link": "https://elliotspencermorgan.com/coiled-snake/",
         "slug": "coiled-snake",
         "wordpress_id": 2110,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492413/5562091-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Coiled_SnakePainting.jpg",
         "detected_colors": [
+            "Brown",
             "Gold",
-            "Black",
-            "Grey"
+            "Black"
         ]
     },
     {
@@ -2830,8 +2550,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Avacado-Snack/1295487/6492407/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Art Deco, Abstract Expressionism, Conceptual, Fine Art",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Conceptual",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2843,10 +2563,12 @@
         "link": "https://elliotspencermorgan.com/avacado-snack/",
         "slug": "avacado-snack",
         "wordpress_id": 2111,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492407/5562085-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Avacado_SnackPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Brown",
+            "Black",
+            "Grey"
         ]
     },
     {
@@ -2855,8 +2577,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Gold-Shapes/1295487/6492375/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.3 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2868,10 +2590,12 @@
         "link": "https://elliotspencermorgan.com/gold-shapes/",
         "slug": "gold-shapes",
         "wordpress_id": 2112,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492375/5562053-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Gold_ShapesPainting.jpg",
         "detected_colors": [
+            "Brown",
             "Gold",
-            "Black"
+            "Black",
+            "Grey"
         ]
     },
     {
@@ -2880,8 +2604,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Musical-Embrace/1295487/6492355/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Conceptual, Art Deco, Fine Art",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Conceptual",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.3 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2893,7 +2617,7 @@
         "link": "https://elliotspencermorgan.com/musical-embrace/",
         "slug": "musical-embrace",
         "wordpress_id": 2113,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492355/5562033-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Musical_EmbracePainting.jpg",
         "detected_colors": [
             "Gold",
             "Black",
@@ -2906,8 +2630,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Organic-food/1295487/6492337/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Organic, Luxury, Abstract, Abstract Expressionism, Fluid, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.3 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2919,11 +2643,10 @@
         "link": "https://elliotspencermorgan.com/organic-food/",
         "slug": "organic-food",
         "wordpress_id": 2114,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492337/5562015-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Organic_foodPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
-            "Grey"
+            "Brown"
         ]
     },
     {
@@ -2932,8 +2655,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Snake-Eggs/1295487/6492325/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Art Deco, Abstract Expressionism, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2945,11 +2668,11 @@
         "link": "https://elliotspencermorgan.com/snake-eggs/",
         "slug": "snake-eggs",
         "wordpress_id": 2115,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492325/5562003-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Snake_EggsPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
-            "Grey"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -2958,8 +2681,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Brush-Strokes/1295487/6492323/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.3 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2971,10 +2694,9 @@
         "link": "https://elliotspencermorgan.com/brush-strokes/",
         "slug": "brush-strokes",
         "wordpress_id": 2116,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492323/5562001-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Brush_StrokesPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
             "Brown"
         ]
     },
@@ -2984,8 +2706,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Blanket/1295487/6492319/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.3 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -2997,11 +2719,12 @@
         "link": "https://elliotspencermorgan.com/blanket/",
         "slug": "blanket",
         "wordpress_id": 2117,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492319/5561997-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/BlanketPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
-            "Grey"
+            "Brown",
+            "Grey",
+            "Black"
         ]
     },
     {
@@ -3010,8 +2733,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Dance/1295487/6492311/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Art Deco",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.3 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3023,11 +2746,11 @@
         "link": "https://elliotspencermorgan.com/dancepainting/",
         "slug": "dancepainting",
         "wordpress_id": 1872,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492311/5561989-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/DancePainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black",
-            "Grey"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -3036,8 +2759,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Bloom/1295487/6492303/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Organic, Luxury, Abstract, Abstract Expressionism, Fluid, Fine Art, Modern",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "23 W x 17.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3049,11 +2772,10 @@
         "link": "https://elliotspencermorgan.com/bloom/",
         "slug": "bloom",
         "wordpress_id": 1608,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492303/5561981-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/BloomPainting.jpg",
         "detected_colors": [
-            "Gold",
-            "Black",
-            "Grey"
+            "Brown",
+            "Gold"
         ]
     },
     {
@@ -3062,8 +2784,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Organic-Shapes/1295487/6492289/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Luxury, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3075,10 +2797,11 @@
         "link": "https://elliotspencermorgan.com/organic-shapes/",
         "slug": "organic-shapes",
         "wordpress_id": 2120,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6492289/5561967-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Organic_ShapesPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -3087,8 +2810,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Silver/1295487/6483881/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Conceptual, Art Deco, Fine Art",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Fine Art, Conceptual, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.5 W x 27.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3100,11 +2823,12 @@
         "link": "https://elliotspencermorgan.com/silver/",
         "slug": "silver",
         "wordpress_id": 2121,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6483881/5553559-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/SilverPainting.jpg",
         "detected_colors": [
-            "Brown",
+            "Red",
             "Grey",
-            "Pink"
+            "Silver",
+            "Brown"
         ]
     },
     {
@@ -3113,8 +2837,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Fortune/1295487/6483865/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.5 W x 27.3 H x 1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3126,11 +2850,12 @@
         "link": "https://elliotspencermorgan.com/fortune/",
         "slug": "fortune",
         "wordpress_id": 2122,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6483865/5553543-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/FortunePainting.jpg",
         "detected_colors": [
-            "Brown",
+            "Red",
+            "Silver",
             "Grey",
-            "Pink"
+            "Beige"
         ]
     },
     {
@@ -3139,8 +2864,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Transformation/1295487/6483815/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.5 W x 27.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3152,11 +2877,12 @@
         "link": "https://elliotspencermorgan.com/transformation/",
         "slug": "transformation",
         "wordpress_id": 1607,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6483815/5553493-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/TransformationPainting.jpg",
         "detected_colors": [
-            "White",
-            "Brown",
-            "Pink"
+            "Red",
+            "Beige",
+            "Silver",
+            "White"
         ]
     },
     {
@@ -3165,8 +2891,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Golden-Nugget/1295487/6483777/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.5 W x 27.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3178,10 +2904,10 @@
         "link": "https://elliotspencermorgan.com/golden-nugget/",
         "slug": "golden-nugget",
         "wordpress_id": 2124,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6483777/5553455-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Golden_NuggetPainting.jpg",
         "detected_colors": [
             "Gold",
-            "Brown"
+            "Red"
         ]
     },
     {
@@ -3190,8 +2916,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Golden-Rule/1295487/6483759/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Art Deco, Abstract Expressionism, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.5 W x 27.3 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3203,10 +2929,11 @@
         "link": "https://elliotspencermorgan.com/golden-rule/",
         "slug": "golden-rule",
         "wordpress_id": 1606,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6483759/5553437-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Golden_RulePainting.jpg",
         "detected_colors": [
+            "Red",
             "Gold",
-            "Brown"
+            "Pink"
         ]
     },
     {
@@ -3215,8 +2942,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Feather-trees/1295487/6447005/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Fine Art, Art Deco, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.5 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3228,11 +2955,11 @@
         "link": "https://elliotspencermorgan.com/feather-trees/",
         "slug": "feather-trees",
         "wordpress_id": 2126,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6447005/5516741-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Feather_treesPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Grey",
-            "Brown"
+            "Red",
+            "Brown",
+            "Grey"
         ]
     },
     {
@@ -3241,8 +2968,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Magic-Carpet/1295487/6446995/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.8 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3254,11 +2981,11 @@
         "link": "https://elliotspencermorgan.com/magic-carpet/",
         "slug": "magic-carpet",
         "wordpress_id": 2127,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446995/5516731-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Magic_CarpetPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Grey",
-            "Brown"
+            "Brown",
+            "Red",
+            "Grey"
         ]
     },
     {
@@ -3267,8 +2994,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Screen/1295487/6446983/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3280,9 +3007,10 @@
         "link": "https://elliotspencermorgan.com/screen/",
         "slug": "screen",
         "wordpress_id": 2128,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446983/5516719-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ScreenPainting.jpg",
         "detected_colors": [
             "Brown",
+            "Red",
             "Grey"
         ]
     },
@@ -3292,8 +3020,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Spring-Blooms/1295487/6446977/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Organic, Fluid, Abstract, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.5 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3305,11 +3033,11 @@
         "link": "https://elliotspencermorgan.com/spring-blooms/",
         "slug": "spring-blooms",
         "wordpress_id": 2129,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446977/5516713-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Spring_BloomsPainting.jpg",
         "detected_colors": [
-            "Brown",
             "Grey",
-            "Pink"
+            "Silver",
+            "Red"
         ]
     },
     {
@@ -3318,8 +3046,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Celebrate/1295487/6446967/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3331,11 +3059,11 @@
         "link": "https://elliotspencermorgan.com/celebrate/",
         "slug": "celebrate",
         "wordpress_id": 2130,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446967/5516703-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/CelebratePainting.jpg",
         "detected_colors": [
-            "Black",
+            "Grey",
             "Brown",
-            "Grey"
+            "Red"
         ]
     },
     {
@@ -3344,8 +3072,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Anemones/1295487/6446959/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3357,10 +3085,12 @@
         "link": "https://elliotspencermorgan.com/anemones/",
         "slug": "anemones",
         "wordpress_id": 2131,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446959/5516695-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/AnemonesPainting.jpg",
         "detected_colors": [
+            "Grey",
+            "Red",
             "Brown",
-            "Grey"
+            "Silver"
         ]
     },
     {
@@ -3369,8 +3099,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Coral/1295487/6446941/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Fine Art, Modern, Abstract, Abstract Expressionism",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3382,12 +3112,12 @@
         "link": "https://elliotspencermorgan.com/coral/",
         "slug": "coral",
         "wordpress_id": 2132,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446941/5516677-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/CoralPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Brown",
             "Grey",
-            "Pink"
+            "Brown",
+            "Red",
+            "Silver"
         ]
     },
     {
@@ -3396,8 +3126,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Existance/1295487/6446929/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Art Deco, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Abstract, Abstract Expressionism, Fine Art, Modern, Minimalist",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3409,10 +3139,11 @@
         "link": "https://elliotspencermorgan.com/existance/",
         "slug": "existance",
         "wordpress_id": 2133,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446929/5516665-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/ExistancePainting-768x539.jpg",
         "detected_colors": [
+            "Grey",
             "Brown",
-            "Grey"
+            "Red"
         ]
     },
     {
@@ -3421,8 +3152,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Fireworks/1295487/6446913/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract, Abstract Expressionism, Expressionism, Fine Art, Modern",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Abstract, Expressionism, Abstract Expressionism, Fine Art, Modern",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3434,11 +3165,12 @@
         "link": "https://elliotspencermorgan.com/fireworks/",
         "slug": "fireworks",
         "wordpress_id": 2134,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446913/5516649-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/FireworksPainting.jpg",
         "detected_colors": [
-            "Brown",
             "Grey",
-            "Pink"
+            "Silver",
+            "Red",
+            "Brown"
         ]
     },
     {
@@ -3448,7 +3180,7 @@
         "type": "new_from_saatchi",
         "year": "2019",
         "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "38.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3460,10 +3192,12 @@
         "link": "https://elliotspencermorgan.com/synapse/",
         "slug": "synapse",
         "wordpress_id": 2135,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446909/5516645-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/SynapsePainting.jpg",
         "detected_colors": [
+            "Grey",
             "Brown",
-            "Grey"
+            "Red",
+            "Silver"
         ]
     },
     {
@@ -3472,8 +3206,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Stick-men/1295487/6446901/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Ink, Paper",
+        "styles": "Minimalist, Abstract",
+        "mediumsDetailed": "Acrylic,\u00a0Ink,\u00a0Paper",
         "dimensions": "39.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3485,11 +3219,11 @@
         "link": "https://elliotspencermorgan.com/stick-men/",
         "slug": "stick-men",
         "wordpress_id": 2136,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446901/5516637-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Stick_menPainting.jpg",
         "detected_colors": [
-            "Black",
+            "Grey",
             "Brown",
-            "Grey"
+            "Red"
         ]
     },
     {
@@ -3499,7 +3233,7 @@
         "type": "new_from_saatchi",
         "year": "2019",
         "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "39.3 W x 27.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3511,11 +3245,12 @@
         "link": "https://elliotspencermorgan.com/descending/",
         "slug": "descending",
         "wordpress_id": 2137,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446893/5516629-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/DescendingPainting.jpg",
         "detected_colors": [
-            "Black",
+            "Grey",
             "Brown",
-            "Grey"
+            "Red",
+            "Black"
         ]
     },
     {
@@ -3525,7 +3260,7 @@
         "type": "new_from_saatchi",
         "year": "2019",
         "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3537,9 +3272,10 @@
         "link": "https://elliotspencermorgan.com/lifeforce/",
         "slug": "lifeforce",
         "wordpress_id": 2138,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446799/5516535-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/lifeforcePainting.jpg",
         "detected_colors": [
-            "White",
+            "Silver",
+            "Red",
             "Grey",
             "Brown"
         ]
@@ -3551,7 +3287,7 @@
         "type": "new_from_saatchi",
         "year": "2019",
         "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3563,11 +3299,12 @@
         "link": "https://elliotspencermorgan.com/turquoise-and-peppers/",
         "slug": "turquoise-and-peppers",
         "wordpress_id": 2139,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446775/5516511-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Turquoise_and_PeppersPainting.jpg",
         "detected_colors": [
-            "Black",
             "Brown",
-            "Grey"
+            "Red",
+            "Grey",
+            "Black"
         ]
     },
     {
@@ -3577,7 +3314,7 @@
         "type": "new_from_saatchi",
         "year": "2019",
         "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3589,11 +3326,11 @@
         "link": "https://elliotspencermorgan.com/turquoise-blend/",
         "slug": "turquoise-blend",
         "wordpress_id": 2140,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446755/5516491-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Turquoise_blendPainting.jpg",
         "detected_colors": [
-            "Black",
+            "Grey",
             "Brown",
-            "Grey"
+            "Red"
         ]
     },
     {
@@ -3602,8 +3339,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Turquoise-stretch/1295487/6446705/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Minimalist, Abstract",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3615,11 +3352,10 @@
         "link": "https://elliotspencermorgan.com/turquoise-stretch/",
         "slug": "turquoise-stretch",
         "wordpress_id": 2141,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446705/5516441-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Turquoise_stretchPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Brown",
-            "Grey"
+            "Grey",
+            "Brown"
         ]
     },
     {
@@ -3628,8 +3364,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Turquoise-Circuit-board/1295487/6446693/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Geometric, Minimalist, Abstract, Structured",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.5 W x 25.5 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3641,11 +3377,11 @@
         "link": "https://elliotspencermorgan.com/turquoise-circuit-board/",
         "slug": "turquoise-circuit-board",
         "wordpress_id": 2142,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446693/5516429-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Turquoise_Circuit_boardPainting.jpg",
         "detected_colors": [
-            "Black",
+            "Grey",
             "Brown",
-            "Grey"
+            "Red"
         ]
     },
     {
@@ -3655,7 +3391,7 @@
         "type": "new_from_saatchi",
         "year": "2019",
         "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "25.8 W x 38.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3667,10 +3403,12 @@
         "link": "https://elliotspencermorgan.com/blast-of-blue-on-red/",
         "slug": "blast-of-blue-on-red",
         "wordpress_id": 2143,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446665/5516401-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blast_of_Blue_on_RedPainting.jpg",
         "detected_colors": [
+            "Grey",
             "Gold",
-            "Grey"
+            "Silver",
+            "Red"
         ]
     },
     {
@@ -3680,7 +3418,7 @@
         "type": "new_from_saatchi",
         "year": "2019",
         "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3692,10 +3430,10 @@
         "link": "https://elliotspencermorgan.com/blue-gold/",
         "slug": "blue-gold",
         "wordpress_id": 2144,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446651/5516387-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_GoldPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Brown"
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -3704,8 +3442,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Blue-Glacier/1295487/6446603/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Minimalist, Abstract",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3717,10 +3455,11 @@
         "link": "https://elliotspencermorgan.com/blue-glacier/",
         "slug": "blue-glacier",
         "wordpress_id": 1605,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446603/5516339-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_GlacierPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Grey",
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -3729,8 +3468,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Blue-Wave/1295487/6446583/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Minimalist, Organic, Fluid, Abstract",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3742,10 +3481,11 @@
         "link": "https://elliotspencermorgan.com/blue-wave/",
         "slug": "blue-wave",
         "wordpress_id": 2146,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446583/5516319-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_WavePainting.jpg",
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Grey",
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -3754,8 +3494,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Blue-Mesh/1295487/6446557/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Minimalist, Abstract",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3767,10 +3507,11 @@
         "link": "https://elliotspencermorgan.com/blue-mesh/",
         "slug": "blue-mesh",
         "wordpress_id": 2147,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446557/5516293-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_MeshPainting.jpg",
         "detected_colors": [
+            "Grey",
             "Black",
-            "Grey"
+            "Brown"
         ]
     },
     {
@@ -3779,8 +3520,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Cold-Blue/1295487/6446543/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Minimalist, Abstract",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "25.8 W x 38.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3792,10 +3533,11 @@
         "link": "https://elliotspencermorgan.com/cold-blue/",
         "slug": "cold-blue",
         "wordpress_id": 2148,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446543/5516279-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Cold_BluePainting.jpg",
         "detected_colors": [
+            "Grey",
             "Black",
-            "Grey"
+            "Brown"
         ]
     },
     {
@@ -3804,8 +3546,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-Blue-Storm/1295487/6446503/view",
         "type": "new_from_saatchi",
         "year": "2019",
-        "styles": "Abstract",
-        "mediumsDetailed": "Acrylic, Paper",
+        "styles": "Minimalist, Abstract",
+        "mediumsDetailed": "Acrylic,\u00a0Paper",
         "dimensions": "38.8 W x 25.8 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3817,10 +3559,11 @@
         "link": "https://elliotspencermorgan.com/blue-storm/",
         "slug": "blue-storm",
         "wordpress_id": 1602,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6446503/5516239-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_StormPainting.jpg",
         "detected_colors": [
+            "Grey",
             "Black",
-            "Grey"
+            "Brown"
         ]
     },
     {
@@ -3830,7 +3573,7 @@
         "type": "new_from_saatchi",
         "year": "2018",
         "styles": "Expressionism",
-        "mediumsDetailed": "Metal, Stainless Steel",
+        "mediumsDetailed": "Metal,\u00a0Stainless Steel",
         "dimensions": "10 W x 14 H x 0.3 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3844,8 +3587,9 @@
         "wordpress_id": 2150,
         "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6444945/5514681-HSC00002-7.jpg",
         "detected_colors": [
-            "Black",
-            "White",
+            "Blue",
+            "Beige",
+            "Silver",
             "Grey"
         ]
     },
@@ -3856,7 +3600,7 @@
         "type": "new_from_saatchi",
         "year": "2018",
         "styles": "Expressionism",
-        "mediumsDetailed": "Metal, Stainless Steel",
+        "mediumsDetailed": "Metal,\u00a0Stainless Steel",
         "dimensions": "14 W x 8 H x 0.3 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3870,9 +3614,10 @@
         "wordpress_id": 2150,
         "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6444917/5514653-HSC00001-7.jpg",
         "detected_colors": [
-            "Black",
+            "Blue",
+            "Silver",
             "Grey",
-            "Pink"
+            "Beige"
         ]
     },
     {
@@ -3882,7 +3627,7 @@
         "type": "new_from_saatchi",
         "year": "2018",
         "styles": "Expressionism",
-        "mediumsDetailed": "Metal, Stainless Steel",
+        "mediumsDetailed": "Metal,\u00a0Stainless Steel",
         "dimensions": "20 W x 20 H x 0.3 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3896,10 +3641,10 @@
         "wordpress_id": 2152,
         "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6444891/5514627-UOIQHDXE-7.jpg",
         "detected_colors": [
+            "Red",
+            "Silver",
             "Gold",
-            "Brown",
-            "Grey",
-            "Pink"
+            "Brown"
         ]
     },
     {
@@ -3909,7 +3654,7 @@
         "type": "new_from_saatchi",
         "year": "2018",
         "styles": "Expressionism",
-        "mediumsDetailed": "Metal, Stainless Steel",
+        "mediumsDetailed": "Metal,\u00a0Stainless Steel",
         "dimensions": "12 W x 8 H x 0.3 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3923,9 +3668,9 @@
         "wordpress_id": 2153,
         "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6444853/5514589-HSC00001-7.jpg",
         "detected_colors": [
-            "Gold",
-            "Brown",
-            "Pink"
+            "Red",
+            "Silver",
+            "Gold"
         ]
     },
     {
@@ -3934,8 +3679,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Installation-NO-PORKING/1295487/6444805/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Expressionism",
-        "mediumsDetailed": "Metal, Stainless Steel",
+        "styles": "Minimalist, Expressionism",
+        "mediumsDetailed": "Metal,\u00a0Stainless Steel",
         "dimensions": "14 W x 8 H x 0.5 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3947,11 +3692,12 @@
         "link": "https://elliotspencermorgan.com/no-porking/",
         "slug": "no-porking",
         "wordpress_id": 2154,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6444805/5514541-HSC00001-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/NO_PORKINGInstallation.jpg",
         "detected_colors": [
-            "Gold",
+            "Silver",
             "Black",
-            "Pink"
+            "Gold",
+            "Grey"
         ]
     },
     {
@@ -3960,8 +3706,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-GOLD-SERIES-006/1295487/6412863/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 24 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3973,11 +3719,11 @@
         "link": "https://elliotspencermorgan.com/gold-series-006/",
         "slug": "gold-series-006",
         "wordpress_id": 2155,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6412863/5482619-HSC00002-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GOLD_SERIES_006Painting.jpg",
         "detected_colors": [
             "Gold",
             "Black",
-            "Brown"
+            "Grey"
         ]
     },
     {
@@ -3986,8 +3732,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-GOLD-SERIES-005/1295487/6412831/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Minimalist, Luxury, Abstract",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -3999,10 +3745,11 @@
         "link": "https://elliotspencermorgan.com/gold-series-005/",
         "slug": "gold-series-005",
         "wordpress_id": 2156,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6412831/5482587-HSC00002-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GOLD_SERIES_005Painting.jpg",
         "detected_colors": [
+            "Black",
             "Gold",
-            "Black"
+            "Brown"
         ]
     },
     {
@@ -4011,8 +3758,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-GOLD-SERIES-004/1295487/6412815/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Minimalist, Luxury, Abstract",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -4024,10 +3771,11 @@
         "link": "https://elliotspencermorgan.com/gold-series-004/",
         "slug": "gold-series-004",
         "wordpress_id": 2157,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6412815/5482571-HSC00002-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GOLD_SERIES_004Painting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -4036,8 +3784,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-GOLD-SERIES-003/1295487/6412813/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Minimalist, Luxury, Abstract",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -4049,10 +3797,11 @@
         "link": "https://elliotspencermorgan.com/gold-series-003/",
         "slug": "gold-series-003",
         "wordpress_id": 2158,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6412813/5482569-HSC00002-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GOLD_SERIES_003Painting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -4061,8 +3810,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-GOLD-SERIES-002/1295487/6412799/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -4074,11 +3823,11 @@
         "link": "https://elliotspencermorgan.com/gold-series-002/",
         "slug": "gold-series-002",
         "wordpress_id": 2159,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6412799/5482555-HSC00002-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GOLD_SERIES_002Painting.jpg",
         "detected_colors": [
-            "Gold",
             "Black",
-            "Grey"
+            "Gold",
+            "Brown"
         ]
     },
     {
@@ -4087,8 +3836,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-GOLD-SERIES-001/1295487/6412791/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Luxury, Abstract",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "17.5 W x 23 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "Not Applicable",
@@ -4100,10 +3849,11 @@
         "link": "https://elliotspencermorgan.com/gold-series-001/",
         "slug": "gold-series-001",
         "wordpress_id": 2160,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6412791/5482547-HSC00002-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/GOLD_SERIES_001Painting.jpg",
         "detected_colors": [
             "Gold",
-            "Black"
+            "Black",
+            "Brown"
         ]
     },
     {
@@ -4112,8 +3862,8 @@
         "saatchi_url": "https://www.saatchiart.com/art/Painting-waves/1295487/6364287/view",
         "type": "new_from_saatchi",
         "year": "2018",
-        "styles": "Abstract Expressionism, Conceptual, Figurative, Modern",
-        "mediumsDetailed": "Ink, Paper",
+        "styles": "Figurative, Organic, Fluid, Abstract Expressionism, Modern, Conceptual",
+        "mediumsDetailed": "Ink,\u00a0Paper",
         "dimensions": "20 W x 15 H x 0.1 D in",
         "frame": "Not Framed",
         "readyToHang": "No",
@@ -4125,11 +3875,12 @@
         "link": "https://elliotspencermorgan.com/waves/",
         "slug": "waves",
         "wordpress_id": 1601,
-        "image_url": "https://images.saatchiart.com/saatchi/1295487/art/6364287/5434049-HSC00002-7.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/wavesPainting.jpg",
         "detected_colors": [
-            "Black",
-            "Grey",
-            "Pink"
+            "Pink",
+            "Brown",
+            "Silver",
+            "Black"
         ]
     },
     {
@@ -4147,14 +3898,16 @@
         "slug": "waves",
         "link": "https://elliotspencermorgan.com/waves/",
         "saatchi_url": null,
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/wavesPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/wavesPainting.jpg",
         "type": "page",
         "wordpress_id": 1601,
         "detected_colors": [
-            "Black",
-            "Grey",
-            "Pink"
-        ]
+            "Pink",
+            "Brown",
+            "Silver",
+            "Black"
+        ],
+        "styles": "Organic, Fluid"
     },
     {
         "id": 1602,
@@ -4162,13 +3915,15 @@
         "slug": "blue-storm",
         "link": "https://elliotspencermorgan.com/blue-storm/",
         "saatchi_url": null,
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Blue_StormPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_StormPainting.jpg",
         "type": "page",
         "wordpress_id": 1602,
         "detected_colors": [
+            "Grey",
             "Black",
-            "Grey"
-        ]
+            "Brown"
+        ],
+        "styles": "Minimalist"
     },
     {
         "id": 1605,
@@ -4176,12 +3931,13 @@
         "slug": "blue-glacier",
         "link": "https://elliotspencermorgan.com/blue-glacier/",
         "saatchi_url": null,
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Blue_GlacierPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Blue_GlacierPainting.jpg",
         "type": "page",
         "wordpress_id": 1605,
         "detected_colors": [
-            "Black",
-            "Grey"
+            "Grey",
+            "Brown",
+            "Black"
         ]
     },
     {
@@ -4190,13 +3946,15 @@
         "slug": "golden-rule",
         "link": "https://elliotspencermorgan.com/golden-rule/",
         "saatchi_url": null,
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/Golden_RulePainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/Golden_RulePainting.jpg",
         "type": "page",
         "wordpress_id": 1606,
         "detected_colors": [
+            "Red",
             "Gold",
-            "Brown"
-        ]
+            "Pink"
+        ],
+        "styles": "Minimalist"
     },
     {
         "id": 1607,
@@ -4204,13 +3962,14 @@
         "slug": "transformation",
         "link": "https://elliotspencermorgan.com/transformation/",
         "saatchi_url": null,
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/TransformationPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/TransformationPainting.jpg",
         "type": "page",
         "wordpress_id": 1607,
         "detected_colors": [
-            "White",
-            "Brown",
-            "Pink"
+            "Red",
+            "Pink",
+            "Beige",
+            "Silver"
         ]
     },
     {
@@ -4219,13 +3978,13 @@
         "slug": "bloom",
         "link": "https://elliotspencermorgan.com/bloom/",
         "saatchi_url": null,
-        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11/BloomPainting.jpg",
+        "image_url": "https://elliotspencermorgan.com/wp-content/uploads/2025/11-holdingspace-originals/BloomPainting.jpg",
         "type": "page",
         "wordpress_id": 1608,
         "detected_colors": [
-            "Gold",
-            "Black",
-            "Grey"
-        ]
+            "Brown",
+            "Gold"
+        ],
+        "styles": "Luxury, Organic, Fluid"
     }
 ]

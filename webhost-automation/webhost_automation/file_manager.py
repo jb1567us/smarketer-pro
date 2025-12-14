@@ -19,6 +19,40 @@ class FileManager:
         """
         return self.client.call_uapi("Fileman", "get_file_content", file=file_path)
 
+    def is_directory(self, path: str) -> bool:
+        """
+        Checks if a path is a directory by attempting to list its content.
+        """
+        try:
+            # If we can list it, it's likely a directory
+            self.list_files(path)
+            return True
+        except Exception:
+            return False
+
+    def download_file(self, remote_path: str, local_path: str):
+        """
+        Downloads a file from the server to local path.
+        """
+        if self.is_directory(remote_path):
+            raise ValueError(f"Remote path '{remote_path}' is a directory. Please use `files-compress` to download it as a zip archive.")
+
+        data = self.get_file_content(remote_path)
+        content = data.get("content") if isinstance(data, dict) else data
+        
+        # If content is None, maybe file is empty
+        if content is None:
+            content = ""
+            
+        # Write to local
+        # If we received string, write as text. If bytes, write key.
+        mode = "w" if isinstance(content, str) else "wb"
+        encoding = "utf-8" if mode == "w" else None
+        
+        with open(local_path, mode, encoding=encoding) as f:
+            f.write(content)
+
+
     def upload_file(self, local_path: str, remote_dir: str):
         """
         Uploads a local file to a remote directory.
@@ -70,4 +104,40 @@ class FileManager:
         name: new folder name
         """
         return self.client.call_uapi("Fileman", "mkdir", path=path, name=name)
+
+    def compress_files(self, source_paths: list, dest_path: str, type: str = "zip"):
+        """
+        Compresses files or directories.
+        source_paths: list of full paths to compress
+        dest_path: full path including filename (e.g., public_html/backup.zip)
+        type: zip, tar, gzip, bzip2
+        """
+        # UAPI Fileman::compress_files
+        # 'files' argument is one or more file paths. 
+        # 'compress_file_path' is destination.
+        
+        # We need to correctly pass list of files.
+        # UAPI usually accepts multiple keys or comma sep? 
+        # Check docs: "files" parameter.
+        # Actually standard python request for duplicate keys?
+        # Or usually it takes a list in client logic.
+        
+        # NOTE: UAPI usually expects 'files' as a list argument which requests handles as multiple params with same key
+        return self.client.call_uapi("Fileman", "compress_files", compress_file_path=dest_path, type=type, files=source_paths)
+
+    def extract_files(self, source_path: str, dest_path: str):
+        """
+        Extracts an archive.
+        source_path: path to archive
+        dest_path: directory to extract to
+        """
+        return self.client.call_uapi("Fileman", "extract_files", sourcefiles=source_path, path=dest_path)
+
+    def change_permissions(self, path: str, permissions: str):
+        """
+        Change file permissions (chmod).
+        permissions: e.g. "0755" or "0644"
+        """
+        return self.client.call_uapi("Fileman", "chmod", files=path, permissions=permissions)
+
 
