@@ -17,7 +17,13 @@ class FileManager:
         Get content of a file (if text).
         UAPI Fileman::get_file_content
         """
-        return self.client.call_uapi("Fileman", "get_file_content", file=file_path)
+        import os
+        directory = os.path.dirname(file_path)
+        filename = os.path.basename(file_path)
+        if not directory:
+            directory = "public_html" # Default or assume relative to home?
+            
+        return self.client.call_uapi("Fileman", "get_file_content", dir=directory, file=filename)
 
     def is_directory(self, path: str) -> bool:
         """
@@ -74,7 +80,7 @@ class FileManager:
         try:
             with open(local_path, "rb") as f:
                 files = {'file-1': (filename, f)}
-                data = {'dir': remote_dir}
+                data = {'dir': remote_dir, 'overwrite': 1}
                 
                 # We use the session directly to handle multipart upload
                 response = self.client.session.post(url, data=data, files=files, timeout=60)

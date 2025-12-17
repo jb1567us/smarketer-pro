@@ -169,6 +169,25 @@ def files_upload(local_path: str, remote_dir: str = "public_html"):
         console.print(f"[red]Upload failed:[/red] {e}")
 
 @app.command()
+def files_upload_browser(local_path: str, remote_path: str, headless: bool = False):
+    """
+    Upload a file using Browser Automation.
+    remote_path: e.g. public_html/test.php
+    """
+    try:
+        config = Config()
+        if not config.cpanel_password:
+             console.print("[bold red]Error:[/bold red] CPANEL_PASSWORD is required.")
+             raise typer.Exit(code=1)
+        
+        bot = BrowserBot(config, headless=headless)
+        console.print(f"[yellow]Uploading {local_path} to {remote_path}...[/yellow]")
+        bot.upload_file(local_path, remote_path)
+        
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+
+@app.command()
 def files_delete(remote_path: str):
     """Delete a remote file (Permanent)."""
     client = get_client()
