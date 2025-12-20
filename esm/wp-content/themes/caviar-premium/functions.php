@@ -67,4 +67,7 @@ function caviar_get_tags_list($id) {
     }
     return '';
 }
+
+// Disable WordPress Native Lazy Loading to prevent placeholder issues
+add_filter( 'wp_lazy_loading_enabled', '__return_false' );
 ?>

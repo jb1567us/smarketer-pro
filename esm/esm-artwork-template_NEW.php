@@ -66,26 +66,8 @@ class ESM_Artwork_Template
             return $template;
         }
 
-
         $post = get_post();
         if (!$post) return $template;
-
-        // Explicitly route Collection pages to their own template
-        $slug = $post->post_name;
-        $collection_slugs = [
-            'gold-collection',
-            'blue-turquoise-collection',
-            'oversized-statement-pieces',
-            'sculpture-collection',
-            'pattern-geometric',
-            'minimalist-abstract',
-            'neutral-tones'
-        ];
-        
-        if (in_array($slug, $collection_slugs)) {
-            $this->render_collection_page($post);
-            exit;
-        }
 
         // Check if this page matches an artwork in our DB
         $title = trim($post->post_title);
@@ -123,16 +105,11 @@ class ESM_Artwork_Template
         if ($detected_colors) $tags_combined[] = $detected_colors;
         $tags_display = implode(', ', $tags_combined);
 
-        // Use custom description if available, otherwise fallback to generated
-        if (!empty($data['description'])) {
-            $desc = $data['description'];
-        } else {
-            $desc = "Original {$medium} painting by Elliot Spencer Morgan.";
-            if ($year) $desc .= " Created in {$year}.";
-            if ($styles) $desc .= " Featuring elements of {$styles}.";
-            $desc .= " Perfect for interior design projects, high-end residential spaces, and hospitality environments.";
-            $desc .= " Signed and delivered with a Certificate of Authenticity. Available for trade professionals.";
-        }
+        $desc = "Original {$medium} painting by Elliot Spencer Morgan.";
+        if ($year) $desc .= " Created in {$year}.";
+        if ($styles) $desc .= " Featuring elements of {$styles}.";
+        $desc .= " Perfect for interior design projects, high-end residential spaces, and hospitality environments.";
+        $desc .= " Signed and delivered with a Certificate of Authenticity. Available for trade professionals.";
 
         $installation = isset($data['readyToHang']) ? $data['readyToHang'] : "Wired & Ready to Hang";
         if ($installation === 'No') $installation = "Requires Framing";
@@ -179,9 +156,7 @@ class ESM_Artwork_Template
             isset($data['title']) ? $data['title'] . '_HighRes.zip' : '',
             isset($data['slug']) ? $data['slug'] . '_HighRes.zip' : '',
             $title . '_HighRes.zip',
-            sanitize_title($title) . '_HighRes.zip',
-            str_replace(' ', '_', $title) . '_HighRes.zip',
-            isset($data['title']) ? str_replace(' ', '_', $data['title']) . '_HighRes.zip' : ''
+            sanitize_title($title) . '_HighRes.zip'
         ];
         $zip_candidates = array_filter($zip_candidates);
         $zip_file = $this->find_file(ABSPATH . 'downloads/high_res/', $zip_candidates);
@@ -602,187 +577,6 @@ class ESM_Artwork_Template
         }
         return false;
     }
-
-    private function render_collection_page($post)
-    {
-        $title = trim($post->post_title);
-        // Use raw post content to avoid wpautop breaking the grid structure
-        $content = $post->post_content;
-        
-        ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo esc_html($title); ?> - Elliot Spencer Morgan</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <style>
-        /* RESET & CORE */
-        * { box-sizing: border-box; }
-        body {
-            margin: 0; padding: 0;
-            font-family: 'Inter', sans-serif;
-            color: #2c3e50;
-            background: #ffffff;
-            overflow-x: hidden;
-            width: 100%;
-        }
-        a { color: inherit; text-decoration: none; }
-        
-        /* HEADER - FIXED & TRANSPARENT */
-        header {
-            position: fixed; top: 0; left: 0; width: 100%;
-            display: flex; justify-content: flex-end; align-items: center;
-            padding: 20px 40px;
-            z-index: 1000;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        .site-title {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 400;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #1a1a1a;
-            white-space: nowrap;
-        }
-        
-        /* HAMBURGER MENU */
-        .menu-toggle {
-            background: none; border: none; cursor: pointer;
-            display: flex; flex-direction: column; gap: 6px;
-            z-index: 2000; padding: 10px;
-        }
-        .bar { width: 24px; height: 1px; background: #1a1a1a; transition: 0.3s; }
-        
-        /* MENU OVERLAY */
-        .menu-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: white; z-index: 1500;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: 0.4s ease;
-        }
-        .menu-overlay.active { opacity: 1; pointer-events: auto; }
-        .menu-overlay nav a {
-            display: block; font-family: 'Playfair Display', serif;
-            font-size: 2rem; margin: 15px 0; color: #1a1a1a;
-            text-align: center; transition: 0.2s;
-        }
-        .menu-overlay nav a:hover { color: #555; transform: scale(1.02); }
-
-        /* CONTENT CONTAINER */
-        .collection-container {
-            max-width: 100%;
-            margin-top: 80px; /* Offset for fixed header */
-            padding: 40px 20px;
-        }
-        
-        /* Ensure the grid styles from content are respected */
-        .gold-collection-grid {
-            width: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        /* FOOTER */
-        footer {
-            background: #fafafa; padding: 60px 20px; text-align: center;
-            border-top: 1px solid #eee; margin-top: 80px;
-        }
-        .social-links a { margin: 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .social-links a { margin: 0 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .copyright { margin-top: 30px; font-size: 12px; color: #999; }
-        
-        /* Gold Collection Grid - Responsive */
-        .gold-collection-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 30px;
-            margin: 40px 0;
-        }
-        @media (min-width: 768px) {
-            .gold-collection-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        
-        /* Related Collections Links */
-        .related-grid li a {
-            display: block;
-            padding: 20px;
-            border: 1px solid #eee;
-            color: #333;
-            text-decoration: none;
-            font-family: 'Playfair Display', serif;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            background: #fff;
-        }
-        .related-grid li a:hover {
-            border-color: #1a1a1a;
-            background: #fafafa;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Header -->
-    <header>
-        <a href="/" class="site-title">Elliot Spencer Morgan</a>
-        <button class="menu-toggle" onclick="document.querySelector('.menu-overlay').classList.toggle('active')">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </button>
-    </header>
-
-    <!-- Menu Overlay -->
-    <div class="menu-overlay">
-        <button class="menu-toggle" style="position: absolute; top: 20px; right: 40px;" onclick="document.querySelector('.menu-overlay').classList.remove('active')">
-            <div class="bar" style="transform: rotate(45deg) translate(5px, 5px);"></div>
-            <div class="bar" style="opacity: 0;"></div>
-            <div class="bar" style="transform: rotate(-45deg) translate(5px, -5px);"></div>
-        </button>
-        <nav>
-            <a href="/">Home</a>
-            <a href="/sculpture-collection/">Sculpture</a>
-            <a href="/gold-collection/">Gold Collection</a>
-            <a href="/about/">About</a>
-            <a href="/contact/">Contact</a>
-        </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="collection-container">
-        <?php echo $content; ?>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-        <div class="social-links">
-            <a href="https://instagram.com">Instagram</a>
-            <a href="https://saatchiart.com">Saatchi Art</a>
-        </div>
-        <p class="copyright">&copy; <?php echo date('Y'); ?> Elliot Spencer Morgan. All Rights Reserved.</p>
-    </footer>
-
-</body>
-</html>
-        <?php
-    }
-
 }
 }
 

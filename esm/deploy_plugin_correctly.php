@@ -1,58 +1,42 @@
 <?php
-// deploy_plugin_correctly.php
-require_once($_SERVER['DOCUMENT_ROOT'] . '/wp-load.php');
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-$source_plugin = $_SERVER['DOCUMENT_ROOT'] . '/esm-artwork-template.php';
-$dest_dir = WPMU_PLUGIN_DIR;
-$dest_plugin = $dest_dir . '/esm-artwork-template.php';
-$json_source = $_SERVER['DOCUMENT_ROOT'] . '/artwork_data.json';
+echo "<h1>Deployment v2</h1>";
 
-echo "<h1>Plugin Deployment Check</h1>";
+$wp_load = $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php';
+require_once($wp_load);
 
-// 1. Ensure MU Plugins Dir exists
-if (!file_exists($dest_dir)) {
-    mkdir($dest_dir, 0755, true);
-    echo "Created MU Plugin Dir: $dest_dir<br>";
-} else {
-    echo "MU Plugin Dir exists: $dest_dir<br>";
+if (!defined('WPMU_PLUGIN_DIR')) {
+    echo "WPMU_PLUGIN_DIR not defined, defining it...<br>";
+    define('WPMU_PLUGIN_DIR', WP_CONTENT_DIR . '/mu-plugins');
 }
 
-echo "Current Dir: " . __DIR__ . "<br>";
-echo "Doc Root: " . $_SERVER['DOCUMENT_ROOT'] . "<br>";
+$dest_dir = WPMU_PLUGIN_DIR;
+echo "Dest Dir: $dest_dir<br>";
 
-$files = scandir(__DIR__);
-echo "<h2>Files in Current Dir:</h2><ul>";
-foreach ($files as $f) {
-    if (strpos($f, '.php') !== false || strpos($f, '.json') !== false) {
-        echo "<li>$f</li>";
+
+// Deploy artwork_data.json
+$source_json = $_SERVER['DOCUMENT_ROOT'] . '/artwork_data.json';
+$dest_json = $dest_dir . '/artwork_data.json';
+
+if (!file_exists($source_json)) {
+    die("Source JSON NOT FOUND: $source_json");
+}
+
+if (file_exists($dest_json)) {
+    if (unlink($dest_json)) {
+        echo "Deleted old JSON.<br>";
+    } else {
+        echo "Failed to delete old JSON.<br>";
     }
 }
-echo "</ul>";
 
-// Check MU Plugins specifically
-$mu = WPMU_PLUGIN_DIR;
-echo "<h2>Files in MU Plugins ($mu):</h2><ul>";
-if (is_dir($mu)) {
-    $mu_files = scandir($mu);
-    foreach ($mu_files as $f)
-        echo "<li>$f</li>";
+if (copy($source_json, $dest_json)) {
+    echo "<h1>SUCCESS: MOVED JSON.</h1>";
+    echo "Size: " . filesize($dest_json);
 } else {
-    echo "<li>MU Dir does not exist.</li>";
-}
-echo "</ul>";
-
-// 3. Confirm JSON
-if (file_exists($json_source)) {
-    echo "✅ artwork_data.json found in root.<br>";
-} else {
-    echo "❌ artwork_data.json MISSING from root.<br>";
-}
-
-// 4. Test Shortcode Existence
-if (shortcode_exists('esm_artwork_layout')) {
-    echo "<h2>🎉 SUCCESS: Shortcode [esm_artwork_layout] is REGISTERED!</h2>";
-} else {
-    echo "<h2>⚠️ ALERT: Shortcode [esm_artwork_layout] is NOT registered yet.</h2>";
-    echo "Verify file permissions and structure.";
+    echo "<h1>FAIL: JSON Copy failed.</h1>";
+    print_r(error_get_last());
 }
 ?>

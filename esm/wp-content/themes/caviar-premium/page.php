@@ -12,59 +12,132 @@ while ( have_posts() ) :
     // --- Data Extraction -- //
     $slug = get_post_field( 'post_name', get_post() );
     $title = get_the_title();
+
+    // 1. Load JSON Data
+    $json_file = ABSPATH . 'artwork_data.json'; // Assuming it sits in root
+    // Fallback locations if not in root
+    if (!file_exists($json_file)) {
+        $json_file = dirname(ABSPATH) . '/artwork_data.json'; 
+    }
     
-    // Generate Saatchi URL (Heuristic from build script)
-    // Adjust logic if actual custom field exists
-    $saatchi_slug = str_replace(array('-painting', '-sculpture', '-collage', '-installation', '-print'), '', $slug);
-    $saatchi_url = 'https://www.saatchiart.com/art/Painting-' . ucfirst($saatchi_slug); // Placeholder ID not needed usually for search, but deep link might need ID. using search or just base structure.
-    // Note: Saatchi URLs usually need an ID. e.g. /art/Painting-Slug/123/456. 
-    // If we don't have the ID, this link might fallback to 404. 
-    // BETTER: If we have a 'saatchi_url' custom field, use it. Else, maybe just link to profile?
-    // For this template, I will use a custom field 'saatchi_link' if present, else #.
-    $saatchi_link_cf = get_post_meta(get_the_ID(), 'saatchi_url', true);
-    if (!$saatchi_link_cf) {
-        $saatchi_link_cf = $saatchi_url; // Tentative fallback
+    $artwork_data = null;
+    if (file_exists($json_file)) {
+        $json_content = file_get_contents($json_file);
+        $data_array = json_decode($json_content, true);
+        
+        // Find matching artwork by Slug or Title
+        foreach ($data_array as $item) {
+            // Check slug match (try both WP slug and simple slug)
+            if (
+                (isset($item['slug']) && $item['slug'] === $slug) ||
+                (isset($item['wordpress_id']) && $item['wordpress_id'] == get_the_ID()) ||
+                (isset($item['cleanTitle']) && strcasecmp($item['cleanTitle'], $title) === 0) ||
+                (isset($item['title']) && strcasecmp($item['title'], $title) === 0)
+            ) {
+                $artwork_data = $item;
+                break;
+            }
+        }
     }
 
-    // Parse Tags for Metadata
-    $tags = get_the_tags();
+    // 2. Initialize Meta with Defaults
     $meta = [
         'price' => '',
         'dimensions' => '',
         'styles' => [],
         'mediums' => [],
-        'frame' => 'Not Framed', // Default
-        'packaging' => 'Ships Rolled', // Default
+        'frame' => 'Not Framed',
+        'packaging' => 'Ships Rolled',
         'shipping' => 'United States',
-        'materials' => []
+        'materials' => [],
+        'saatchi_url' => ''
     ];
 
-    if ($tags) {
-        foreach ($tags as $tag) {
-            $name = $tag->name;
-            if (strpos($name, '$') === 0) {
-                $meta['price'] = $name;
-            } elseif (strpos($name, ' x ') !== false || strpos($name, ' cm') !== false || strpos($name, ' in') !== false) {
-                $meta['dimensions'] = $name;
-            } elseif (stripos($name, 'framed') !== false) {
-                $meta['frame'] = $name;
-            } elseif (stripos($name, 'ship') !== false || stripos($name, 'box') !== false || stripos($name, 'tube') !== false) {
-                $meta['packaging'] = $name;
-            } elseif (in_array(strtolower($name), ['ink', 'paper', 'canvas', 'acrylic', 'oil'])) {
-                $meta['mediums'][] = $name;
-                $meta['materials'][] = $name; // for schema
+    // 3. Populate from JSON if found
+    if ($artwork_data) {
+        $meta['price'] = isset($artwork_data['price']) ? '$' . number_format((float)$artwork_data['price']) : '';
+        
+        // Dimensions: Prefer 'dimensions' field, else construct from w/h/d
+        if (!empty($artwork_data['dimensions'])) {
+            $meta['dimensions'] = $artwork_data['dimensions'];
+        } elseif (!empty($artwork_data['width']) && !empty($artwork_data['height'])) {
+            $d = isset($artwork_data['depth']) ? $artwork_data['depth'] : '1';
+            $meta['dimensions'] = "{$artwork_data['width']} W x {$artwork_data['height']} H x {$d} D in";
+        }
+
+        // Styles
+        if (!empty($artwork_data['styles'])) {
+            // Can be string or array
+            if (is_array($artwork_data['styles'])) {
+                $meta['styles'] = $artwork_data['styles'];
             } else {
-                $meta['styles'][] = $name; // Assign rest to styles
+                $meta['styles'] = array_map('trim', explode(',', $artwork_data['styles']));
             }
         }
+
+        // Mediums
+        if (!empty($artwork_data['mediumsDetailed'])) {
+            $meta['mediums'] = array_map('trim', explode(',', str_replace(chr(160), ' ', $artwork_data['mediumsDetailed']))); // Handle nbsp
+            $meta['materials'] = $meta['mediums'];
+        } elseif (!empty($artwork_data['medium'])) {
+             $meta['mediums'][] = $artwork_data['medium'];
+             $meta['materials'][] = $artwork_data['medium'];
+        }
+
+        // Frame
+        if (!empty($artwork_data['frame'])) {
+            $meta['frame'] = $artwork_data['frame'];
+        }
+
+        // Packaging
+        if (!empty($artwork_data['packaging'])) {
+            $meta['packaging'] = $artwork_data['packaging'];
+        }
+
+        // Shipping
+        if (!empty($artwork_data['shippingFrom'])) {
+            $meta['shipping'] = $artwork_data['shippingFrom'];
+        }
+        
+        // Saatchi URL from JSON
+        if (!empty($artwork_data['saatchi_url'])) {
+            $meta['saatchi_url'] = $artwork_data['saatchi_url'];
+        }
+        
+        // Image URL from JSON
+        // The user explicitly requested to use the path from the JSON as the featured images are broken.
+        if (!empty($artwork_data['image_url'])) {
+            $meta['image_url'] = $artwork_data['image_url'];
+        }
+    }
+
+    // 4. Fallback: Parse Tags if JSON failed (Optional, removing per request to use JSON, but good for safety? User said 'should be gathered from artwork data.json'. I will rely on JSON primarily).
+    // If we strictly obey "not from tags", we skip tag parsing.
+    
+    // Fallback for Saatchi URL if JSON didn't have it (heuristic)
+    if (empty($meta['saatchi_url'])) {
+        // Check CF first
+        $cf_saatchi = get_post_meta(get_the_ID(), 'saatchi_url', true);
+        if ($cf_saatchi) {
+             $meta['saatchi_url'] = $cf_saatchi;
+        } else {
+             // Heuristic
+             $saatchi_slug = str_replace(array('-painting', '-sculpture', '-collage', '-installation', '-print'), '', $slug);
+             $meta['saatchi_url'] = 'https://www.saatchiart.com/art/Painting-' . ucfirst($saatchi_slug);
+        }
+    }
+    
+    // Fallback for Image if JSON didn't have it
+    if (empty($meta['image_url'])) {
+        $meta['image_url'] = get_the_post_thumbnail_url(get_the_ID(), 'full');
     }
 
     // Downloads
     $spec_sheet = "/downloads/spec_sheets/" . ucfirst($slug) . "_spec.pdf";
     $high_res = "/downloads/high_res/" . ucfirst($slug) . "_HighRes.zip";
 
-    // Image
-    $image_url_full = get_the_post_thumbnail_url(get_the_ID(), 'full');
+    // Image (Use Meta)
+    $image_url_full = $meta['image_url'];
     
     // Schema Logic
     $schema_price = str_replace(['$', ','], '', $meta['price']);
@@ -80,9 +153,26 @@ while ( have_posts() ) :
 
     <!-- Main Image -->
     <?php if ($image_url_full) : ?>
-    <img src="<?php echo esc_url($image_url_full); ?>" 
-         alt="<?php the_title_attribute(); ?>" 
-         class="artwork-hero-image">
+    <div class="artwork-hero-wrapper" style="text-align:center;">
+        <img src="<?php echo esc_url($image_url_full); ?>" 
+             alt="<?php the_title_attribute(); ?>" 
+             class="artwork-hero-image skip-lazy no-lazy"
+             loading="eager"
+             decoding="sync"
+             data-no-lazy="1"
+             data-skip-lazy="1"
+        >
+        <noscript>
+            <img src="<?php echo esc_url($image_url_full); ?>" alt="<?php the_title_attribute(); ?>" class="artwork-hero-image">
+        </noscript>
+        
+        <!-- Direct Source Link (Visible for Debugging) -->
+        <div style="margin-top: 10px; font-family: monospace; font-size: 11px; background: #f9f9f9; padding: 5px; display: inline-block;">
+            Source: <a href="<?php echo esc_url($image_url_full); ?>" target="_blank"><?php echo esc_html($image_url_full); ?></a>
+        </div>
+    </div>
+    <?php else: ?>
+        <p style="text-align:center; color:red;">No image URL found in JSON or WordPress for this page.</p>
     <?php endif; ?>
 
     <?php if ($meta['price']) : ?>

@@ -35,12 +35,12 @@
     <?php endif; ?>
 </div>
 
-<header id="masthead" class="site-header">
-    <div class="wp-block-group">
-        <div class="wp-block-site-title">
+<header id="caviar-header-main" class="site-header">
+    <div id="caviar-title-container">
+        <h1 id="caviar-site-title">
             <a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home">
                 <?php bloginfo( 'name' ); ?>
             </a>
-        </div>
+        </h1>
     </div>
 </header>

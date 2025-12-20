@@ -98,10 +98,9 @@ class FileManager:
         Deletes a file or directory.
         UAPI Fileman::fileop check(fileop) -> unlink (delete) or trash
         """
-        # Note: double_decode=0 is standard defaults
-        # Names are passed as 'files' (or 'file' sometimes depending on ver)
-        # UAPI 'Fileman' 'fileop'
-        return self.client.call_uapi("Fileman", "fileop", op="unlink", sourcefiles=remote_path)
+        # UAPI Fileman::delete_files
+        # Deletes files or directories.
+        return self.client.call_uapi("Fileman", "delete_files", path=remote_path)
 
     def create_directory(self, path: str, name: str):
         """
