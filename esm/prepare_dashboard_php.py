@@ -52,7 +52,7 @@ $page = get_page_by_path($page_slug);
 $post_data = array(
     'post_title'    => $page_title,
     'post_content'  => $page_content,
-    'post_status'   => 'private',
+    'post_status'   => 'publish',
     'post_type'     => 'page',
     'post_author'   => get_current_user_id() ? get_current_user_id() : 1, // Fallback to ID 1 if no user logged in
 );
