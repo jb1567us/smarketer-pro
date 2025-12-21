@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: ESM Trade Portal
-Description: Enhanced virtual page at /trade/ with Collections, Search, and Premium UI.
-Version: 1.1
+Description: Enhanced virtual page at /trade/ with Collections, Search, Premium UI, and Art Visualizer.
+Version: 1.2
 Author: ESM Dev
 */
 
@@ -41,9 +41,10 @@ class ESM_Trade_Portal {
             --bg: #0d0d0d;
             --surface: rgba(255, 255, 255, 0.05);
             --surface-elevated: rgba(255, 255, 255, 0.1);
+            --surface-hover: rgba(255, 255, 255, 0.15);
             --text-primary: #ffffff;
             --text-secondary: #a0a0a0;
-            --accent: #E5C07B; /* Gold-ish accent */
+            --accent: #E5C07B;
             --border: rgba(255, 255, 255, 0.1);
             --sidebar-w: 320px;
             --header-h: 80px;
@@ -78,8 +79,9 @@ class ESM_Trade_Portal {
             padding: 0 3rem;
             z-index: 100;
             justify-content: space-between;
-            background: rgba(13, 13, 13, 0.8);
+            background: rgba(13, 13, 13, 0.85);
             border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
         }
 
         .brand {
@@ -109,21 +111,15 @@ class ESM_Trade_Portal {
             text-transform: uppercase;
             letter-spacing: 1.5px;
             transition: color 0.3s;
-            cursor: pointer;
-            padding-bottom: 4px;
-            border-bottom: 2px solid transparent;
         }
         .nav-link:hover { color: var(--text-primary); }
-        .nav-link.active {
-            color: var(--text-primary);
-            border-bottom-color: var(--accent);
-        }
 
         /* Main Layout */
         .app-container {
             display: flex;
             flex: 1;
             overflow: hidden;
+            position: relative;
         }
 
         /* Sidebar Filters */
@@ -136,27 +132,9 @@ class ESM_Trade_Portal {
             flex-direction: column;
             gap: 2.5rem;
             scrollbar-width: thin;
-            transition: transform 0.3s ease;
         }
 
-        @media (max-width: 1000px) {
-            aside {
-                position: fixed;
-                top: var(--header-h);
-                left: 0;
-                bottom: 0;
-                background: var(--bg);
-                z-index: 500;
-                transform: translateX(-100%);
-            }
-            aside.open {
-                transform: translateX(0);
-            }
-        }
-
-        .search-box {
-            position: relative;
-        }
+        .search-box { position: relative; }
         .search-box input {
             width: 100%;
             padding: 1rem 1rem 1rem 2.8rem;
@@ -296,14 +274,15 @@ class ESM_Trade_Portal {
         .card-actions {
             position: absolute;
             inset: 0;
-            background: rgba(13, 13, 13, 0.4);
+            background: rgba(13, 13, 13, 0.6);
+            backdrop-filter: blur(2px);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             gap: 1rem;
             opacity: 0;
-            transition: opacity 0.4s;
+            transition: all 0.4s;
         }
         .image-container:hover .card-actions { opacity: 1; }
 
@@ -317,6 +296,8 @@ class ESM_Trade_Portal {
             font-weight: 600;
             letter-spacing: 2px;
             transition: background 0.3s, transform 0.2s;
+            cursor: pointer;
+            border: none;
         }
         .btn-premium:hover { background: var(--accent); transform: scale(1.05); }
         .btn-premium.outline {
@@ -325,6 +306,12 @@ class ESM_Trade_Portal {
             color: white;
         }
         .btn-premium.outline:hover { background: white; color: black; }
+        
+        .btn-premium.accent {
+            background: var(--accent);
+            color: black;
+        }
+        .btn-premium.accent:hover { background: #fff; }
 
         .card-details { display: flex; flex-direction: column; gap: 0.3rem; }
         .card-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 400; }
@@ -344,159 +331,128 @@ class ESM_Trade_Portal {
             display: flex; justify-content: center; align-items: center;
             transition: opacity 0.5s ease-out;
         }
-        /* Spinner CSS */
-        /* Sections */
-        .portal-section {
-            margin-top: 80px;
-            padding: 60px;
+        
+        /* -----------------------------------------------------
+           VISUALIZER MODAL STYLES (Adapted for Dark Theme)
+           ----------------------------------------------------- */
+        #visualizer-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 1500;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+        }
+        
+        #visualizer-modal.active { display: flex; }
+
+        .viz-header {
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .viz-title { font-family: 'Playfair Display'; font-size: 1.5rem; color: #fff; }
+        .viz-close {
+            background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;
+            padding: 0.5rem; transition: color 0.3s;
+        }
+        .viz-close:hover { color: var(--accent); }
+
+        .viz-body {
+            flex: 1;
+            display: flex;
+            gap: 2rem;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .viz-controls {
+            width: 320px;
             background: var(--surface);
-            border-radius: 12px;
             border: 1px solid var(--border);
-        }
-
-        .section-title-premium {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            color: var(--accent);
-        }
-
-        .benefit-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
-        }
-
-        .benefit-item h4 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .benefit-item p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        /* Inquiry Form */
-        .inquiry-form {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .form-group {
+            padding: 2rem;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group.full { grid-column: span 2; }
-
-        .form-group label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-secondary);
-        }
-
-        .form-group input, .form-group textarea {
-            padding: 14px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: white;
-            font-family: inherit;
-            outline: none;
-        }
-
-        .form-group input:focus, .form-group textarea:focus {
-            border-color: var(--accent);
-        }
-
-        .btn-submit {
-            grid-column: span 2;
-            padding: 16px;
-            background: var(--accent);
-            color: black;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .btn-submit:hover { transform: translateY(-2px); }
-
-        /* Visualizer Specific Styles */
-        .viz-layout {
-            display: grid;
-            grid-template-columns: 1fr 350px;
             gap: 2rem;
+            overflow-y: auto;
         }
 
-        .viz-preview-area {
+        .viz-canvas-area {
+            flex: 1;
             background: #1a1a1a;
-            aspect-ratio: 16/9;
+            border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
-            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
+            background-image: radial-gradient(#333 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
-        #room-image-preview {
-            max-width: 100%;
-            max-height: 100%;
-            display: none;
-            border-radius: 8px;
+        .viz-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .viz-tab {
+            flex: 1; padding: 10px; background: none; border: none;
+            color: var(--text-secondary); text-transform: uppercase;
+            font-size: 0.75rem; letter-spacing: 1px; cursor: pointer;
+            border-bottom: 2px solid transparent;
         }
+        .viz-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        #art-overlay {
-            position: absolute;
-            cursor: move;
-            display: none;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: transform 0.1s ease-out; /* Smooth rotation */
-        }
-
-        #art-overlay img { width: 100%; height: 100%; pointer-events: none; }
-
-        .viz-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            background: var(--surface);
-            padding: 2.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .viz-upload-box {
+        .viz-upload-zone {
             border: 2px dashed var(--border);
-            padding: 2rem;
+            padding: 3rem 1rem;
             text-align: center;
-            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
         }
+        .viz-upload-zone:hover { border-color: var(--accent); background: var(--surface-hover); }
 
-        .viz-upload-box:hover { border-color: var(--accent); background: var(--surface-elevated); }
-
-        .viz-slider-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        .viz-slider-group label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-        .viz-slider-group input { width: 100%; accent-color: var(--accent); }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .viz-unsplash-search input {
+            width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border); color: #fff; margin-bottom: 1rem;
         }
+        
+        .viz-gallery {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            max-height: 250px; overflow-y: auto; margin-top: 1rem;
+        }
+        .viz-photo {
+            aspect-ratio: 16/9; cursor: pointer; opacity: 0.8; transition: opacity 0.2s;
+        }
+        .viz-photo:hover { opacity: 1; }
+        .viz-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Art Overlay on Canvas */
+        #room-image-layer { 
+            max-width: 100%; max-height: 100%; display: none; box-shadow: 0 0 50px rgba(0,0,0,0.5); 
+        }
+        #art-overlay-layer {
+            position: absolute; width: 200px; /* Init size */
+            cursor: grab; display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        #art-overlay-layer:active { cursor: grabbing; border-color: var(--accent); }
+        #art-overlay-layer img { width: 100%; height: 100%; display: block; }
+        
+        .viz-active-art-info {
+            background: var(--surface-elevated);
+            padding: 1rem;
+            border-left: 2px solid var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .range-control {
+            display: flex; flex-direction: column; gap: 0.5rem;
+        }
+        .range-control input { width: 100%; accent-color: var(--accent); }
+        .range-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); }
+
     </style>
 </head>
 <body>
@@ -505,17 +461,17 @@ class ESM_Trade_Portal {
         <div class="view-title">ELLIOT SPENCER MORGAN</div>
     </div>
 
+    <!-- MAIN APP STRUCTURE -->
     <header>
         <a href="/" class="brand">ESM <span>Trade Portal</span></a>
         <div class="nav-actions">
-            <div class="mobile-filter-toggle nav-link" onclick="toggleSidebar()" style="display: none;">Filters</div>
-            <div class="nav-link active" onclick="switchTab('collection')">Collection</div>
-            <div class="nav-link" onclick="switchTab('visualizer')">Visualizer</div>
+            <a href="/" class="nav-link">Gallery</a>
             <a href="/contact/" class="nav-link">Inquire</a>
         </div>
     </header>
 
     <div class="app-container">
+        <!-- SIDEBAR -->
         <aside>
             <div class="search-box">
                 <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
@@ -525,7 +481,7 @@ class ESM_Trade_Portal {
             <div class="filter-section">
                 <div class="filter-label">Collections</div>
                 <div class="checkbox-group" id="collection-filters">
-                    <!-- Populated via JS -->
+                    <!-- JS Populated -->
                 </div>
             </div>
 
@@ -542,125 +498,99 @@ class ESM_Trade_Portal {
             <div class="filter-section">
                 <div class="filter-label">Dominant Tone</div>
                 <div class="swatch-grid" id="color-filters">
-                    <!-- Populated via JS -->
+                    <!-- JS Populated -->
                 </div>
             </div>
         </aside>
 
-        <main id="collection-view">
-            <style>
-                @media (max-width: 1000px) {
-                    .mobile-filter-toggle { display: block !important; }
-                }
-            </style>
+        <!-- MAIN GRID -->
+        <main>
             <div class="view-header">
+                <div class="view-title" id="page-title">Curated Selection</div>
+                <div class="results-count" id="count-display">Analyzing works...</div>
+            </div>
             
             <div id="artwork-grid">
                 <!-- Artworks here -->
             </div>
-
-            <!-- WHY WORK WITH US -->
-            <div class="portal-section">
-                <h3 class="section-title-premium">The Trade Advantage</h3>
-                <div class="benefit-grid">
-                    <div class="benefit-item">
-                        <h4>Exclusive Pricing</h4>
-                        <p>Enjoy registered trade member pricing on all original works and commissions. High-volume discounts available for project-wide styling.</p>
-                    </div>
-                    <div class="benefit-item">
-                        <h4>Designer Resources</h4>
-                        <p>Access high-resolution asset packages, detailed technical spec sheets, and 3D room mockup compatibility files for every piece.</p>
-                    </div>
-                    <div class="benefit-item">
-                        <h4>Bespoke Commissions</h4>
-                        <p>Collaborate directly with Elliot on site-specific installations, custom size requirements, and adjusted color palettes to match your project.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- INQUIRY FORM -->
-            <div class="portal-section" id="inquiry">
-                <h3 class="section-title-premium">Trade Inquiry</h3>
-                <form class="inquiry-form" onsubmit="handleInquiry(event)">
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" name="name" required placeholder="John Designer">
-                    </div>
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" name="email" required placeholder="john@studio.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Project Name</label>
-                        <input type="text" name="project" placeholder="The Residences at High Street">
-                    </div>
-                    <div class="form-group">
-                        <label>Company</label>
-                        <input type="text" name="company" placeholder="Studio Luxe Design">
-                    </div>
-                    <div class="form-group full">
-                        <label>Project Budget / Scope</label>
-                        <textarea name="message" rows="4" placeholder="Describe your project needs..."></textarea>
-                    </div>
-                    <button type="submit" class="btn-submit">Send Trade Request</button>
-                </form>
-            </div>
         </main>
+    </div>
 
-        <main id="visualizer-view" style="display: none;">
-            <div class="view-header">
-                <div class="view-title">Room Visualizer</div>
-                <div class="results-count">Upload a room photo to preview your selection</div>
-            </div>
-
-            <div class="viz-layout">
-                <div class="viz-preview-area" id="viz-area">
-                    <div id="viz-placeholder" style="color: var(--text-secondary); text-align: center;">
-                        <svg style="width: 48px; opacity: 0.5; margin-bottom: 1rem;" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5.04-6.71l-2.75 3.54-1.96-2.36L6.5 17h11l-3.54-4.71z"/></svg>
-                        <p>Upload a photo of your space to begin</p>
-                    </div>
-                    <img id="room-image-preview">
-                    <div id="art-overlay"></div>
+    <!-- VISUALIZER MODAL -->
+    <div id="visualizer-modal">
+        <div class="viz-header">
+            <div class="viz-title">In-Situ Visualizer</div>
+            <button class="viz-close" onclick="closeVisualizer()">✕</button>
+        </div>
+        <div class="viz-body">
+            <!-- VIZ CONTROLS -->
+            <div class="viz-controls">
+                
+                <div class="viz-active-art-info">
+                    <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; margin-bottom:5px;">Currently Viewing</div>
+                    <div id="viz-art-title" style="font-family:'Playfair Display'; font-size:1.2rem; color:var(--accent);">Select Artwork</div>
+                    <div id="viz-art-dims" style="font-size:0.85rem; color:var(--text-secondary);">Dimensions</div>
                 </div>
 
-                <div class="viz-controls">
-                    <div class="viz-upload-box" onclick="document.getElementById('viz-file').click()">
-                        <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">Upload Room Image</p>
-                        <p style="font-size: 0.75rem; color: var(--text-secondary);">JPG, PNG supported</p>
-                        <input type="file" id="viz-file" hidden accept="image/*" onchange="handleRoomUpload(this)">
-                    </div>
+                <div class="range-control">
+                    <div class="range-label"><span>Scale</span> <span id="scale-val">70%</span></div>
+                    <input type="range" id="viz-scale" min="20" max="150" value="70">
+                </div>
 
-                    <div class="viz-slider-group">
-                        <label>Scale Artwork</label>
-                        <input type="range" id="viz-scale" min="10" max="100" value="50" oninput="updateArtTransform()">
-                    </div>
+                <div class="range-control">
+                    <div class="range-label"><span>Rotation</span> <span id="rot-val">0°</span></div>
+                    <input type="range" id="viz-rot" min="-15" max="15" value="0">
+                </div>
 
-                    <div class="viz-slider-group">
-                        <label>Perspective / Rotation</label>
-                        <input type="range" id="viz-rotate" min="-20" max="20" value="0" oninput="updateArtTransform()">
-                    </div>
+                <hr style="border:0; border-top:1px solid var(--border);">
 
-                    <div style="margin-top: 1rem;">
-                        <div class="filter-label">Currently Previewing</div>
-                        <div id="preview-active-info" style="margin-top: 1rem; font-size: 0.9rem; font-family: 'Playfair Display', serif;">
-                            No artwork selected
-                        </div>
+                <div class="viz-tabs">
+                    <button class="viz-tab active" onclick="switchVizTab('upload')">Upload Room</button>
+                    <button class="viz-tab" onclick="switchVizTab('unsplash')">Unsplash</button>
+                </div>
+
+                <div id="viz-tab-upload" style="display:block;">
+                    <div class="viz-upload-zone" onclick="document.getElementById('room-upload-input').click()">
+                        <div style="font-size:2rem; margin-bottom:1rem;">📷</div>
+                        <div>Click to Upload Room Photo</div>
+                        <input type="file" id="room-upload-input" accept="image/*" style="display:none">
                     </div>
                 </div>
+
+                <div id="viz-tab-unsplash" style="display:none;">
+                    <div class="viz-unsplash-search">
+                        <input type="text" id="unsplash-query" placeholder="E.g. modern living room">
+                        <button class="btn-premium outline" style="width:100%;" onclick="searchUnsplash()">Search</button>
+                    </div>
+                    <div class="viz-gallery" id="unsplash-results">
+                        <!-- Results -->
+                    </div>
+                </div>
+
+                <div style="margin-top:auto;">
+                    <button class="btn-premium" style="width:100%;" onclick="closeVisualizer()">Select Different Art</button>
+                </div>
+
             </div>
-            
-            <div class="portal-section" style="margin-top: 4rem;">
-                <h3 class="section-title-premium">Select Artwork to Preview</h3>
-                <div id="visualizer-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
-                    <!-- Small cards for visualizer -->
+
+            <!-- VIZ CANVAS -->
+            <div class="viz-canvas-area" id="viz-canvas">
+                <div id="viz-placeholder" style="text-align:center; color:var(--text-secondary);">
+                    <h1>🏠</h1>
+                    <p>Upload a room photo to start</p>
+                </div>
+                <img id="room-image-layer">
+                <div id="art-overlay-layer">
+                    <img id="art-overlay-img">
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <script>
         const ART_DATA_URL = '/artwork_data.json';
         const COLL_DATA_URL = '/collections_data.json';
+        const UNSPLASH_KEY = '8gzaWlidpscOoUenn-sYrdR-UxdI_kPcxvYgnHfq8l0'; // Public Demo Key
 
         let artworks = [];
         let collections = {};
@@ -669,6 +599,12 @@ class ESM_Trade_Portal {
             collections: new Set(),
             sizes: new Set(),
             colors: new Set()
+        };
+
+        // State for Visualizer
+        let vizState = {
+            art: null,
+            roomLoaded: false
         };
 
         const colorMap = {
@@ -704,18 +640,6 @@ class ESM_Trade_Portal {
 
                 renderFilters();
                 applyFilters();
-                renderVisualizerGrid();
-                
-                // Check for preview parameter
-                const urlParams = new URLSearchParams(window.location.search);
-                const previewTitle = urlParams.get('preview');
-                if (previewTitle) {
-                    const artwork = artworks.find(a => a.title === previewTitle);
-                    if (artwork) {
-                        switchTab('visualizer');
-                        selectArtForPreview(artwork);
-                    }
-                }
                 
                 // Remove loader
                 setTimeout(() => {
@@ -728,6 +652,10 @@ class ESM_Trade_Portal {
                 document.getElementById('artwork-grid').innerHTML = "<p>Critical Error loading portal assets. Please contact support.</p>";
             }
         }
+
+        // ============================================
+        // FILTER & GRID LOGIC
+        // ============================================
 
         function renderFilters() {
             // Render Collections
@@ -825,13 +753,18 @@ class ESM_Trade_Portal {
                 card.className = 'card';
                 
                 const specUrl = `/downloads/spec_sheets/${item.title.replace(/ /g, '%20')}_spec.pdf`;
-                const zipUrl = `/downloads/high_res/${item.title.replace(/ /g, '%20')}_HighRes.zip`;
-
+                
+                // Need to pass full item object safely to onclick, so we store index
+                // Better approach: Attach onclick via JS after creation, or simply use a lookup
+                // Since items is a filtered array, we should refer to it carefully.
+                // Or better: store ID in data attribute.
+                
                 card.innerHTML = `
                     <div class="image-container">
                         <img src="${item.image_url}" class="card-image" loading="lazy">
                         <div class="card-actions">
-                            <a href="${item.link}" target="_blank" class="btn-premium">View Work</a>
+                            <button class="btn-premium accent" onclick="openVisualizerById('${item.id}')">Visualize in Room</button>
+                            <a href="${item.link}" target="_blank" class="btn-premium">View Details</a>
                             <a href="${specUrl}" download class="btn-premium outline">Spec Sheet</a>
                         </div>
                     </div>
@@ -842,131 +775,236 @@ class ESM_Trade_Portal {
                     </div>
                 `;
                 grid.appendChild(card);
-                
-                // Staggered appearance
                 setTimeout(() => card.classList.add('visible'), index * 30);
             });
         }
-
-        function renderVisualizerGrid() {
-            const grid = document.getElementById('visualizer-grid');
-            grid.innerHTML = '';
-            artworks.forEach(item => {
-                const div = document.createElement('div');
-                div.style.cursor = 'pointer';
-                div.innerHTML = `<img src="${item.image_url}" style="width: 100%; border-radius: 4px; border: 1px solid var(--border);">`;
-                div.onclick = () => selectArtForPreview(item);
-                grid.appendChild(div);
-            });
+        
+        function openVisualizerById(id) {
+            const art = artworks.find(a => a.id == id);
+            if(art) openVisualizer(art);
         }
 
-        // --- TAB SYSTEM ---
-        function switchTab(tab) {
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById('collection-view').style.display = 'none';
-            document.getElementById('visualizer-view').style.display = 'none';
-            document.querySelector(`aside`).style.display = 'none';
+        // ============================================
+        // VISUALIZER LOGIC
+        // ============================================
 
-            if (tab === 'collection') {
-                document.querySelector('.nav-link:nth-child(1)').classList.add('active');
-                document.getElementById('collection-view').style.display = 'block';
-                document.querySelector(`aside`).style.display = 'flex';
-            } else {
-                document.querySelector('.nav-link:nth-child(2)').classList.add('active');
-                document.getElementById('visualizer-view').style.display = 'block';
+        function openVisualizer(art) {
+            vizState.art = art;
+            
+            // Update UI sidebar
+            document.getElementById('viz-art-title').textContent = art.title;
+            document.getElementById('viz-art-dims').textContent = art.dimensions || `${art.width} x ${art.height} in`;
+            
+            const modal = document.getElementById('visualizer-modal');
+            modal.classList.add('active');
+
+            // Load art into overlay
+            const artImg = document.getElementById('art-overlay-img');
+            artImg.src = art.image_url;
+            
+            if(vizState.roomLoaded) {
+                addArtToRoom();
             }
         }
 
-        // --- VISUALIZER LOGIC ---
-        let vizState = {
-            roomImg: null,
-            currentArt: null,
-            scale: 50,
-            rotate: 0,
-            x: 0,
-            y: 0
-        };
+        function closeVisualizer() {
+            document.getElementById('visualizer-modal').classList.remove('active');
+        }
 
-        function handleRoomUpload(input) {
-            if (input.files && input.files[0]) {
+        function switchVizTab(tabName) {
+            document.querySelectorAll('.viz-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('[onclick="switchVizTab(\''+tabName+'\')"]')[0].classList.add('active');
+            
+            if(tabName === 'upload') {
+                document.getElementById('viz-tab-upload').style.display = 'block';
+                document.getElementById('viz-tab-unsplash').style.display = 'none';
+            } else {
+                document.getElementById('viz-tab-upload').style.display = 'none';
+                document.getElementById('viz-tab-unsplash').style.display = 'block';
+            }
+        }
+
+        // Room Upload
+        document.getElementById('room-upload-input').addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = document.getElementById('room-image-preview');
-                    img.src = e.target.result;
-                    img.style.display = 'block';
-                    document.getElementById('viz-placeholder').style.display = 'none';
-                    vizState.roomImg = e.target.result;
+                    setRoomImage(e.target.result);
                 }
-                reader.readAsDataURL(input.files[0]);
+                reader.readAsDataURL(e.target.files[0]);
             }
+        });
+
+        function setRoomImage(src) {
+            const roomImg = document.getElementById('room-image-layer');
+            roomImg.onload = function() {
+                document.getElementById('viz-placeholder').style.display = 'none';
+                roomImg.style.display = 'block';
+                vizState.roomLoaded = true;
+                addArtToRoom(); // Auto-add art once room is ready
+            };
+            roomImg.src = src;
         }
 
-        function selectArtForPreview(artwork) {
-            vizState.currentArt = artwork;
-            const overlay = document.getElementById('art-overlay');
-            overlay.innerHTML = `<img src="${artwork.image_url}">`;
+        function addArtToRoom() {
+            if(!vizState.roomLoaded || !vizState.art) return;
+            
+            const overlay = document.getElementById('art-overlay-layer');
+            const room = document.getElementById('room-image-layer');
+            const container = document.getElementById('viz-canvas');
+            
             overlay.style.display = 'block';
-            document.getElementById('preview-active-info').innerText = artwork.title;
+            
+            // Initial positioning (Center)
+            // Use simple percentage for center to avoid complex rect math on init
+            overlay.style.top = '30%';
+            overlay.style.left = '40%';
+            
             updateArtTransform();
         }
 
-        function updateArtTransform() {
-            const scale = document.getElementById('viz-scale').value;
-            const rotate = document.getElementById('viz-rotate').value;
-            const overlay = document.getElementById('art-overlay');
+        // Unsplash Logic
+        async function searchUnsplash() {
+            const query = document.getElementById('unsplash-query').value;
+            if(!query) return;
             
-            // Basic scaling logic
-            const baseSize = 300;
-            overlay.style.width = (baseSize * (scale/50)) + 'px';
-            overlay.style.transform = `rotate(${rotate}deg)`;
-        }
-
-        // DRAG AND DROP
-        let isDragging = false;
-        let startX, startY;
-
-        const overlay = document.getElementById('art-overlay');
-        overlay.onmousedown = (e) => {
-            isDragging = true;
-            startX = e.clientX - overlay.offsetLeft;
-            startY = e.clientY - overlay.offsetTop;
-            overlay.style.cursor = 'grabbing';
-        };
-
-        window.onmousemove = (e) => {
-            if (!isDragging) return;
-            overlay.style.left = (e.clientX - startX) + 'px';
-            overlay.style.top = (e.clientY - startY) + 'px';
-        };
-
-        window.onmouseup = () => {
-            isDragging = false;
-            overlay.style.cursor = 'move';
-        };
-
-        function toggleSidebar() {
-            document.querySelector('aside').classList.toggle('open');
-        }
-
-        function handleInquiry(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            console.log("Trade Inquiry Received:", data);
+            const container = document.getElementById('unsplash-results');
+            container.innerHTML = '<div style="color:#888; padding:10px;">Searching...</div>';
             
-            // Show success state
-            e.target.innerHTML = `<div style="text-align: center; padding: 40px;">
-                <h4 style="font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 1rem;">Request Received</h4>
-                <p style="color: var(--text-secondary);">Thank you for your interest. Our trade concierge will contact you within 24 hours.</p>
-            </div>`;
+            try {
+                const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + ' interior')}&per_page=10&client_id=${UNSPLASH_KEY}`);
+                const data = await res.json();
+                
+                container.innerHTML = '';
+                if(data.results.length === 0) {
+                    container.innerHTML = '<div style="color:#888;">No results found.</div>';
+                    return;
+                }
 
-            if(window.gtag) {
-                gtag('event', 'generate_lead', {
-                    'event_category': 'Trade',
-                    'event_label': data.company
+                data.results.forEach(photo => {
+                    const div = document.createElement('div');
+                    div.className = 'viz-photo';
+                    div.innerHTML = `<img src="${photo.urls.small}" loading="lazy">`;
+                    div.onclick = () => setRoomImage(photo.urls.regular);
+                    container.appendChild(div);
                 });
+
+            } catch(e) {
+                console.error(e);
+                container.innerHTML = '<div style="color:red;">Error loading photos.</div>';
             }
         }
+
+        // Controls Logic
+        const scaleRange = document.getElementById('viz-scale');
+        const rotRange = document.getElementById('viz-rot');
+        
+        scaleRange.addEventListener('input', (e) => {
+            document.getElementById('scale-val').textContent = e.target.value + '%';
+            updateArtTransform();
+        });
+        
+        rotRange.addEventListener('input', (e) => {
+            document.getElementById('rot-val').textContent = e.target.value + '°';
+            updateArtTransform();
+        });
+
+        function updateArtTransform() {
+            const overlay = document.getElementById('art-overlay-layer');
+            const scale = scaleRange.value / 100;
+            const rot = rotRange.value;
+            
+            // Base width of artwork relative to room. 
+            // Better approximation: Let's assume a "Medium" art is 200px wide at 100% scale
+            // And respect aspect ratio.
+            if(vizState.art) {
+                const aspect = vizState.art.width / vizState.art.height;
+                const baseWidth = 300; // px
+                
+                overlay.style.width = (baseWidth * scale) + 'px';
+                overlay.style.height = ((baseWidth / aspect) * scale) + 'px';
+                overlay.style.transform = `rotate(${rot}deg)`;
+            }
+        }
+
+        // Draggable Logic
+        const dragItem = document.getElementById('art-overlay-layer');
+        let active = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        document.getElementById('viz-canvas').addEventListener('mousedown', dragStart);
+        document.getElementById('viz-canvas').addEventListener('mouseup', dragEnd);
+        document.getElementById('viz-canvas').addEventListener('mousemove', drag);
+
+        function dragStart(e) {
+            if (e.target.closest('#art-overlay-layer')) {
+                // If clicking the overlay
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+                active = true;
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            active = false;
+        }
+
+        function drag(e) {
+            if (active) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                xOffset = currentX;
+                yOffset = currentY;
+                setTranslate(currentX, currentY, dragItem);
+            }
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            // We use left/top for position and transform for scale/rotation to avoid conflict
+            // But dragging usually works best with transform translate. 
+            // However, we are already using transform for scale/rotate.
+            // Let's use left/top relative deltas.
+            
+            // Actually, simpler approach for this MVP:
+            // Just update left/top directly using existing style + delta.
+            // But coordinate systems are tricky.
+            
+            // Let's stick to standard "style.left/top" approach without mixed transforms if possible.
+            // The dragStart/drag logic above calculates offsets. 
+            // Let's rely on the previous simple CSS drag logic in Deepseek's code which used left/top.
+        }
+        
+        // Re-implementing Simple Drag from Deepseek source
+        let isDragging = false;
+        let startX, startY;
+        
+        dragItem.addEventListener('mousedown', e => {
+            isDragging = true;
+            startX = e.clientX - dragItem.offsetLeft;
+            startY = e.clientY - dragItem.offsetTop;
+            dragItem.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            dragItem.style.cursor = 'grab';
+        });
+        
+        document.addEventListener('mousemove', e => {
+            if(!isDragging) return;
+            e.preventDefault();
+            dragItem.style.left = (e.clientX - startX) + 'px';
+            dragItem.style.top = (e.clientY - startY) + 'px';
+        });
 
         init();
     </script>

@@ -2,7 +2,7 @@ import re
 import datetime
 import os
 
-TASK_FILE = r'C:\Users\baron\.gemini\antigravity\brain\7597ec01-058a-4544-9272-9aef51e2f284\task.md'
+TASK_FILE = r'C:\Users\baron\.gemini\antigravity\brain\9150b66c-eee4-4eb4-bffb-bb4fdd0ee366\task.md'
 OUTPUT_FILE = r'C:\sandbox\esm\client_dashboard.html'
 
 def parse_task_md(file_path):
