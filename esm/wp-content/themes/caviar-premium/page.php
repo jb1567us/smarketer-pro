@@ -173,7 +173,7 @@ while ( have_posts() ) :
         </div>
     </div>
     <?php else: ?>
-        <p style="text-align:center; color:red;">No image URL found in JSON or WordPress for this page.</p>
+        <!-- <p style="text-align:center; color:red;">No image URL found in JSON or WordPress for this page.</p> -->
     <?php endif; ?>
 
     <?php if ($meta['price']) : ?>

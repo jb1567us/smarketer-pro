@@ -3,8 +3,8 @@
 header('Content-Type: text/plain');
 
 $filesToDelete = [
-    'unzip_specs.php',
-    'spec_sheets_v3.zip',
+    'deploy_all.php',
+    'deploy_json.php',
     'cleanup.php'
 ];
 

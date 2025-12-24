@@ -4,9 +4,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 urls = [
     'https://elliotspencermorgan.com/caviarpainting/',
-    'https://elliotspencermorgan.com/boldpainting-4/',
-    'https://elliotspencermorgan.com/floating_6_-_rabbitsculpture/',
-    'https://elliotspencermorgan.com/floating_6_-_rabbitSculpture/'
+    'https://elliotspencermorgan.com/honeycomb_-_mulch_seriescollage/',
+    'https://elliotspencermorgan.com/floating_5_-_mothsculpture/',
 ]
 
 with open('verification_results.txt', 'w') as f:

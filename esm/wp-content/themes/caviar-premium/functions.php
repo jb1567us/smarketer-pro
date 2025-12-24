@@ -70,4 +70,15 @@ function caviar_get_tags_list($id) {
 
 // Disable WordPress Native Lazy Loading to prevent placeholder issues
 add_filter( 'wp_lazy_loading_enabled', '__return_false' );
+
+// Force load ESM Collection Template (Deployment Fix)
+$esm_template = WP_CONTENT_DIR . '/mu-plugins/esm-collection-template.php';
+if (file_exists($esm_template)) {
+    require_once $esm_template;
+} else {
+    $esm_template_fallback = ABSPATH . 'wp-content/mu-plugins/esm-collection-template.php';
+    if (file_exists($esm_template_fallback)) {
+        require_once $esm_template_fallback;
+    }
+}
 ?>

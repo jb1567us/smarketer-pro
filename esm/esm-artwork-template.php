@@ -62,6 +62,8 @@ class ESM_Artwork_Template
 
     public function override_template($template)
     {
+        $post = get_post();
+        
         // Debug: active
         echo "<!-- ESM DEBUG: Override Template Called. Singular: " . (is_singular() ? 'YES' : 'NO') . " Page: " . (is_page() ? 'YES' : 'NO') . " PostType: " . get_post_type() . " -->";
 
@@ -115,6 +117,8 @@ class ESM_Artwork_Template
     private function render_full_page($post, $data)
     {
         $title = trim($post->post_title);
+        $debug_img = isset($data['image_url']) ? $data['image_url'] : 'NOT SET';
+        echo "\n<!-- DEBUG DATA: ImageURL='{$debug_img}' -->\n";
         
         // --- DATA PREP ---
         $price = isset($data['price']) ? '$' . number_format($data['price']) : 'Inquire';
@@ -125,7 +129,10 @@ class ESM_Artwork_Template
         $width = isset($data['width']) ? $data['width'] : '';
         $height = isset($data['height']) ? $data['height'] : '';
 
-        $medium = isset($data['mediumsDetailed']) ? $data['mediumsDetailed'] : (isset($data['medium']) ? $data['medium'] : 'Mixed Media');
+        // Safely handle medium which can be string or array in some legacy data
+        $mediumRaw = isset($data['mediumsDetailed']) ? $data['mediumsDetailed'] : (isset($data['medium']) ? $data['medium'] : 'Mixed Media');
+        $medium = is_string($mediumRaw) ? $mediumRaw : (is_array($mediumRaw) ? implode(', ', $mediumRaw) : 'Mixed Media');
+        
         $year = isset($data['year']) ? $data['year'] : '';
         $styles = isset($data['styles']) ? $data['styles'] : '';
         
@@ -135,10 +142,17 @@ class ESM_Artwork_Template
         if ($detected_colors) $tags_combined[] = $detected_colors;
         $tags_display = implode(', ', $tags_combined);
 
-        // Use custom description if available, otherwise fallback to generated
-        if (!empty($data['description'])) {
-            $desc = $data['description'];
-        } else {
+        // Use custom description if available and valid, otherwise fallback
+        $desc = '';
+        if (!empty($data['description']) && is_string($data['description'])) {
+            $candidate_desc = $data['description'];
+            // Validation: Reject if it looks like raw JSON or PHP code
+            if (strpos($candidate_desc, '<?') === false && strpos(trim($candidate_desc), '{') !== 0) {
+                $desc = $candidate_desc;
+            }
+        }
+        
+        if (empty($desc)) {
             $desc = "Original {$medium} painting by Elliot Spencer Morgan.";
             if ($year) $desc .= " Created in {$year}.";
             if ($styles) $desc .= " Featuring elements of {$styles}.";
@@ -150,7 +164,7 @@ class ESM_Artwork_Template
         if ($installation === 'No') $installation = "Requires Framing";
         
         $framing = isset($data['frame']) ? $data['frame'] : "Unframed";
-        $shipping = isset($data['shippingFrom']) ? $data['shippingFrom'] : "United States";
+        $shipping = isset($data['shippingFrom']) ? $data['shippingFrom'] : "Worldwide";
         $packaging = isset($data['packaging']) ? $data['packaging'] : "Ships in a Box";
 
         $image_url = isset($data['image_url']) ? $data['image_url'] : '';

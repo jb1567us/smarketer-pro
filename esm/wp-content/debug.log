@@ -1,1 +1,2 @@
 [24-Dec-2025 14:34:29 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): No connection could be made because the target machine actively refused it in C:\sandbox\esm\wp-includes\class-wpdb.php on line 1994
+[24-Dec-2025 22:55:48 UTC] PHP Warning:  mysqli_real_connect(): (HY000/2002): No connection could be made because the target machine actively refused it in C:\sandbox\esm\wp-includes\class-wpdb.php on line 1994

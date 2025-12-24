@@ -7,6 +7,10 @@ def generate():
     with open('esm-trade-portal.php', 'r', encoding='utf-8') as f:
         plugin_code = f.read()
 
+    # Read JS code
+    with open('esm-trade-portal.js', 'r', encoding='utf-8') as f:
+        js_code = f.read()
+
     # Read image
     with open('istockphoto-1535511484-1024x1024.jpg', 'rb') as f:
         img_data = f.read()
@@ -39,6 +43,18 @@ if (file_put_contents($plugin_path, $plugin_code)) {{
     echo "<div style='color:green'>✅ Plugin updated at $plugin_path</div>";
 }} else {{
     echo "<div style='color:red'>❌ Failed to update plugin at $plugin_path</div>";
+}}
+
+// 3. Deploy JS
+$js_path = $root . '/wp-content/mu-plugins/esm-trade-portal.js';
+$js_code = <<<'JS_EOD'
+{js_code}
+JS_EOD;
+
+if (file_put_contents($js_path, $js_code)) {{
+    echo "<div style='color:green'>✅ JS updated at $js_path</div>";
+}} else {{
+    echo "<div style='color:red'>❌ Failed to update JS at $js_path</div>";
 }}
 
 echo "<br><a href='/trade/' style='padding:10px; background:#000; color:#fff; text-decoration:none'>Return to Trade Portal</a>";

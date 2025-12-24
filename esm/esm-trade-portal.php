@@ -10,6 +10,8 @@ echo "<!-- DEBUG: esm-trade-portal.php FILE LOADED -->";
 
 if (!defined('ABSPATH')) exit;
 
+$log_file = plugin_dir_path(__FILE__) . 'debug_trace.log';
+
 class ESM_Trade_Portal {
 
     public function __construct() {

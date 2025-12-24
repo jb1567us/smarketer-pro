@@ -1,6 +1,6 @@
 <?php
 // load WP environment
-require_once($_SERVER['DOCUMENT_ROOT'] . '/wp-load.php');
+require_once(__DIR__ . '/wp-load.php');
 
 // Enable error reporting
 ini_set('display_errors', 1);
@@ -30,92 +30,8 @@ function regenerate_collection_page($slug, $collection) {
 
     echo "Found " . count($artworks) . " artworks.\n";
 
-    // 2. Build HTML
-    $artwork_cards_html = '';
-
-    foreach ($artworks as $aw) {
-        $title = htmlspecialchars($aw['title']);
-        $image = !empty($aw['image_url']) ? $aw['image_url'] : '';
-        // Fix relative URLs if needed, but usually full URLs in JSON
-        
-        $link = !empty($aw['link']) ? $aw['link'] : '#';
-
-        // Dimensions
-        $dims = '';
-        if (isset($aw['dimensions'])) {
-            $dims = htmlspecialchars($aw['dimensions']);
-        } elseif (isset($aw['width'], $aw['height'])) {
-            $dims = $aw['width'] . ' W x ' . $aw['height'] . ' H x ' . (isset($aw['depth']) ? $aw['depth'] : '0.1') . ' D in';
-        }
-
-        // Medium
-        $medium = isset($aw['mediumsDetailed']) ? htmlspecialchars($aw['mediumsDetailed']) : (isset($aw['medium']) ? htmlspecialchars($aw['medium']) : '');
-
-        // Description - truncate if too long? No, user wants full text likely.
-        $description = isset($aw['description']) ? $aw['description'] : '';
-        // Convert newlines to breaks
-        $description = nl2br(htmlspecialchars($description));
-
-        // Card HTML
-        $card = '
-        <div class="artwork-card" style="text-align: center; margin-bottom: 50px;">
-            <a href="' . $link . '" style="display: block; width: 100%;">
-                <img src="' . $image . '" alt="' . $title . '" class="no-lazy skip-lazy" data-no-lazy="1" style="width: 100%; aspect-ratio: 3/4; object-fit: cover; margin-bottom: 10px;">
-            </a>
-            <h3 style="font-size: 18px; margin: 15px 0 5px 0;"><a href="' . $link . '" style="text-decoration: none; color: #000;">' . $title . '</a></h3>
-            <p class="details" style="font-size: 14px; color: #666; margin-bottom: 10px;">' . $dims . ' | ' . $medium . '</p>
-        </div>';
-        
-        $artwork_cards_html .= $card;
-    }
-
-    // 3. Build Related Links (Generic)
-    // We can just hardcode the list of ALL collections here for navigation
-    // Or reuse the existing "Explore More" list pattern
-    $all_collections = [
-        'blue-turquoise-collection' => 'Blue & Turquoise Collection',
-        'oversized-statement-pieces' => 'Oversized Statement Pieces',
-        'sculpture-collection' => 'Sculpture Collection',
-        'pattern-geometric' => 'Pattern & Geometric',
-        'minimalist-abstract' => 'Minimalist Abstract',
-        'neutral-tones' => 'Neutral Tones',
-        'gold-collection' => 'Gold Collection'
-    ];
-
-    $related_links_html = '';
-    foreach ($all_collections as $k => $t) {
-        if ($k === $slug) continue; // Skip self
-        $related_links_html .= '<li><a href="/' . $k . '/">' . $t . '</a></li>';
-    }
-
-    // 4. Final HTML Structure (The "Gold Standard" Template)
-    $final_html = '
-<div class="collection-page" style="margin-bottom: 60px;">
-    <div class="collection-header" style="text-align: center; max-width: 800px; margin: 0 auto 50px auto;">
-        <h1 style="font-family: \'Playfair Display\', serif; font-size: 3rem; margin-bottom: 20px;">' . $collection['title'] . '</h1>
-        <p class="collection-intro" style="font-size: 1.1rem; line-height: 1.6; color: #555;">' . (isset($collection['description']) ? $collection['description'] : '') . '</p>
-    </div>
-    
-    <div class="gold-collection-grid">
-        ' . $artwork_cards_html . '
-    </div>
-    
-    <div class="collection-cta" style="text-align: center; margin: 80px 0; padding: 60px 20px; background: #fafafa; border-radius: 4px;">
-        <h2 style="font-family: \'Playfair Display\', serif; margin-bottom: 15px;">Questions About This Collection?</h2>
-        <p style="margin-bottom: 25px; color: #666;">I\'d love to help you find the perfect piece for your space.</p>
-        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-            <a href="/contact" style="display: inline-block; background: #1a1a1a; color: #fff; padding: 15px 40px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; transition: opacity 0.3s;">Get in Touch</a>
-            <a href="/trade" style="display: inline-block; border: 1px solid #1a1a1a; color: #1a1a1a; padding: 15px 40px; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; transition: all 0.3s;">Trade Program</a>
-        </div>
-    </div>
-    
-    <div class="related-collections" style="margin: 60px 0; border-top: 1px solid #eee; padding-top: 60px;">
-        <h2 style="text-align: center; font-family: \'Playfair Display\', serif; margin-bottom: 40px;">Explore More Collections</h2>
-        <ul class="related-grid" style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; text-align: center;">
-            ' . $related_links_html . '
-        </ul>
-    </div>
-</div>';
+    // 4. Final HTML Structure - NOW HANDLED BY esm-collection-template.php
+    $final_html = '<!-- ESM Collection Template Active -->';
 
     // 5. Update WordPress Page
     $page = get_page_by_path($slug);

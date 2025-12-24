@@ -6,6 +6,10 @@
 
 $artwork_param = isset($_GET['artwork']) ? $_GET['artwork'] : '';
 $data_file = __DIR__ . '/artwork_data.json';
+if (!file_exists($data_file) && defined('ABSPATH')) {
+    $data_file = ABSPATH . 'artwork_data.json';
+}
+
 $artwork = null;
 
 if (file_exists($data_file)) {
@@ -13,9 +17,12 @@ if (file_exists($data_file)) {
     if ($data) {
         foreach ($data as $item) {
             // Match by slug or title
-            if ((isset($item['slug']) && $item['slug'] === $artwork_param) || 
-                (isset($item['title']) && $item['title'] === $artwork_param) ||
-                (isset($item['title']) && strtolower(trim($item['title'])) === strtolower(trim($artwork_param)))) {
+            $item_slug = isset($item['slug']) ? $item['slug'] : '';
+            $item_title = isset($item['title']) ? $item['title'] : '';
+            
+            if (($item_slug === $artwork_param) || 
+                ($item_title === $artwork_param) ||
+                (strtolower(trim($item_title)) === strtolower(trim($artwork_param)))) {
                 $artwork = $item;
                 break;
             }

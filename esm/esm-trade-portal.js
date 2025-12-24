@@ -149,6 +149,9 @@ async function init() {
             }
         }, 800);
 
+        // Initialize Gestures
+        setupGestures();
+
     } catch (err) {
         console.error("Portal Init Error:", err);
         const grid = document.getElementById('artwork-grid');
@@ -655,9 +658,12 @@ async function shareVisualizerScene() {
     }
 }
 
+
 // Draggable & Gesture Logic
-const dragItem = document.getElementById('art-overlay-layer');
-if (dragItem) {
+function setupGestures() {
+    const dragItem = document.getElementById('art-overlay-layer');
+    if (!dragItem) return;
+
     let isDragging = false;
     let startX, startY;
 
@@ -716,14 +722,13 @@ if (dragItem) {
         }
     }, { passive: false });
 
-    document.addEventListener('touchend', () => {
-        isDragging = false;
-        isGesturing = false;
-    });
-
-    document.addEventListener('touchmove', e => {
+    // Use document for touchmove to prevent scrolling while gesturing
+    // Note: This effectively disables scrolling while touching the art element if we prevent default
+    const dragHandler = (e) => {
         if (!isDragging && !isGesturing) return;
-        e.preventDefault();
+
+        // Only prevent default if we are actively dragging or gesturing
+        if (e.cancelable) e.preventDefault();
 
         if (isDragging && e.touches.length === 1) {
             newDrag.style.left = (e.touches[0].clientX - startX) + 'px';
@@ -759,7 +764,18 @@ if (dragItem) {
 
             updateArtTransform();
         }
-    }, { passive: false });
+    };
+
+    // Attach to the element itself for movement, or document?
+    // Attaching to document ensures we don't lose it if finger slides off, 
+    // but preventing default on document interferes with scroll.
+    // The previous code attached to document. Let's stick with that but be careful.
+    document.addEventListener('touchmove', dragHandler, { passive: false });
+
+    document.addEventListener('touchend', () => {
+        isDragging = false;
+        isGesturing = false;
+    });
 }
 
 // Wait for DOM

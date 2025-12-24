@@ -47,8 +47,4 @@ if ($pos !== false) {
         echo "ERROR: Could not write to file.";
     }
     
-} else {
-    echo "Marker not found. Dumping last 100 chars for diagnostics:\n";
-    echo htmlspecialchars(substr($content, -100));
 }
-?>

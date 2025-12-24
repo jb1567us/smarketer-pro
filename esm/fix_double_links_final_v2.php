@@ -47,4 +47,3 @@ foreach ($pages as $p) {
 }
 
 echo "Done. Fixed $fixed pages.";
-?>
