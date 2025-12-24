@@ -16,6 +16,7 @@ class ESM_Trade_Portal {
     }
 
     public function add_endpoint() {
+        wp_enqueue_script('esm-trade-portal-js', plugin_dir_url(__FILE__) . 'esm-trade-portal.js', [], '3.5', true);
         add_rewrite_rule('^trade/?$', 'index.php?esm_trade=1', 'top');
         add_rewrite_tag('%esm_trade%', '1');
     }
@@ -35,6 +36,8 @@ class ESM_Trade_Portal {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         :root {
@@ -234,11 +237,23 @@ class ESM_Trade_Portal {
         .view-title { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 400; }
         .results-count { font-size: 0.9rem; color: var(--text-secondary); letter-spacing: 1px; }
 
+/* Main Grid Fix */
         #artwork-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 3rem;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
         }
+
+        /* ... existing styles ... */
+
+        /* Visualizer Upload Tab Fix */
+        #viz-tab-upload {
+            display: block; /* Ensure visible by default */
+            padding-top: 1rem;
+        }
+
+
 
         /* Premium Card */
         .card {
@@ -310,6 +325,7 @@ class ESM_Trade_Portal {
         .btn-premium.accent {
             background: var(--accent);
             color: black;
+            border: none;
         }
         .btn-premium.accent:hover { background: #fff; }
 
@@ -379,6 +395,7 @@ class ESM_Trade_Portal {
             flex-direction: column;
             gap: 2rem;
             overflow-y: auto;
+            max-height: 100%; /* Ensure it doesn't overflow parent */
         }
 
         .viz-canvas-area {
@@ -453,7 +470,135 @@ class ESM_Trade_Portal {
         .range-control input { width: 100%; accent-color: var(--accent); }
         .range-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); }
 
-    </style>
+        /* Mobile Responsiveness */
+        @media (max-width: 992px) {
+            :root {
+                --sidebar-w: 100%;
+                --header-h: 70px;
+            }
+
+            header {
+                padding: 0 1.5rem;
+            }
+
+            .brand {
+                font-size: 1.4rem;
+            }
+
+            .nav-actions {
+                display: none; /* Hide top nav links on mobile to save space */
+            }
+
+            .app-container {
+                flex-direction: column;
+            }
+
+            aside {
+                position: fixed;
+                top: var(--header-h);
+                left: -100%;
+                width: 100%;
+                height: calc(100vh - var(--header-h));
+                background: var(--bg);
+                z-index: 1000;
+                transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 1.5rem;
+            }
+
+            aside.active {
+                left: 0;
+            }
+
+            main {
+                padding: 1.5rem;
+            }
+
+            .view-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .view-title {
+                font-size: 2rem;
+            }
+
+            #artwork-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 1rem;
+            }
+
+            .card-title {
+                font-size: 1.1rem;
+            }
+
+            .card-meta {
+                font-size: 0.75rem;
+            }
+
+            /* Visualizer Mobile */
+            .viz-body {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+                overflow-y: auto;
+            }
+
+            .viz-controls {
+                width: 100%;
+                max-height: none;
+                order: 2;
+                padding: 1.5rem;
+            }
+
+            .viz-canvas-area {
+                width: 100%;
+                height: 40vh;
+                flex: none;
+                order: 1;
+            }
+
+            .viz-header {
+                padding: 1rem 1.5rem;
+            }
+
+            .viz-title {
+                font-size: 1.2rem;
+            }
+
+            .btn-premium {
+                padding: 10px 15px;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Menu Toggle Button */
+        .mobile-filter-btn {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 992px) {
+            .mobile-filter-btn {
+                display: flex;
+            }
+        }
+            /* Loading screen fix */
+            #loader-overlay { pointer-events: none; }
+            #loader-overlay.active { pointer-events: auto; }
+</style>
 </head>
 <body>
 
@@ -468,6 +613,10 @@ class ESM_Trade_Portal {
             <a href="/" class="nav-link">Gallery</a>
             <a href="/contact/" class="nav-link">Inquire</a>
         </div>
+        <button class="mobile-filter-btn" onclick="toggleSidebar()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+            Filters
+        </button>
     </header>
 
     <div class="app-container">
@@ -546,6 +695,7 @@ class ESM_Trade_Portal {
 
                 <div class="viz-tabs">
                     <button class="viz-tab active" onclick="switchVizTab('upload')">Upload Room</button>
+                    <button class="viz-tab" onclick="switchVizTab('camera')">Camera</button>
                     <button class="viz-tab" onclick="switchVizTab('unsplash')">Unsplash</button>
                 </div>
 
@@ -554,6 +704,19 @@ class ESM_Trade_Portal {
                         <div style="font-size:2rem; margin-bottom:1rem;">📷</div>
                         <div>Click to Upload Room Photo</div>
                         <input type="file" id="room-upload-input" accept="image/*" style="display:none">
+                    </div>
+                </div>
+
+                <div id="viz-tab-camera" style="display:none;">
+                    <div style="text-align:center;">
+                        <video id="camera-stream" playsinline autoplay style="width:100%; border-radius:8px; background:#000; display:none; margin-bottom:10px;"></video>
+                        <div id="camera-error" style="color:var(--accent); font-size:0.8rem; margin-bottom:10px; display:none;"></div>
+                        
+                        <div id="camera-controls">
+                            <button class="btn-premium outline" style="width:100%; margin-bottom:10px;" onclick="startCamera()">Start Camera</button>
+                        </div>
+                        
+                        <button id="btn-capture" class="btn-premium accent" style="width:100%; display:none;" onclick="capturePhoto()">Capture Photo</button>
                     </div>
                 </div>
 
@@ -567,8 +730,10 @@ class ESM_Trade_Portal {
                     </div>
                 </div>
 
-                <div style="margin-top:auto;">
-                    <button class="btn-premium" style="width:100%;" onclick="closeVisualizer()">Select Different Art</button>
+                <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px;">
+                    <button id="btn-download-pdf" class="btn-premium outline" style="width:100%;" onclick="downloadVisualizerPDF()">Download Scene as PDF</button>
+                    <button id="btn-share-scene" class="btn-premium outline" style="width:100%; margin-top:10px;" onclick="shareVisualizerScene()">Share Scene</button>
+                    <button class="btn-premium" style="width:100%; margin-top:10px;" onclick="closeVisualizer()">Select Different Art</button>
                 </div>
 
             </div>
@@ -587,433 +752,11 @@ class ESM_Trade_Portal {
         </div>
     </div>
 
-    <script>
-        const ART_DATA_URL = '/artwork_data.json';
-        const COLL_DATA_URL = '/collections_data.json';
-        const UNSPLASH_KEY = '8gzaWlidpscOoUenn-sYrdR-UxdI_kPcxvYgnHfq8l0'; // Public Demo Key
-
-        let artworks = [];
-        let collections = {};
-        let activeFilters = {
-            search: '',
-            collections: new Set(),
-            sizes: new Set(),
-            colors: new Set()
-        };
-
-        // State for Visualizer
-        let vizState = {
-            art: null,
-            roomLoaded: false
-        };
-
-        const colorMap = {
-            'Red': '#c0392b', 'Blue': '#2980b9', 'Green': '#27ae60', 'Gold': '#d4af37',
-            'Silver': '#bdc3c7', 'Black': '#000000', 'Grey': '#7f8c8d', 'White': '#ffffff',
-            'Pink': '#e84393', 'Brown': '#63422d', 'Beige': '#f5f5dc', 'Purple': '#8e44ad',
-            'Orange': '#d35400', 'Yellow': '#f1c40f'
-        };
-
-        async function init() {
-            try {
-                // Parallel fetch
-                const [artRes, collRes] = await Promise.all([
-                    fetch(ART_DATA_URL),
-                    fetch(COLL_DATA_URL)
-                ]);
-                
-                const artRaw = await artRes.json();
-                collections = await collRes.json();
-
-                // Process Artworks
-                artworks = artRaw.filter(a => a.type === 'page' && a.image_url);
-                
-                // Map collection metadata back to artworks
-                artworks.forEach(art => {
-                    art.membership = [];
-                    for(let slug in collections) {
-                        if(collections[slug].artworks.some(ca => ca.id === art.wordpress_id || ca.wordpress_id === art.wordpress_id)) {
-                            art.membership.push(collections[slug].title);
-                        }
-                    }
-                });
-
-                renderFilters();
-                applyFilters();
-                
-                // Remove loader
-                setTimeout(() => {
-                    document.getElementById('loader-overlay').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loader-overlay').remove(), 500);
-                }, 800);
-
-            } catch (err) {
-                console.error("Portal Init Error:", err);
-                document.getElementById('artwork-grid').innerHTML = "<p>Critical Error loading portal assets. Please contact support.</p>";
-            }
-        }
-
-        // ============================================
-        // FILTER & GRID LOGIC
-        // ============================================
-
-        function renderFilters() {
-            // Render Collections
-            const collContainer = document.getElementById('collection-filters');
-            Object.values(collections).sort((a,b) => a.title.localeCompare(b.title)).forEach(coll => {
-                const label = document.createElement('label');
-                label.className = 'checkbox-item';
-                label.innerHTML = `<input type="checkbox" value="${coll.title}"> ${coll.title}`;
-                label.querySelector('input').addEventListener('change', (e) => {
-                    if(e.target.checked) activeFilters.collections.add(coll.title);
-                    else activeFilters.collections.delete(coll.title);
-                    applyFilters();
-                });
-                collContainer.appendChild(label);
-            });
-
-            // Render Colors
-            const colorContainer = document.getElementById('color-filters');
-            const uniqueColors = new Set();
-            artworks.forEach(a => a.detected_colors?.forEach(c => uniqueColors.add(c)));
-            
-            Array.from(uniqueColors).sort().forEach(color => {
-                const div = document.createElement('div');
-                div.className = 'swatch';
-                div.style.backgroundColor = colorMap[color] || '#ccc';
-                div.title = color;
-                div.addEventListener('click', () => {
-                    div.classList.toggle('active');
-                    if(div.classList.contains('active')) activeFilters.colors.add(color);
-                    else activeFilters.colors.delete(color);
-                    applyFilters();
-                });
-                colorContainer.appendChild(div);
-            });
-
-            // Search listener
-            document.getElementById('global-search').addEventListener('input', (e) => {
-                activeFilters.search = e.target.value.toLowerCase().trim();
-                applyFilters();
-            });
-
-            // Size listeners
-            document.querySelectorAll('input[name="size"]').forEach(el => {
-                el.addEventListener('change', (e) => {
-                    if(e.target.checked) activeFilters.sizes.add(e.target.value);
-                    else activeFilters.sizes.delete(e.target.value);
-                    applyFilters();
-                });
-            });
-        }
-
-        function applyFilters() {
-            const filtered = artworks.filter(art => {
-                // Search
-                if(activeFilters.search) {
-                    const matchTitle = art.title.toLowerCase().includes(activeFilters.search);
-                    const matchColl = art.membership.some(m => m.toLowerCase().includes(activeFilters.search));
-                    if(!matchTitle && !matchColl) return false;
-                }
-                
-                // Collection
-                if(activeFilters.collections.size > 0) {
-                    if(!art.membership.some(m => activeFilters.collections.has(m))) return false;
-                }
-
-                // Size
-                if(activeFilters.sizes.size > 0) {
-                    const w = parseFloat(art.width);
-                    let sizeMatch = false;
-                    if(activeFilters.sizes.has('Small') && w < 20) sizeMatch = true;
-                    if(activeFilters.sizes.has('Medium') && w >= 20 && w < 40) sizeMatch = true;
-                    if(activeFilters.sizes.has('Large') && w >= 40 && w < 60) sizeMatch = true;
-                    if(activeFilters.sizes.has('Oversized') && w >= 60) sizeMatch = true;
-                    if(!sizeMatch) return false;
-                }
-
-                // Color
-                if(activeFilters.colors.size > 0) {
-                    if(!art.detected_colors?.some(c => activeFilters.colors.has(c))) return false;
-                }
-
-                return true;
-            });
-
-            renderGrid(filtered);
-            document.getElementById('count-display').innerText = `${filtered.length} Works Identified`;
-        }
-
-        function renderGrid(items) {
-            const grid = document.getElementById('artwork-grid');
-            grid.innerHTML = '';
-            
-            items.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                
-                const specUrl = `/downloads/spec_sheets/${item.title.replace(/ /g, '%20')}_spec.pdf`;
-                
-                // Need to pass full item object safely to onclick, so we store index
-                // Better approach: Attach onclick via JS after creation, or simply use a lookup
-                // Since items is a filtered array, we should refer to it carefully.
-                // Or better: store ID in data attribute.
-                
-                card.innerHTML = `
-                    <div class="image-container">
-                        <img src="${item.image_url}" class="card-image" loading="lazy">
-                        <div class="card-actions">
-                            <button class="btn-premium accent" onclick="openVisualizerById('${item.id}')">Visualize in Room</button>
-                            <a href="${item.link}" target="_blank" class="btn-premium">View Details</a>
-                            <a href="${specUrl}" download class="btn-premium outline">Spec Sheet</a>
-                        </div>
-                    </div>
-                    <div class="card-details">
-                        <div class="card-title">${item.title}</div>
-                        <div class="card-meta">${item.dimensions || item.width + ' x ' + item.height + ' in'}</div>
-                        <div class="card-tag">${item.membership[0] || 'Original Series'}</div>
-                    </div>
-                `;
-                grid.appendChild(card);
-                setTimeout(() => card.classList.add('visible'), index * 30);
-            });
-        }
-        
-        function openVisualizerById(id) {
-            const art = artworks.find(a => a.id == id);
-            if(art) openVisualizer(art);
-        }
-
-        // ============================================
-        // VISUALIZER LOGIC
-        // ============================================
-
-        function openVisualizer(art) {
-            vizState.art = art;
-            
-            // Update UI sidebar
-            document.getElementById('viz-art-title').textContent = art.title;
-            document.getElementById('viz-art-dims').textContent = art.dimensions || `${art.width} x ${art.height} in`;
-            
-            const modal = document.getElementById('visualizer-modal');
-            modal.classList.add('active');
-
-            // Load art into overlay
-            const artImg = document.getElementById('art-overlay-img');
-            artImg.src = art.image_url;
-            
-            if(vizState.roomLoaded) {
-                addArtToRoom();
-            }
-        }
-
-        function closeVisualizer() {
-            document.getElementById('visualizer-modal').classList.remove('active');
-        }
-
-        function switchVizTab(tabName) {
-            document.querySelectorAll('.viz-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('[onclick="switchVizTab(\''+tabName+'\')"]')[0].classList.add('active');
-            
-            if(tabName === 'upload') {
-                document.getElementById('viz-tab-upload').style.display = 'block';
-                document.getElementById('viz-tab-unsplash').style.display = 'none';
-            } else {
-                document.getElementById('viz-tab-upload').style.display = 'none';
-                document.getElementById('viz-tab-unsplash').style.display = 'block';
-            }
-        }
-
-        // Room Upload
-        document.getElementById('room-upload-input').addEventListener('change', function(e) {
-            if (e.target.files && e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    setRoomImage(e.target.result);
-                }
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        });
-
-        function setRoomImage(src) {
-            const roomImg = document.getElementById('room-image-layer');
-            roomImg.onload = function() {
-                document.getElementById('viz-placeholder').style.display = 'none';
-                roomImg.style.display = 'block';
-                vizState.roomLoaded = true;
-                addArtToRoom(); // Auto-add art once room is ready
-            };
-            roomImg.src = src;
-        }
-
-        function addArtToRoom() {
-            if(!vizState.roomLoaded || !vizState.art) return;
-            
-            const overlay = document.getElementById('art-overlay-layer');
-            const room = document.getElementById('room-image-layer');
-            const container = document.getElementById('viz-canvas');
-            
-            overlay.style.display = 'block';
-            
-            // Initial positioning (Center)
-            // Use simple percentage for center to avoid complex rect math on init
-            overlay.style.top = '30%';
-            overlay.style.left = '40%';
-            
-            updateArtTransform();
-        }
-
-        // Unsplash Logic
-        async function searchUnsplash() {
-            const query = document.getElementById('unsplash-query').value;
-            if(!query) return;
-            
-            const container = document.getElementById('unsplash-results');
-            container.innerHTML = '<div style="color:#888; padding:10px;">Searching...</div>';
-            
-            try {
-                const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + ' interior')}&per_page=10&client_id=${UNSPLASH_KEY}`);
-                const data = await res.json();
-                
-                container.innerHTML = '';
-                if(data.results.length === 0) {
-                    container.innerHTML = '<div style="color:#888;">No results found.</div>';
-                    return;
-                }
-
-                data.results.forEach(photo => {
-                    const div = document.createElement('div');
-                    div.className = 'viz-photo';
-                    div.innerHTML = `<img src="${photo.urls.small}" loading="lazy">`;
-                    div.onclick = () => setRoomImage(photo.urls.regular);
-                    container.appendChild(div);
-                });
-
-            } catch(e) {
-                console.error(e);
-                container.innerHTML = '<div style="color:red;">Error loading photos.</div>';
-            }
-        }
-
-        // Controls Logic
-        const scaleRange = document.getElementById('viz-scale');
-        const rotRange = document.getElementById('viz-rot');
-        
-        scaleRange.addEventListener('input', (e) => {
-            document.getElementById('scale-val').textContent = e.target.value + '%';
-            updateArtTransform();
-        });
-        
-        rotRange.addEventListener('input', (e) => {
-            document.getElementById('rot-val').textContent = e.target.value + '°';
-            updateArtTransform();
-        });
-
-        function updateArtTransform() {
-            const overlay = document.getElementById('art-overlay-layer');
-            const scale = scaleRange.value / 100;
-            const rot = rotRange.value;
-            
-            // Base width of artwork relative to room. 
-            // Better approximation: Let's assume a "Medium" art is 200px wide at 100% scale
-            // And respect aspect ratio.
-            if(vizState.art) {
-                const aspect = vizState.art.width / vizState.art.height;
-                const baseWidth = 300; // px
-                
-                overlay.style.width = (baseWidth * scale) + 'px';
-                overlay.style.height = ((baseWidth / aspect) * scale) + 'px';
-                overlay.style.transform = `rotate(${rot}deg)`;
-            }
-        }
-
-        // Draggable Logic
-        const dragItem = document.getElementById('art-overlay-layer');
-        let active = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-        let xOffset = 0;
-        let yOffset = 0;
-
-        document.getElementById('viz-canvas').addEventListener('mousedown', dragStart);
-        document.getElementById('viz-canvas').addEventListener('mouseup', dragEnd);
-        document.getElementById('viz-canvas').addEventListener('mousemove', drag);
-
-        function dragStart(e) {
-            if (e.target.closest('#art-overlay-layer')) {
-                // If clicking the overlay
-                initialX = e.clientX - xOffset;
-                initialY = e.clientY - yOffset;
-                active = true;
-            }
-        }
-
-        function dragEnd(e) {
-            initialX = currentX;
-            initialY = currentY;
-            active = false;
-        }
-
-        function drag(e) {
-            if (active) {
-                e.preventDefault();
-                currentX = e.clientX - initialX;
-                currentY = e.clientY - initialY;
-                xOffset = currentX;
-                yOffset = currentY;
-                setTranslate(currentX, currentY, dragItem);
-            }
-        }
-
-        function setTranslate(xPos, yPos, el) {
-            // We use left/top for position and transform for scale/rotation to avoid conflict
-            // But dragging usually works best with transform translate. 
-            // However, we are already using transform for scale/rotate.
-            // Let's use left/top relative deltas.
-            
-            // Actually, simpler approach for this MVP:
-            // Just update left/top directly using existing style + delta.
-            // But coordinate systems are tricky.
-            
-            // Let's stick to standard "style.left/top" approach without mixed transforms if possible.
-            // The dragStart/drag logic above calculates offsets. 
-            // Let's rely on the previous simple CSS drag logic in Deepseek's code which used left/top.
-        }
-        
-        // Re-implementing Simple Drag from Deepseek source
-        let isDragging = false;
-        let startX, startY;
-        
-        dragItem.addEventListener('mousedown', e => {
-            isDragging = true;
-            startX = e.clientX - dragItem.offsetLeft;
-            startY = e.clientY - dragItem.offsetTop;
-            dragItem.style.cursor = 'grabbing';
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-            dragItem.style.cursor = 'grab';
-        });
-        
-        document.addEventListener('mousemove', e => {
-            if(!isDragging) return;
-            e.preventDefault();
-            dragItem.style.left = (e.clientX - startX) + 'px';
-            dragItem.style.top = (e.clientY - startY) + 'px';
-        });
-
-        init();
-    </script>
+    <!-- JS loaded via wp_enqueue_script in PHP class -->
 </body>
 </html>
         <?php
-        exit;
     }
 }
 
 new ESM_Trade_Portal();
-?>

@@ -62,12 +62,24 @@ class ESM_Artwork_Template
 
     public function override_template($template)
     {
+        // Debug: active
+        echo "<!-- ESM DEBUG: Override Template Called. Singular: " . (is_singular() ? 'YES' : 'NO') . " Page: " . (is_page() ? 'YES' : 'NO') . " PostType: " . get_post_type() . " -->";
+
         if (!is_singular() && !is_page()) {
-            return $template;
+            // Force check if it's a post with a matching title
+            $post = get_post();
+            if ($post) {
+                $title = trim($post->post_title);
+                $key = strtolower($title);
+                if (isset($this->data_map[$key])) {
+                     // It's a match, proceed!
+                } else {
+                    return $template;
+                }
+            } else {
+                return $template;
+            }
         }
-
-
-        $post = get_post();
         if (!$post) return $template;
 
         // Explicitly route Collection pages to their own template
@@ -162,15 +174,14 @@ class ESM_Artwork_Template
 
         // File Lookups
         $candidates = [
-            isset($data['title']) ? $data['title'] . '_spec.pdf' : '',
-            isset($data['slug']) ? $data['slug'] . '_spec.pdf' : '',
-            $title . '_spec.pdf',
-            sanitize_title($title) . '_spec.pdf',
-            // Add new detected patterns
             isset($data['title']) ? $data['title'] . '_Sheet.pdf' : '',
             isset($data['title']) ? $data['title'] . ' Painting_Sheet.pdf' : '',
             $title . '_Sheet.pdf',
-            $title . ' Painting_Sheet.pdf'
+            $title . ' Painting_Sheet.pdf',
+            isset($data['slug']) ? $data['slug'] . '_spec.pdf' : '',
+            isset($data['title']) ? $data['title'] . '_spec.pdf' : '',
+            $title . '_spec.pdf',
+            sanitize_title($title) . '_spec.pdf'
         ];
         $candidates = array_filter($candidates);
         $spec_file = $this->find_file(ABSPATH . 'downloads/spec_sheets/', $candidates);
@@ -380,10 +391,26 @@ class ESM_Artwork_Template
         
         /* RESPONSIVE */
         @media(max-width: 768px) {
-            .artwork-title { font-size: 2rem; }
+            header { padding: 10px 15px; height: 60px; }
+            .site-title { font-size: 1.1rem; }
+            .artwork-container { margin-top: 60px; }
+            .hero-section { padding: 20px 10px; margin-bottom: 20px; }
+            .artwork-title { font-size: 1.8rem; }
+            .artwork-price { font-size: 1.2rem; margin-bottom: 20px; }
             .details-grid { grid-template-columns: 1fr; }
-            .detail-item { border-right: none; }
-            header { padding: 15px 20px; }
+            .detail-item { border-right: none; padding: 15px; }
+            .actions { gap: 10px; margin-bottom: 30px; }
+            .btn { max-width: 100%; }
+            .description { font-size: 1rem; padding: 0 10px; }
+            .specs-box { padding: 20px; margin: 0 10px 40px 10px; }
+            .specs-header { font-size: 1.4rem; }
+            .downloads { flex-direction: column; gap: 10px; }
+            
+            .related-section h3 { font-size: 1.4rem; }
+            /* Force 2 column grid on mobile */
+            .related-section > div { grid-template-columns: 1fr 1fr !important; gap: 15px !important; }
+            /* Show first 2 only if screen is very small, otherwise 3 might look crowded */
+            .related-section > div a:nth-child(n+3) { display: none; } 
         }
     </style>
 </head>
@@ -471,6 +498,7 @@ class ESM_Artwork_Template
                     <?php if ($zip_file): ?>
                         <a href="/downloads/high_res/<?php echo esc_attr($zip_file); ?>" class="download-link" download>🖼️ High-Res Package</a>
                     <?php endif; ?>
+                    <a href="/mobile-spec.php?artwork=<?php echo urlencode($data['slug'] ?? $title); ?>" class="download-link" style="color: #b76e79; font-weight: 500;">📱 Mobile Spec View</a>
                 </div>
                 <?php endif; ?>
                 

@@ -139,8 +139,8 @@ class ESM_Artwork_Template
 
         // File Lookups
         $candidates = [
+            isset($data['slug']) ? $data['slug'] . '_spec.pdf' : '', // Priority 1: Exact JSON slug
             isset($data['title']) ? $data['title'] . '_spec.pdf' : '',
-            isset($data['slug']) ? $data['slug'] . '_spec.pdf' : '',
             $title . '_spec.pdf',
             sanitize_title($title) . '_spec.pdf',
             // Add new detected patterns

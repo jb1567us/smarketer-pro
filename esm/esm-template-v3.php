@@ -133,8 +133,8 @@ class ESM_Artwork_Template
         $shipping = isset($data['shippingFrom']) ? $data['shippingFrom'] : "United States";
 
         // Files
-        $slug = sanitize_title($title);
-        $spec_file = $this->find_file(ABSPATH . 'downloads/spec_sheets/', [$title . '_spec.pdf', $slug . '_spec.pdf', $title . '.pdf']);
+        $slug = isset($data['slug']) ? $data['slug'] : sanitize_title($title);
+        $spec_file = $this->find_file(ABSPATH . 'downloads/spec_sheets/', [$title . '_Sheet.pdf', $slug . '_spec.pdf', $title . '_spec.pdf', $title . '.pdf']);
         $zip_file = $this->find_file(ABSPATH . 'downloads/high_res/', [$title . '_HighRes.zip', $slug . '_HighRes.zip', $title . '.zip']);
 
         // --- 2. CSS STYLES ---

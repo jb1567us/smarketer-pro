@@ -133,7 +133,8 @@ while ( have_posts() ) :
     }
 
     // Downloads
-    $spec_sheet = "/downloads/spec_sheets/" . ucfirst($slug) . "_spec.pdf";
+    $spec_title = isset($artwork_data['title']) ? $artwork_data['title'] : $title;
+    $spec_sheet = "/downloads/spec_sheets/" . $spec_title . "_Sheet.pdf";
     $high_res = "/downloads/high_res/" . ucfirst($slug) . "_HighRes.zip";
 
     // Image (Use Meta)

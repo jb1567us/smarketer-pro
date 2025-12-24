@@ -1,14 +1,22 @@
 <?php
-$files = ['deploy_dashboard.php', 'check_dashboard.php'];
-foreach ($files as $f) {
-    if (file_exists($f)) {
-        unlink($f);
-        echo "Deleted $f<br>";
+// cleanup.php
+header('Content-Type: text/plain');
+
+$filesToDelete = [
+    'unzip_specs.php',
+    'spec_sheets_v3.zip',
+    'cleanup.php'
+];
+
+foreach ($filesToDelete as $file) {
+    if (file_exists($file)) {
+        if (unlink($file)) {
+            echo "Deleted $file\n";
+        } else {
+            echo "Failed to delete $file\n";
+        }
     } else {
-        echo "$f not found<br>";
+        echo "$file not found, skipping.\n";
     }
 }
-// Delete self
-unlink(__FILE__);
-echo "Cleanup complete.";
 ?>
