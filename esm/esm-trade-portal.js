@@ -655,16 +655,27 @@ async function shareVisualizerScene() {
     }
 }
 
-// Draggable Logic - Simple 
+// Draggable & Gesture Logic
 const dragItem = document.getElementById('art-overlay-layer');
 if (dragItem) {
     let isDragging = false;
     let startX, startY;
 
-    // Avoid dupes - cloneNode kills event listeners but we need to re-add them
+    // Pinch / Rotate state
+    let initialDist = 0;
+    let initialScale = 70;
+    let initialAngle = 0;
+    let startRotation = 0;
+    let isGesturing = false;
+
+    // Avoid dupes - cloneNode kills event listeners
     const newDrag = dragItem.cloneNode(true);
     dragItem.parentNode.replaceChild(newDrag, dragItem);
 
+    const getDist = (t1, t2) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    const getAngle = (t1, t2) => Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
+
+    // Mouse Events
     newDrag.addEventListener('mousedown', e => {
         isDragging = true;
         startX = e.clientX - newDrag.offsetLeft;
@@ -684,6 +695,71 @@ if (dragItem) {
         newDrag.style.left = (e.clientX - startX) + 'px';
         newDrag.style.top = (e.clientY - startY) + 'px';
     });
+
+    // Touch Events
+    newDrag.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            isGesturing = false;
+            startX = e.touches[0].clientX - newDrag.offsetLeft;
+            startY = e.touches[0].clientY - newDrag.offsetTop;
+        } else if (e.touches.length === 2) {
+            isDragging = false;
+            isGesturing = true;
+            initialDist = getDist(e.touches[0], e.touches[1]);
+            initialAngle = getAngle(e.touches[0], e.touches[1]);
+
+            const scaleEl = document.getElementById('viz-scale');
+            const rotEl = document.getElementById('viz-rot');
+            initialScale = scaleEl ? parseFloat(scaleEl.value) : 70;
+            startRotation = rotEl ? parseFloat(rotEl.value) : 0;
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+        isDragging = false;
+        isGesturing = false;
+    });
+
+    document.addEventListener('touchmove', e => {
+        if (!isDragging && !isGesturing) return;
+        e.preventDefault();
+
+        if (isDragging && e.touches.length === 1) {
+            newDrag.style.left = (e.touches[0].clientX - startX) + 'px';
+            newDrag.style.top = (e.touches[0].clientY - startY) + 'px';
+        } else if (isGesturing && e.touches.length === 2) {
+            // Pinch to Zoom
+            const currentDist = getDist(e.touches[0], e.touches[1]);
+            const scaleFactor = currentDist / initialDist;
+            let newScale = initialScale * scaleFactor;
+
+            // Constrain scale (matches slider 20-150)
+            newScale = Math.min(Math.max(newScale, 20), 150);
+
+            const scaleEl = document.getElementById('viz-scale');
+            if (scaleEl) {
+                scaleEl.value = newScale;
+                safeSetText('scale-val', Math.round(newScale) + '%');
+            }
+
+            // Two-finger Rotation
+            const currentAngle = getAngle(e.touches[0], e.touches[1]);
+            const angleDiff = currentAngle - initialAngle;
+            let newRot = startRotation + angleDiff;
+
+            // Constrain rotation (matches slider -15 to 15)
+            newRot = Math.min(Math.max(newRot, -15), 15);
+
+            const rotEl = document.getElementById('viz-rot');
+            if (rotEl) {
+                rotEl.value = newRot;
+                safeSetText('rot-val', Math.round(newRot) + '°');
+            }
+
+            updateArtTransform();
+        }
+    }, { passive: false });
 }
 
 // Wait for DOM

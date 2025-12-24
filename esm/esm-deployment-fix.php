@@ -208,6 +208,7 @@ class ESM_Artwork_Template_Fix
 
         $shipping = isset($data['shippingFrom']) ? $data['shippingFrom'] : "United States";
 
+        $zip_candidates = [
             isset($data['title']) ? $data['title'] . '_HighRes.zip' : '',
 
             isset($data['slug']) ? $data['slug'] . '_HighRes.zip' : '',

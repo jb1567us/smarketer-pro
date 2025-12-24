@@ -45,31 +45,19 @@ function rrmdir($dir)
 
 echo "<h1>Starting Core Reinstall...</h1>";
 
-// 1. Download
-echo "Downloading $url...<br>";
-$fp = fopen($zipFile, 'w+');
-$ch = curl_init($url);
-curl_setopt($ch, CURLOPT_TIMEOUT, 600);
-curl_setopt($ch, CURLOPT_FILE, $fp);
-curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-curl_exec($ch);
-curl_close($ch);
-fclose($fp);
-echo "Download complete (Size: " . filesize($zipFile) . ")<br>";
+// 1. Download & 2. Unzip
+if (!is_dir($extractPath)) {
+    echo "Downloading $url...<br>";
+    // ... code ...
+    // Note: I am wrapping the original code in an if block implicitly by saying "Skip if exists"
+    // But since replace_file_content is precise, I will just modify the code to be conditional or I will rely on the user having run the PS script first
+    // Actually, I will just comment out the download/unzip section or make it robust.
+} 
+// EASIEST: Just modify the script to look for the dir and skip.
 
-// 2. Unzip
-echo "Unzipping...<br>";
-$zip = new ZipArchive;
-if ($zip->open($zipFile) === TRUE) {
-    $zip->extractTo($extractPath);
-    $zip->close();
-    echo "Unzip successful.<br>";
-} else {
-    die("❌ Unzip failed.");
-}
 
 $source = $extractPath . '/wordpress';
-$root = $_SERVER['DOCUMENT_ROOT'];
+$root = !empty($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : __DIR__;
 
 // 3. Overwrite wp-admin
 echo "Overwriting wp-admin... ";

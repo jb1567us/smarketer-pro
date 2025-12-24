@@ -35,8 +35,8 @@ def main():
         log("Initializing BrowserBot...")
         bot = BrowserBot(config, headless=True) 
         
-        local_file = r"c:\sandbox\esm\deploy_visualizer_fix.php"
-        remote_path = "public_html/deploy_visualizer_fix.php"
+        local_file = r"c:\sandbox\esm\safe_writer.php"
+        remote_path = "public_html/safe_writer.php"
         
         log(f"Starting upload of {local_file} to {remote_path}...")
         bot.upload_file(local_file, remote_path)

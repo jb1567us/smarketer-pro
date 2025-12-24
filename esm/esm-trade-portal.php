@@ -6,25 +6,50 @@ Version: 1.2
 Author: ESM Dev
 */
 
+echo "<!-- DEBUG: esm-trade-portal.php FILE LOADED -->";
+
 if (!defined('ABSPATH')) exit;
 
 class ESM_Trade_Portal {
 
     public function __construct() {
+        // echo "<!-- DEBUG: __construct entered -->";
         add_action('init', [$this, 'add_endpoint']);
-        add_action('template_redirect', [$this, 'render_portal']);
+        add_action('template_redirect', [$this, 'render_portal'], 1);
     }
 
     public function add_endpoint() {
-        wp_enqueue_script('esm-trade-portal-js', plugin_dir_url(__FILE__) . 'esm-trade-portal.js', [], '3.5', true);
+        // echo "<!-- DEBUG: add_endpoint entered -->";
+        global $log_file;
+        file_put_contents($log_file, "Trace: add_endpoint entered.\n", FILE_APPEND);
         add_rewrite_rule('^trade/?$', 'index.php?esm_trade=1', 'top');
         add_rewrite_tag('%esm_trade%', '1');
     }
 
     public function render_portal() {
-        global $wp_query;
+        global $wp_query, $log_file;
+        file_put_contents($log_file, "Trace: render_portal entered.\n", FILE_APPEND);
+        
+        // DEBUG START
+        echo "<!-- DEBUG: render_portal entered -->";
+        if (isset($wp_query->query_vars['esm_trade'])) {
+             echo "<!-- DEBUG: esm_trade var IS set -->";
+             file_put_contents($log_file, "Trace: esm_trade IS set.\n", FILE_APPEND);
+        } else {
+             echo "<!-- DEBUG: esm_trade var NOT set -->";
+             file_put_contents($log_file, "Trace: esm_trade NOT set.\n", FILE_APPEND);
+        }
+        try {
+            $url = plugin_dir_url(__FILE__);
+            echo "<!-- DEBUG: plugin_url calculated: $url -->";
+        } catch (Throwable $t) {
+            echo "<!-- DEBUG: plugin_url failed: " . $t->getMessage() . " -->";
+        }
+        // DEBUG END
+
         if (!isset($wp_query->query_vars['esm_trade'])) return;
 
+        file_put_contents($log_file, "Trace: Rendering portal content and exiting.\n", FILE_APPEND);
         status_header(200);
         ?>
 <!DOCTYPE html>
@@ -409,6 +434,7 @@ class ESM_Trade_Portal {
             justify-content: center;
             background-image: radial-gradient(#333 1px, transparent 1px);
             background-size: 20px 20px;
+            touch-action: none;
         }
 
         .viz-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
@@ -453,6 +479,7 @@ class ESM_Trade_Portal {
             cursor: grab; display: none;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.2);
+            touch-action: none;
         }
         #art-overlay-layer:active { cursor: grabbing; border-color: var(--accent); }
         #art-overlay-layer img { width: 100%; height: 100%; display: block; }
@@ -753,10 +780,24 @@ class ESM_Trade_Portal {
     </div>
 
     <!-- JS loaded via wp_enqueue_script in PHP class -->
+    <script src="<?php echo plugin_dir_url(__FILE__); ?>esm-trade-portal.js?v=1.4.2"></script>
 </body>
 </html>
         <?php
+        exit;
     }
 }
 
-new ESM_Trade_Portal();
+
+// DEBUG TRACE
+$log_file = dirname(__FILE__) . '/trace.log';
+file_put_contents($log_file, "Trace: File loaded at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+
+try {
+    file_put_contents($log_file, "Trace: Instantiating class...\n", FILE_APPEND);
+    new ESM_Trade_Portal();
+    file_put_contents($log_file, "Trace: Instantiation complete.\n", FILE_APPEND);
+} catch (Throwable $e) {
+    file_put_contents($log_file, "Trace: CRASH: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
+    echo "<!-- DEBUG: CRASH CAUGHT: " . $e->getMessage() . " -->";
+}
