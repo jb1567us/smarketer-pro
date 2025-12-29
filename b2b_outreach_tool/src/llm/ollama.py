@@ -1,3 +1,4 @@
+import os
 import requests
 import json
 import time
@@ -9,6 +10,8 @@ class OllamaProvider(LLMProvider):
         self.model = model
         self.base_url = base_url.rstrip('/')
         self.api_url = f"{self.base_url}/api/chat"
+        # Check for optional API Key (for cloud hosted Ollama)
+        self.api_key = os.getenv("OLLAMA_API_KEY")
 
     def _call_api(self, messages, json_mode=False):
         payload = {
@@ -22,9 +25,14 @@ class OllamaProvider(LLMProvider):
         # Shorter retry logic for local services (usually connection refused if down)
         for attempt in range(3):
             try:
+                headers = {"Content-Type": "application/json"}
+                if self.api_key:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+
                 response = requests.post(
                     self.api_url,
                     json=payload,
+                    headers=headers,
                     timeout=300 # Local models can be slow
                 )
                 response.raise_for_status()

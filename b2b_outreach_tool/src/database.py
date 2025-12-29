@@ -138,6 +138,26 @@ def get_leads_by_status(status="new"):
     conn.close()
     return [{'url': r[0], 'email': r[1]} for r in results]
 
+def clear_all_leads():
+    """Deletes ALL leads from the database. Dangerous!"""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM leads')
+    conn.commit()
+    conn.close()
+
+def delete_leads(lead_ids):
+    """Deletes specific leads by ID list."""
+    if not lead_ids:
+        return
+    conn = get_connection()
+    c = conn.cursor()
+    # Safe parameter substitution for list
+    placeholders = ','.join(['?'] * len(lead_ids))
+    c.execute(f'DELETE FROM leads WHERE id IN ({placeholders})', lead_ids)
+    conn.commit()
+    conn.close()
+
 def log_campaign_event(email, event_type, template_id=None, event_data=None):
     """Logs an event (sent, open, click) for a lead."""
     conn = get_connection()

@@ -1,105 +1,87 @@
-# B2B Outreach Tool Configuration
-
-# Search Settings
 search:
-  engine: "searxng" # searxng, google, ddg
-  searxng_url: "http://localhost:8080/search"
-  default_depth: 1 # 0 = home only, 1 = home + internal links
-  max_results: 3
-  keywords: []    # Default keywords if none provided
-  
-  # Search Profiles (Tuning)
+  engine: searxng
+  searxng_url: http://localhost:8080/search
+  default_depth: 1
+  max_results: 50 # Increased from 3
+  keywords: []
   profiles:
     default:
-      categories: ["general"]
-      engines: [] # Empty = all enabled in searxng settings
+      categories:
+      - general
+      engines: ["google", "bing", "duckduckgo", "wikidata"] # Better defaults
     tech:
-      categories: ["it", "science"]
-      engines: []
+      categories:
+      - it
+      - science
+      engines: ["google", "github", "stackoverflow"]
     creative:
-      categories: ["images", "videos", "social media"]
-      engines: []
+      categories:
+      - images
+      - videos
+      - social media
+      engines: ["google", "bing images"]
     news:
-      categories: ["news"]
-      engines: []
-
-# LLM Settings
+      categories:
+      - news
+      engines: ["google news", "bing news"]
 llm:
-  provider: "gemini" 
-  
-  # Smart Router Mode (Optional)
-  # To use: set mode: "router" and configure candidates.
-  # The router will try candidate 1, if it fails, try candidate 2, etc.
-  mode: "single" # "single" or "router"
+  provider: gemini
+  mode: single
   router:
     candidates:
-      - provider: "groq"
-        model_name: "llama3-70b-8192"
-      - provider: "mistral"
-        model_name: "mistral-large-latest"
-      - provider: "gemini"
-        model_name: "gemini-flash-latest"
-
-  # Supported Providers:
-
-  # - gemini (Google AI Studio) [Env: GEMINI_API_KEY]
-  # - openai [Env: OPENAI_API_KEY]
-  # - ollama [Config: ollama_base_url]
-  # - openrouter [Env: OPENROUTER_API_KEY]
-  # - nvidia (NVIDIA NIM) [Env: NVIDIA_API_KEY]
-  # - mistral (La Plateforme) [Env: MISTRAL_API_KEY]
-  # - mistral_codestral [Env: MISTRAL_API_KEY]
-  # - huggingface [Env: HUGGINGFACE_API_KEY]
-  # - cerebras [Env: CEREBRAS_API_KEY]
-  # - groq [Env: GROQ_API_KEY]
-  # - cohere [Env: COHERE_API_KEY]
-  # - github_models [Env: GITHUB_TOKEN]
-  # - cloudflare (Workers AI) [Env: CLOUDFLARE_API_KEY, CLOUDFLARE_ACCOUNT_ID]
-  # - google_cloud_vertex_ai (Complex auth, basic support)
-  
-  model_name: "gemini-flash-latest" 
-  # Common Default Models:
-  # - gemini: gemini-flash-latest
-  # - openai: gpt-4o-mini
-  # - mistral: mistral-large-latest
-  # - groq: llama3-70b-8192
-  # - cohere: command-r
-  
-  # For Ollama (Local or Cloud):
-  # ollama_base_url="http://localhost:11434" (Local) or "https://your-ollama-cloud.com" (Cloud)
-
-# Extraction Settings
+    - provider: groq
+      model_name: llama3-70b-8192
+    - provider: mistral
+      model_name: mistral-large-latest
+    - provider: gemini
+      model_name: gemini-flash-latest
+  model_name: gemini-flash-latest
+  ollama_base_url: http://ollama.com
 extraction:
-  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/91.0.4472.124 Safari/537.36
   timeout: 10
-  # Keywords to identify internal pages to crawl
-  deep_crawl_keywords: ["contact", "about", "team", "staff", "location"]
-  # File extensions to ignore
-  ignored_extensions: [".png", ".jpg", ".jpeg", ".gif", ".css", ".js", ".pdf", ".ico", ".svg"]
-
-# Mailer Settings
+  deep_crawl_keywords:
+  - contact
+  - about
+  - team
+  - staff
+  - location
+  ignored_extensions:
+  - .png
+  - .jpg
+  - .jpeg
+  - .gif
+  - .css
+  - .js
+  - .pdf
+  - .ico
+  - .svg
 email:
-  provider: "smart" # smart, resend, brevo, sendgrid, smtp
-  from_email: "onboarding@resend.dev" # Or your verified domain
-  
-  # Smart Routing (Failover & Load Balancing)
+  provider: smart
+  from_email: onboarding@resend.dev
   smart_routing:
-    providers: ["resend", "brevo", "sendgrid", "smtp"]
-  
-  # API Keys (Set as env vars)
-  # RESEND_API_KEY, BREVO_API_KEY, SENDGRID_API_KEY
-
-
-  smtp_server: "smtp.gmail.com"
+    providers:
+    - resend
+    - brevo
+    - sendgrid
+    - smtp
+  smtp_server: smtp.gmail.com
   smtp_port: 587
-  smtp_user: "${SMTP_USER}" # specific env var format can be handled in code
-  smtp_pass: "${SMTP_PASS}"
+  smtp_user: ${SMTP_USER}
+  smtp_pass: ${SMTP_PASS}
   daily_limit: 100
-  # Template for outreach
-  subject: "Partnership Opportunity: Optimizing your workflow"
-  template_file: "config/email_template.html" # Path relative to root
-
-# Blocklists
+  subject: 'Partnership Opportunity: Optimizing your workflow'
+  template_file: config/email_template.html
 blocklist:
-  domains: ["example.com", "wix.com", "wordpress.com"]
-  usernames: ["sentry", "noreply", "no-reply", "admin", "abuse", "privacy"]
+  domains:
+  - example.com
+  - wix.com
+  - wordpress.com
+  usernames:
+  - sentry
+  - noreply
+  - no-reply
+  - admin
+  - abuse
+  - privacy

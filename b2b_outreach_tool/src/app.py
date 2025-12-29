@@ -12,10 +12,10 @@ load_dotenv()
 # Ensure src is in path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from database import get_connection, get_pain_points, save_template, get_templates, init_db
+from database import get_connection, get_pain_points, save_template, get_templates, init_db, clear_all_leads, delete_leads
 from workflow import run_outreach
 from campaign_manager import start_campaign_step_research, start_campaign_step_copy, start_campaign_step_send
-from config import config
+from config import config, reload_config
 
 st.set_page_config(page_title="B2B Outreach Agent", layout="wide")
 
@@ -40,7 +40,55 @@ def main():
             col2.metric("Nurtured", len(leads[leads['status'] == 'nurtured']))
             col3.metric("Pending", len(leads[leads['status'] == 'new']))
             
-            st.dataframe(leads)
+            # Add selection column for deletion
+            leads['Select'] = False
+            # Reorder to put Select first
+            cols = ['Select'] + [c for c in leads.columns if c != 'Select']
+            leads = leads[cols]
+
+            edited_df = st.data_editor(
+                leads,
+                hide_index=True,
+                column_config={"Select": st.column_config.CheckboxColumn(required=True)},
+                disabled=[c for c in leads.columns if c != "Select"]
+            )
+            
+            # Check for selected rows
+            selected_rows = edited_df[edited_df['Select'] == True]
+            
+            if not selected_rows.empty:
+                if st.button(f"🗑️ Delete Selected ({len(selected_rows)})"):
+                    delete_ids = selected_rows['id'].tolist()
+                    delete_leads(delete_ids)
+                    st.success(f"Deleted {len(delete_ids)} leads.")
+                    time.sleep(1)
+                    st.rerun()
+            
+            with st.expander("🛠️ Data Management"):
+                st.write("Manage your leads database.")
+                
+                m_col1, m_col2 = st.columns(2)
+                
+                with m_col1:
+                    if st.button("🗑️ Clear Database (Delete All)"):
+                        clear_all_leads()
+                        st.warning("Database cleared.")
+                        time.sleep(1)
+                        st.rerun()
+
+                with m_col2:
+                    # Export CSV
+                    csv = leads.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 Download CSV",
+                        data=csv,
+                        file_name='leads_export.csv',
+                        mime='text/csv',
+                    )
+                
+                st.divider()
+                st.caption("To delete specific leads, use the SQLite database directly or clear all above.")
+
         except Exception as e:
             st.error(f"Error loading dashboard: {e}")
             if st.button("Initialize Database"):
@@ -153,6 +201,9 @@ def main():
             
             with open(config_path, 'w') as f:
                 yaml.dump(data, f, sort_keys=False)
+            
+            # Reload memory
+            reload_config()
 
         settings_tab1, settings_tab2, settings_tab3 = st.tabs(["🔑 API Keys", "🧠 LLM Settings", "📧 Email Settings"])
 
@@ -180,7 +231,7 @@ def main():
             }
 
             llm_keys = [
-                "GEMINI_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY", 
+                "GEMINI_API_KEY", "OPENAI_API_KEY", "OLLAMA_API_KEY", "OPENROUTER_API_KEY", 
                 "MISTRAL_API_KEY", "GROQ_API_KEY", "COHERE_API_KEY",
                 "NVIDIA_API_KEY", "CEREBRAS_API_KEY", "HUGGINGFACE_API_KEY",
                 "GITHUB_TOKEN", "CLOUDFLARE_API_KEY"
@@ -226,18 +277,110 @@ def main():
             
             llm_providers = [
                 'gemini', 'openai', 'ollama', 'openrouter', 
-                'mistral', 'groq', 'cohere', 'nvidia', 'cerebras'
+                'mistral', 'groq', 'cohere', 'nvidia', 'cerebras', 'huggingface', 'github_models', 'cloudflare'
             ]
             
-            new_provider = st.selectbox("LLM Provider", llm_providers, index=llm_providers.index(current_provider) if current_provider in llm_providers else 0)
-            new_model = st.text_input("Model Name", value=current_model, help="e.g. gpt-4o-mini, gemini-flash-latest, llama3")
+            # Common models for each provider
+            PROVIDER_MODELS = {
+                'gemini': ['gemini-flash-latest', 'gemini-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'],
+                'openai': ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'],
+                'ollama': ['llama3', 'llama3:70b', 'mistral', 'phi3'], 
+                'mistral': ['mistral-large-latest', 'mistral-small-latest', 'codestral-latest'],
+                'groq': ['llama3-70b-8192', 'llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma-7b-it'],
+                'cohere': ['command-r', 'command-r-plus'],
+                'nvidia': ['meta/llama3-70b-instruct', 'microsoft/phi-3-mini-128k-instruct'],
+                'cerebras': ['llama3.1-70b', 'llama3.1-8b'],
+                'github_models': ['Phi-3-mini-4k-instruct', 'Mistral-large', 'Llama-3.2-90B-Vision'],
+                'cloudflare': ['@cf/meta/llama-3-8b-instruct', '@cf/meta/llama-3.1-8b-instruct'],
+                'huggingface': ['meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mistral-7B-Instruct-v0.2'],
+                'openrouter': ['openai/gpt-4o-mini', 'google/gemini-flash-1.5', 'meta-llama/llama-3.1-70b-instruct']
+            }
+
+            previous_provider = st.session_state.get('prev_provider', current_provider)
             
+            if previous_provider != current_provider:
+                 # Provider changed externally or reloaded
+                 pass
+
+            new_provider = st.selectbox("LLM Provider", llm_providers, index=llm_providers.index(current_provider) if current_provider in llm_providers else 0)
+            
+            # Update session state for provider change tracking
+            st.session_state['prev_provider'] = new_provider
+
+            # Special Config for Ollama
+            if new_provider == 'ollama':
+                current_base_url = config.get('llm', {}).get('ollama_base_url', 'http://localhost:11434')
+                new_base_url = st.text_input("Ollama Base URL", value=current_base_url, help="Local: http://localhost:11434 | Cloud: https://ollama.com")
+                if new_base_url != current_base_url:
+                    if st.button("Save Ollama URL"):
+                        update_config('llm', 'ollama_base_url', new_base_url)
+                        st.success("Ollama URL Saved!")
+                        time.sleep(1)
+                        st.rerun()
+
+            # Model Selection Logic
+            
+            # Initialize custom lists in session state if not present
+            if 'custom_model_lists' not in st.session_state:
+                st.session_state['custom_model_lists'] = {}
+
+            # Check if we have a custom list for this provider
+            fetched_list = st.session_state['custom_model_lists'].get(new_provider)
+            
+            # Combine hardcoded defaults with fetched (or overwrite)
+            # Strategy: Use fetched if available, else hardcoded
+            if fetched_list:
+                known_models = fetched_list
+            else:
+                known_models = PROVIDER_MODELS.get(new_provider, [])
+            
+            # Refresh Button
+            col_sel, col_ref = st.columns([4, 1])
+            with col_sel:
+                # Decide index for curr_model in list
+                model_options = known_models + ["Other (Custom)..."]
+                
+                default_index = 0
+                if current_model in known_models and new_provider == current_provider:
+                    default_index = known_models.index(current_model)
+                elif current_model not in known_models and new_provider == current_provider and current_model:
+                    default_index = len(known_models) # "Other"
+                
+                selected_model_option = st.selectbox(
+                    "Model Selection", 
+                    model_options, 
+                    index=default_index,
+                    help="Select a preset model or choose 'Other' to type your own."
+                )
+            
+            with col_ref:
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🔄 Refresh"):
+                    from model_fetcher import fetch_models_for_provider
+                    with st.spinner(f"Fetching models for {new_provider}..."):
+                        models = fetch_models_for_provider(new_provider)
+                        if models:
+                            st.session_state['custom_model_lists'][new_provider] = models
+                            st.success(f"Found {len(models)} models!")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.warning("Could not fetch models. check API Key.")
+
+            if selected_model_option == "Other (Custom)...":
+                final_model_name = st.text_input("Enter Custom Model Name", value=current_model if current_model not in known_models else "")
+            else:
+                final_model_name = selected_model_option
+
             if st.button("Update LLM Config"):
-                update_config('llm', 'provider', new_provider)
-                update_config('llm', 'model_name', new_model)
-                st.success("LLM Configuration Updated!")
-                time.sleep(1)
-                st.rerun()
+                if final_model_name:
+                    update_config('llm', 'provider', new_provider)
+                    update_config('llm', 'model_name', final_model_name)
+                    st.success(f"Updated! Provider: {new_provider}, Model: {final_model_name}")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("Please provide a model name.")
 
         with settings_tab3:
             st.markdown("### Email Routing")

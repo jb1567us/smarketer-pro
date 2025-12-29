@@ -38,6 +38,13 @@ def load_config():
 # Global config object
 config = load_config()
 
+def reload_config():
+    """Reloads the configuration from the YAML file."""
+    global config
+    config.clear()
+    config.update(load_config())
+
+
 def get_smtp_config():
     """Helper to resolve environment variables in SMTP config."""
     c = config.get("email", {})
