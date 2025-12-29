@@ -2,7 +2,7 @@ import re
 import datetime
 import os
 
-TASK_FILE = r'C:\Users\baron\.gemini\antigravity\brain\9150b66c-eee4-4eb4-bffb-bb4fdd0ee366\task.md'
+TASK_FILE = r'C:\sandbox\esm\PROJECT_STATUS.md'
 OUTPUT_FILE = r'C:\sandbox\esm\client_dashboard.html'
 
 def parse_task_md(file_path):
@@ -60,128 +60,7 @@ def generate_html(title, phases):
     global_progress = int((total_completed / total_tasks) * 100) if total_tasks > 0 else 0
     
     today = datetime.datetime.now().strftime("%B %d, %Y")
-    
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
-    <style>
-        :root {{
-            --bg: #111;
-            --card-bg: #1a1a1a;
-            --text: #eee;
-            --text-muted: #aaa;
-            --accent: #d4af37; /* Gold */
-            --accent-dim: #8a7020;
-            --success: #4caf50;
-            --progress-bg: #333;
-        }}
-        body {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 40px 20px;
-            line-height: 1.6;
-        }}
-        .container {{
-            max-width: 900px;
-            margin: 0 auto;
-        }}
-        header {{
-            text-align: center;
-            margin-bottom: 50px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 30px;
-        }}
-        h1 {{
-            font-weight: 300;
-            letter-spacing: -1px;
-            margin: 0 0 10px 0;
-            font-size: 2.5rem;
-        }}
-        .meta {{
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }}
-        
-        .global-progress {{
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid #333;
-        }}
-        .stat-box h3 {{ margin: 0; font-size: 3rem; color: var(--accent); font-weight: 300; }}
-        .stat-box p {{ margin: 0; color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }}
-        
-        .phase-card {{
-            background: var(--card-bg);
-            border-radius: 8px;
-            margin-bottom: 30px;
-            overflow: hidden;
-            border: 1px solid #333;
-        }}
-        .phase-header {{
-            padding: 20px 30px;
-            background: #222;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }}
-        .phase-header h2 {{ margin: 0; font-size: 1.2rem; font-weight: 500; }}
-        .phase-meta {{ color: var(--text-muted); font-size: 0.9rem; }}
-        
-        .progress-bar-container {{
-            height: 4px;
-            background: var(--progress-bg);
-            width: 100%;
-        }}
-        .progress-bar-fill {{
-            height: 100%;
-            background: var(--accent);
-            transition: width 0.3s ease;
-        }}
-        
-        .task-list {{
-            padding: 20px 30px;
-        }}
-        .task-item {{
-            padding: 8px 0;
-            display: flex;
-            align-items: flex-start;
-            border-bottom: 1px solid #2a2a2a;
-        }}
-        .task-item:last-child {{ border-bottom: none; }}
-        .status-icon {{
-            margin-right: 15px;
-            font-size: 1.1rem;
-            width: 20px;
-            text-align: center;
-        }}
-        .status-done {{ color: var(--success); }}
-        .status-inprogress {{ color: var(--accent); }}
-        .status-todo {{ color: #444; }}
-        
-        .task-text {{ font-size: 0.95rem; }}
-        .task-done .task-text {{ color: var(--text-muted); text-decoration: line-through; opacity: 0.6; }}
-        
-        @media (max-width: 600px) {{
-            .global-progress {{ flex-direction: column; text-align: center; gap: 20px; }}
-            h1 {{ font-size: 1.8rem; }}
-        }}
-    </style>
-</head>
-<body>
+    html = f"""
     <div class="container">
         <header>
             <div class="meta">Project Implementation Status</div>
@@ -244,8 +123,6 @@ def generate_html(title, phases):
         
     html += """
     </div>
-</body>
-</html>
     """
     return html
 

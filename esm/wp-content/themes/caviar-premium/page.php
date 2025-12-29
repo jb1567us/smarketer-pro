@@ -145,6 +145,28 @@ while ( have_posts() ) :
     $schema_materials = implode(', ', $meta['mediums']);
 ?>
 
+<style>
+/* Dark Mode Styling */
+body { background-color: #111 !important; color: #ccc !important; }
+.artwork-page-container { background-color: #111; color: #ccc; }
+h1, h2, h3, h4, h5, h6 { color: #fff !important; }
+.artwork-price { color: #d4af37 !important; }
+.central-block { color: #ccc !important; }
+.details-grid div { color: #ccc !important; }
+.details-grid strong { color: #fff !important; }
+.designer-specs-premium { background-color: #1a1a1a !important; border-color: #333 !important; color: #ccc !important; }
+.designer-specs-premium h3 { border-bottom-color: #333 !important; }
+.specs-list li { border-bottom-color: #333 !important; }
+.section-divider { border-top-color: #333 !important; }
+.artwork-hero-image { box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.details-section { 
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #333;
+    margin-bottom: 2rem;
+}
+</style>
 <div class="artwork-page-container">
 
     <!-- Artwork Header -->
@@ -172,8 +194,6 @@ while ( have_posts() ) :
             Source: <a href="<?php echo esc_url($image_url_full); ?>" target="_blank"><?php echo esc_html($image_url_full); ?></a>
         </div>
     </div>
-    <?php else: ?>
-        <!-- <p style="text-align:center; color:red;">No image URL found in JSON or WordPress for this page.</p> -->
     <?php endif; ?>
 
     <?php if ($meta['price']) : ?>
@@ -181,45 +201,9 @@ while ( have_posts() ) :
     <?php endif; ?>
 
     <!-- Actions -->
-    <div class="artwork-actions">
-        <a href="<?php echo esc_url($saatchi_link_cf); ?>" class="btn-premium btn-saatchi" target="_blank">
-            Purchase on Saatchi Art
-        </a>
-        <a href="/trade" class="btn-premium btn-trade">
-            Request Trade Pricing
-        </a>
-    </div>
+    <!-- Actions Removed -->
 
-    <!-- Details Section -->
-    <div class="central-block details-section">
-        <h3>Details & Dimensions</h3>
-
-        <div class="details-grid">
-            <?php if ($meta['dimensions']) : ?>
-            <div><strong>Dimensions:</strong></div>
-            <div><?php echo esc_html($meta['dimensions']); ?></div>
-            <?php endif; ?>
-
-            <?php if (!empty($meta['styles'])) : ?>
-            <div><strong>Styles:</strong></div>
-            <div><?php echo esc_html(implode(', ', $meta['styles'])); ?></div>
-            <?php endif; ?>
-
-            <?php if (!empty($meta['mediums'])) : ?>
-            <div><strong>Mediums:</strong></div>
-            <div><?php echo esc_html(implode(', ', $meta['mediums'])); ?></div>
-            <?php endif; ?>
-
-            <div><strong>Frame:</strong></div>
-            <div><?php echo esc_html($meta['frame']); ?></div>
-
-            <div><strong>Packaging:</strong></div>
-            <div><?php echo esc_html($meta['packaging']); ?></div>
-
-            <div><strong>Shipping:</strong></div>
-            <div><?php echo esc_html($meta['shipping']); ?></div>
-        </div>
-    </div>
+    <!-- Details Section Removed -->
 
     <!-- Description -->
     <div class="central-block" style="margin-top: 2rem; margin-bottom: 3rem; color: #4a4a4a;">

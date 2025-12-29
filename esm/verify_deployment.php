@@ -1,40 +1,20 @@
 <?php
-// verify_deployment.php
-header('Content-Type: text/plain');
-
 $files = [
-    'esm-trade-portal.php',
-    'esm-artwork-template.php',
-    'esm-template-v3.php'
+    'content/plugins/esm-trade-portal/esm-trade-portal.php',
+    'wp-content/plugins/esm-trade-portal/esm-trade-portal.php',
+    'content/plugins/esm-trade-portal/esm-trade-portal.js',
+    'wp-content/plugins/esm-trade-portal/esm-trade-portal.js'
 ];
 
 foreach ($files as $file) {
-    echo "--- $file ---\n";
-    if (!file_exists($file)) {
-        echo "NOT FOUND\n";
-        continue;
-    }
-    $content = file_get_contents($file);
-    
-    // Check for new patterns
-    if (strpos($content, '_Sheet.pdf') !== false) {
-        echo "Found new naming pattern (_Sheet.pdf)\n";
+    echo "<h2>File: $file</h2>";
+    $path = __DIR__ . '/' . $file;
+    if (file_exists($path)) {
+        echo "MD5: " . md5_file($path) . "<br>";
+        echo "First 100 chars: <pre>" . htmlspecialchars(substr(file_get_contents($path), 0, 100)) . "</pre><br>";
+        echo "Last 100 chars: <pre>" . htmlspecialchars(substr(file_get_contents($path), -100)) . "</pre><br>";
     } else {
-        echo "Missing naming pattern (_Sheet.pdf)\n";
-    }
-    
-    // Check for Trade Portal specific fix
-    if ($file === 'esm-trade-portal.php') {
-        if (strpos($content, '${item.title}_Sheet.pdf') !== false) {
-             echo "Correct code: \${item.title}_Sheet.pdf\n";
-        } else {
-             echo "Old code found or missing update\n";
-        }
-    }
-
-    // Check directory
-    if (strpos($content, 'downloads/spec_sheets/') !== false) {
-        echo "Correct directory found (downloads/spec_sheets/)\n";
+        echo "NOT FOUND<br>";
     }
 }
 ?>

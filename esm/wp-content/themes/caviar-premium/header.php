@@ -36,11 +36,23 @@
 </div>
 
 <header id="caviar-header-main" class="site-header">
-    <div id="caviar-title-container">
+    <div id="caviar-title-container" style="max-width: 550px; margin: 0 auto; padding: 0;">
         <h1 id="caviar-site-title">
-            <a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home">
+            <a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home" style="font-size: 2.0rem; line-height: 1.2; display: block; letter-spacing: 1px;">
                 <?php bloginfo( 'name' ); ?>
             </a>
         </h1>
+        <div class="header-logo-injected" style="text-align: center; width: 100%; margin: 1rem 0 1.5rem 0;">
+            <a href="<?php echo esc_url( home_url( '/' ) ); ?>" style="text-decoration:none; border:none;">
+                <img src="https://elliotspencermorgan.com/logo.png" 
+                     alt="<?php bloginfo( 'name' ); ?> Logo" 
+                     width="299" height="234"
+                     loading="eager" 
+                     decoding="sync"
+                     class="skip-lazy"
+                     data-no-lazy="1"
+                     style="width: 100%; max-width: 100%; height: auto; display: inline-block;" />
+            </a>
+        </div>
     </div>
 </header>

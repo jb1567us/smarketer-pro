@@ -1,7 +1,35 @@
 const ART_DATA_URL = '/artwork_data.json';
 const COLL_DATA_URL = '/collections_data.json';
-const UNSPLASH_KEY = '8gzaWlidpscOoUenn-sYrdR-UxdI_kPcxvYgnHfq8l0'; // Public Demo Key
+const UNSPLASH_KEY = '8gzaWlidpscOoUenn-sYrdR-UxdI_kPcxvYgnHfq8l0'; // Public Demo Key - Replace with own if needed
 const DEFAULT_ROOM = '/istockphoto-1535511484-1024x1024.jpg';
+
+// Data Structures
+const ROOM_TEMPLATES = {
+    modern: [
+        { name: "Modern Living Room", query: "modern minimalist living room white walls" },
+        { name: "Scandinavian Interior", query: "scandinavian living room bright natural light" },
+        { name: "Contemporary Bedroom", query: "contemporary bedroom neutral tones" },
+        { name: "Modern Office", query: "modern home office workspace" },
+    ],
+    traditional: [
+        { name: "Classic Living Room", query: "traditional living room elegant furniture" },
+        { name: "Cozy Study", query: "traditional study room library books" },
+        { name: "Formal Dining", query: "traditional dining room chandelier" },
+        { name: "Master Bedroom", query: "traditional bedroom luxurious decor" },
+    ],
+    industrial: [
+        { name: "Loft Space", query: "industrial loft exposed brick concrete" },
+        { name: "Urban Studio", query: "industrial studio apartment metal fixtures" },
+        { name: "Warehouse Style", query: "industrial warehouse interior high ceilings" },
+        { name: "Modern Industrial", query: "modern industrial living room" },
+    ],
+    gallery: [
+        { name: "White Gallery", query: "art gallery white walls spotlights" },
+        { name: "Museum Space", query: "museum gallery exhibition space" },
+        { name: "Gallery Wall", query: "gallery wall multiple artworks display" },
+        { name: "Contemporary Gallery", query: "contemporary art gallery minimal" },
+    ]
+};
 
 let artworks = [];
 let collections = {};
@@ -10,12 +38,6 @@ let activeFilters = {
     collections: new Set(),
     sizes: new Set(),
     colors: new Set()
-};
-
-// State for Visualizer
-let vizState = {
-    art: null,
-    roomLoaded: false
 };
 
 const colorMap = {
@@ -35,15 +57,9 @@ function safeSetVal(id, val) {
     if (el) el.value = val;
 }
 
-function toggleSidebar() {
-    const aside = document.querySelector('aside');
-    if (aside) aside.classList.toggle('active');
-}
-
 async function init() {
     try {
-        console.log("Portal Init v1.4.2 - ArtMap Active");
-        // Parallel fetch with cache busting
+        console.log("Portal Init v2.1 - ESM Visualizer Upgrade");
         const [artRes, collRes] = await Promise.all([
             fetch(ART_DATA_URL, { cache: "no-store" }),
             fetch(COLL_DATA_URL, { cache: "no-store" })
@@ -54,7 +70,7 @@ async function init() {
         const artRaw = await artRes.json();
         collections = await collRes.json();
 
-        // Create a reverse lookup for membership
+        // Process Artworks - Deduplicate logic
         const artToCollections = {};
         Object.values(collections).forEach(coll => {
             if (coll.artworks) {
@@ -65,76 +81,42 @@ async function init() {
             }
         });
 
-        // Process Artworks - Deduplicate by Image URL & Prioritize items with Dimensions
         const artMap = new Map();
-
         artRaw.forEach(a => {
             if (!a.image_url) return;
-
-            // Attach membership from collections
             a.membership = artToCollections[a.title] || [];
 
-            const hasDims = (a.width && a.height && a.width !== 'undefined' && a.height !== 'undefined');
-            const existing = artMap.get(a.image_url);
-
-            if (existing) {
-                const existingHasDims = (existing.width && existing.height && existing.width !== 'undefined' && existing.height !== 'undefined');
-                // If existing has no dims but new one DOES, replace it
-                if (hasDims && !existingHasDims) {
-                    artMap.set(a.image_url, a);
+            // Dedupe logic
+            if (!artMap.has(a.image_url)) {
+                if (a.type === 'page') {
+                    if (a.slug) a.link = '/' + a.slug + '/';
+                } else {
+                    if (a.slug) a.link = '/' + a.slug + '/';
+                    else if (a.title) a.link = '/' + a.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '/';
                 }
-                // If both have dims or both don't, check if the NEW one is "better" (e.g. has more data)
-                // For now, we stick to the first one unless the new one has dimensions and old one doesn't.
-            } else {
-                // NEW: Slug/Title Collision Check
-                // Before adding by image_url, check if we already have this Title/Slug under a different Image URL
-                let duplicateFound = false;
-                for (const [key, val] of artMap.entries()) {
-                    // Check slug match
-                    if (a.slug && val.slug && a.slug === val.slug) {
-                        duplicateFound = true;
-                        // If new one has dims and old one doesn't, REPLACE the old key
-                        const valHasDims = (val.width && val.height && val.width !== 'undefined' && val.height !== 'undefined');
-                        if (hasDims && !valHasDims) {
-                            artMap.delete(key); // Remove old entry
-                            artMap.set(a.image_url, a); // Add new one
-                        }
-                        break;
-                    }
-                }
-
-                if (!duplicateFound) {
-                    artMap.set(a.image_url, a);
-                }
-            }
-
-            // Ensure link is present
-            if (a.type === 'page') {
-                if (a.slug) a.link = '/' + a.slug + '/';
-            } else {
-                if (a.slug) a.link = '/' + a.slug + '/';
-                else if (a.title) a.link = '/' + a.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') + '/';
+                artMap.set(a.image_url, a);
             }
         });
 
         artworks = Array.from(artMap.values());
-
         renderFilters();
         applyFilters();
 
-        // Check for Preview Request (from Artwork Page)
+        // Initialize Visualizer Logic
+        ESM_Visualizer.init();
+
+        // Check for Preview Request
         const urlParams = new URLSearchParams(window.location.search);
         const previewTitle = urlParams.get('preview');
+        const sessionData = urlParams.get('session');
 
-        if (previewTitle) {
+        if (sessionData) {
+            ESM_Visualizer.loadFromURL(sessionData);
+        } else if (previewTitle) {
             const decoded = decodeURIComponent(previewTitle).toLowerCase();
             const targetArt = artworks.find(a => a.title.toLowerCase() === decoded);
-
             if (targetArt) {
-                console.log("Auto-launching visualizer for:", targetArt.title);
-                openVisualizer(targetArt);
-
-                // Clean URL without refresh
+                ESM_Visualizer.open(targetArt);
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 window.history.pushState({ path: newUrl }, '', newUrl);
             }
@@ -149,19 +131,8 @@ async function init() {
             }
         }, 800);
 
-        // Initialize Gestures
-        setupGestures();
-
     } catch (err) {
         console.error("Portal Init Error:", err);
-        const grid = document.getElementById('artwork-grid');
-        if (grid) {
-            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--text-secondary);">
-                <h2 style="font-family:'Playfair Display'; color:white; margin-bottom:20px;">Portal Error (v1.4)</h2>
-                <p>We encountered an issue loading the gallery. Please clear your cache and refresh.</p>
-                <p style="font-size:0.8rem; margin-top:10px; color:#555;">${err.message}</p>
-            </div>`;
-        }
     }
 }
 
@@ -170,10 +141,9 @@ async function init() {
 // ============================================
 
 function renderFilters() {
-    // Render Collections
     const collContainer = document.getElementById('collection-filters');
     if (collContainer) {
-        collContainer.innerHTML = ''; // Clear first
+        collContainer.innerHTML = '';
         Object.values(collections).sort((a, b) => a.title.localeCompare(b.title)).forEach(coll => {
             const label = document.createElement('label');
             label.className = 'checkbox-item';
@@ -187,42 +157,36 @@ function renderFilters() {
         });
     }
 
-    // Render Colors
     const colorContainer = document.getElementById('color-filters');
     if (colorContainer) {
-        colorContainer.innerHTML = ''; // Clear first
+        colorContainer.innerHTML = '';
         const uniqueColors = new Set();
         artworks.forEach(a => a.detected_colors?.forEach(c => uniqueColors.add(c)));
-
         Array.from(uniqueColors).sort().forEach(color => {
             const div = document.createElement('div');
             div.className = 'swatch';
             div.style.backgroundColor = colorMap[color] || '#ccc';
             div.title = color;
-            div.addEventListener('click', () => {
+            div.onclick = () => {
                 div.classList.toggle('active');
                 if (div.classList.contains('active')) activeFilters.colors.add(color);
                 else activeFilters.colors.delete(color);
                 applyFilters();
-            });
+            };
             colorContainer.appendChild(div);
         });
     }
 
-    // Search listener
     const searchInput = document.getElementById('global-search');
     if (searchInput) {
-        // Remove old listeners to prevent dupes if re-run (not critical here but good practice)
         const newSearch = searchInput.cloneNode(true);
         searchInput.parentNode.replaceChild(newSearch, searchInput);
-
         newSearch.addEventListener('input', (e) => {
             activeFilters.search = e.target.value.toLowerCase().trim();
             applyFilters();
         });
     }
 
-    // Size listeners
     document.querySelectorAll('input[name="size"]').forEach(el => {
         el.addEventListener('change', (e) => {
             if (e.target.checked) activeFilters.sizes.add(e.target.value);
@@ -234,19 +198,12 @@ function renderFilters() {
 
 function applyFilters() {
     const filtered = artworks.filter(art => {
-        // Search
         if (activeFilters.search) {
             const matchTitle = art.title.toLowerCase().includes(activeFilters.search);
             const matchColl = art.membership && art.membership.some(m => m.toLowerCase().includes(activeFilters.search));
             if (!matchTitle && !matchColl) return false;
         }
-
-        // Collection
-        if (activeFilters.collections.size > 0) {
-            if (!art.membership || !art.membership.some(m => activeFilters.collections.has(m))) return false;
-        }
-
-        // Size
+        if (activeFilters.collections.size > 0 && (!art.membership || !art.membership.some(m => activeFilters.collections.has(m)))) return false;
         if (activeFilters.sizes.size > 0) {
             const w = parseFloat(art.width);
             let sizeMatch = false;
@@ -256,12 +213,7 @@ function applyFilters() {
             if (activeFilters.sizes.has('Oversized') && w >= 60) sizeMatch = true;
             if (!sizeMatch) return false;
         }
-
-        // Color
-        if (activeFilters.colors.size > 0) {
-            if (!art.detected_colors?.some(c => activeFilters.colors.has(c))) return false;
-        }
-
+        if (activeFilters.colors.size > 0 && (!art.detected_colors?.some(c => activeFilters.colors.has(c)))) return false;
         return true;
     });
 
@@ -272,16 +224,12 @@ function applyFilters() {
 function renderGrid(items) {
     const grid = document.getElementById('artwork-grid');
     if (!grid) return;
-
     grid.innerHTML = '';
-
     items.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card';
-
         const specUrl = `/downloads/spec_sheets/${item.title}_Sheet.pdf`;
         const membershipDisplay = (item.membership && item.membership.length > 0) ? item.membership[0] : 'Original Series';
-
         card.innerHTML = `
             <div class="image-container">
                 <img src="${item.image_url}" class="card-image" loading="lazy">
@@ -304,481 +252,691 @@ function renderGrid(items) {
 
 function openVisualizerById(id) {
     const art = artworks.find(a => a.id == id);
-    if (art) openVisualizer(art);
+    if (art) ESM_Visualizer.open(art);
 }
+
 
 // ============================================
-// VISUALIZER LOGIC
+// ESM VISUALIZER (Upgraded v2.1)
 // ============================================
 
-function openVisualizer(art) {
-    vizState.art = art;
+const ESM_Visualizer = {
+    canvas: null,
+    ctx: null,
+    container: null,
+    state: {
+        roomImage: DEFAULT_ROOM,
+        roomImgObj: null,
+        artworks: [],
+        wallColor: null,
+        brightness: 100,
+        contrast: 100,
+        spotlight: false,
+        showScaleReference: false,
+        showDimensions: false,
+        selectedArtId: null,
+        isPlayingAR: false,
+        compareMode: false,
+        selectedForCompare: []
+    },
+    dragState: {
+        isDragging: false,
+        startX: 0,
+        startY: 0
+    },
 
-    // Update UI sidebar
-    safeSetText('viz-art-title', art.title);
-    safeSetText('viz-art-dims', art.dimensions || `${art.width} x ${art.height} in`);
+    init: function () {
+        this.canvas = document.getElementById('viz-canvas');
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        this.container = document.getElementById('viz-canvas-container');
 
-    const modal = document.getElementById('visualizer-modal');
-    if (modal) modal.classList.add('active');
+        this.setupGestures();
+        this.setupTemplates();
 
-    // Load art into overlay
-    const artImg = document.getElementById('art-overlay-img');
-    if (artImg) artImg.src = art.image_url;
+        new ResizeObserver(() => this.render()).observe(this.container);
 
-    if (!vizState.roomLoaded) {
-        setRoomImage(DEFAULT_ROOM);
-    } else {
-        addArtToRoom();
-    }
-}
+        const img = new Image();
+        img.src = this.state.roomImage;
+        img.onload = () => {
+            this.state.roomImgObj = img;
+            if (this.isOpen) this.render();
+        };
+    },
 
-function closeVisualizer() {
-    const modal = document.getElementById('visualizer-modal');
-    if (modal) modal.classList.remove('active');
-    stopCamera();
-}
-
-function switchVizTab(tabName) {
-    document.querySelectorAll('.viz-tab').forEach(t => t.classList.remove('active'));
-
-    // Fix: more robust selection
-    const buttons = document.querySelectorAll('.viz-tab');
-    buttons.forEach(b => {
-        if (b.textContent.toLowerCase().includes(tabName)) b.classList.add('active');
-    });
-
-    const uploadTab = document.getElementById('viz-tab-upload');
-    const unsplashTab = document.getElementById('viz-tab-unsplash');
-    const cameraTab = document.getElementById('viz-tab-camera');
-
-    if (uploadTab) uploadTab.style.display = 'none';
-    if (unsplashTab) unsplashTab.style.display = 'none';
-    if (cameraTab) cameraTab.style.display = 'none';
-
-    stopCamera(); // Ensure camera stops when switching away
-
-    if (tabName === 'upload' && uploadTab) uploadTab.style.display = 'block';
-    if (tabName === 'unsplash' && unsplashTab) unsplashTab.style.display = 'block';
-    if (tabName === 'camera' && cameraTab) cameraTab.style.display = 'block';
-}
-
-// Camera Logic
-let cameraStream = null;
-
-async function startCamera() {
-    const errorEl = document.getElementById('camera-error');
-    const video = document.getElementById('camera-stream');
-    const btnStart = document.querySelector('#camera-controls button'); // Start button
-    const btnCapture = document.getElementById('btn-capture');
-
-    if (errorEl) errorEl.style.display = 'none';
-
-    try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' }
-        });
-
-        if (video) {
-            video.srcObject = cameraStream;
-            video.style.display = 'block';
-        }
-
-        if (btnStart) btnStart.style.display = 'none';
-        if (btnCapture) btnCapture.style.display = 'block';
-
-    } catch (err) {
-        console.error("Camera Error:", err);
-        if (errorEl) {
-            errorEl.textContent = "Could not access camera. Please allow permissions.";
-            errorEl.style.display = 'block';
-        }
-    }
-}
-
-function stopCamera() {
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
-
-    const video = document.getElementById('camera-stream');
-    if (video) video.style.display = 'none';
-
-    const btnStart = document.querySelector('#camera-controls button');
-    if (btnStart) btnStart.style.display = 'block';
-
-    const btnCapture = document.getElementById('btn-capture');
-    if (btnCapture) btnCapture.style.display = 'none';
-}
-
-function capturePhoto() {
-    const video = document.getElementById('camera-stream');
-    if (!video || !cameraStream) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const dataUrl = canvas.toDataURL('image/jpeg');
-    setRoomImage(dataUrl);
-    stopCamera();
-}
-
-// Room Upload
-const roomInput = document.getElementById('room-upload-input');
-if (roomInput) {
-    // Remove old listener to avoid dupes
-    const newRoomInput = roomInput.cloneNode(true);
-    roomInput.parentNode.replaceChild(newRoomInput, roomInput);
-
-    newRoomInput.addEventListener('change', function (e) {
-        if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                setRoomImage(e.target.result);
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
-}
-
-function setRoomImage(src) {
-    const roomImg = document.getElementById('room-image-layer');
-    if (!roomImg) return;
-
-    roomImg.onload = function () {
-        const ph = document.getElementById('viz-placeholder');
-        if (ph) ph.style.display = 'none';
-        roomImg.style.display = 'block';
-        vizState.roomLoaded = true;
-        addArtToRoom(); // Auto-add art once room is ready
-    };
-    roomImg.src = src;
-}
-
-function addArtToRoom() {
-    if (!vizState.roomLoaded || !vizState.art) return;
-
-    const overlay = document.getElementById('art-overlay-layer');
-    if (overlay) {
-        overlay.style.display = 'block';
-        // Only center if first time or explicit reset needed? 
-        // For now, keep it simple.
-        // overlay.style.top = '30%';
-        // overlay.style.left = '40%';
-    }
-    updateArtTransform();
-}
-
-// Unsplash Logic
-async function searchUnsplash() {
-    const queryEl = document.getElementById('unsplash-query');
-    if (!queryEl) return;
-    const query = queryEl.value;
-    if (!query) return;
-
-    const container = document.getElementById('unsplash-results');
-    if (!container) return;
-
-    container.innerHTML = '<div style="color:#888; padding:10px;">Searching...</div>';
-
-    try {
-        const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + ' interior')}&per_page=10&client_id=${UNSPLASH_KEY}`);
-        const data = await res.json();
-
+    setupTemplates: function () {
+        const container = document.getElementById('room-templates-container');
+        if (!container) return;
         container.innerHTML = '';
-        if (!data.results || data.results.length === 0) {
-            container.innerHTML = '<div style="color:#888;">No results found.</div>';
-            return;
+
+        Object.keys(ROOM_TEMPLATES).forEach(category => {
+            const h4 = document.createElement('h4');
+            h4.style.color = '#888';
+            h4.style.fontSize = '0.75rem';
+            h4.style.textTransform = 'uppercase';
+            h4.style.marginTop = '15px';
+            h4.style.marginBottom = '8px';
+            h4.textContent = category;
+            container.appendChild(h4);
+
+            const grid = document.createElement('div');
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = '1fr 1fr';
+            grid.style.gap = '8px';
+
+            ROOM_TEMPLATES[category].forEach(temp => {
+                const btn = document.createElement('div');
+                btn.className = 'viz-photo';
+                // Placeholder using unsplash source
+                btn.style.background = '#333';
+                btn.style.height = '60px'; // Compact
+                btn.style.display = 'flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                btn.style.fontSize = '0.7rem';
+                btn.style.textAlign = 'center';
+                btn.style.color = '#fff';
+                btn.innerHTML = `<span>${temp.name}</span>`;
+                btn.onclick = () => this.loadRoomTemplate(temp.query);
+                grid.appendChild(btn);
+            });
+            container.appendChild(grid);
+        });
+    },
+
+    loadRoomTemplate: function (query) {
+        // Use placeholder service
+        const url = `https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&q=80`; // Fallback static for stability
+        // Ideally search unsplash API but keeping simple
+        // Using a set of known good images would be better.
+        // For now, let's use the query to pick a deterministic placeholder if possible, or just a generic one.
+        // Since we don't have a secure backend proxy for Unsplash API here, we use a few hardcoded high quality ones.
+
+        const map = {
+            'modern': 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200',
+            'traditional': 'https://images.unsplash.com/photo-1513584685908-22dd98797f8f?w=1200',
+            'industrial': 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200',
+            'gallery': 'https://images.unsplash.com/photo-1577720643272-265f09367436?w=1200'
+        };
+
+        let src = map['modern'];
+        if (query.includes('traditional')) src = map['traditional'];
+        if (query.includes('industrial')) src = map['industrial'];
+        if (query.includes('gallery')) src = map['gallery'];
+
+        this.setRoomImage(src);
+    },
+
+    open: function (art) {
+        document.getElementById('visualizer-modal').classList.add('active');
+        this.isOpen = true;
+
+        if (this.state.artworks.length === 0 || (this.state.artworks.length === 1 && this.state.artworks[0].id !== art.id)) {
+            this.state.artworks = [{
+                id: Date.now().toString(),
+                data: art,
+                x: 50,
+                y: 40,
+                scale: 0.7,
+                rotation: 0
+            }];
+            this.state.selectedArtId = this.state.artworks[0].id;
         }
 
-        data.results.forEach(photo => {
+        this.updateUI();
+        if (this.state.roomImgObj) this.render();
+        else this.setRoomImage(this.state.roomImage);
+    },
+
+    close: function () {
+        document.getElementById('visualizer-modal').classList.remove('active');
+        this.isOpen = false;
+        this.closeAR();
+    },
+
+    updateUI: function () {
+        const art = this.state.artworks.find(a => a.id === this.state.selectedArtId);
+        if (art) {
+            safeSetText('viz-art-title', art.data.title);
+            safeSetText('viz-art-dims', art.data.dimensions || `${art.data.width} x ${art.data.height} in`);
+            safeSetVal('viz-scale', Math.round(art.scale * 100));
+            safeSetVal('viz-rot', art.rotation);
+            safeSetText('scale-val', Math.round(art.scale * 100) + '%');
+            safeSetText('rot-val', art.rotation + '°');
+        }
+
+        // Show/Hide buttons
+        const multiControls = document.getElementById('multi-art-controls');
+        if (multiControls) {
+            multiControls.style.display = this.state.artworks.length > 0 ? 'flex' : 'none';
+        }
+    },
+
+    addArtwork: function () {
+        const art = this.state.artworks.find(a => a.id === this.state.selectedArtId);
+        if (art) {
+            const newArt = JSON.parse(JSON.stringify(art));
+            newArt.id = Date.now().toString();
+            newArt.x += 10;
+            newArt.y += 10;
+            this.state.artworks.push(newArt);
+            this.state.selectedArtId = newArt.id;
+            this.updateUI();
+            this.render();
+        }
+    },
+
+    removeArtwork: function () {
+        if (this.state.artworks.length <= 1) return alert("Must have at least one artwork.");
+        this.state.artworks = this.state.artworks.filter(a => a.id !== this.state.selectedArtId);
+        this.state.selectedArtId = this.state.artworks[0].id;
+        this.updateUI();
+        this.render();
+    },
+
+    setRoomImage: function (src) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+        img.onload = () => {
+            this.state.roomImage = src;
+            this.state.roomImgObj = img;
+            this.render();
+        };
+    },
+
+    handleRoomUpload: function (input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => this.setRoomImage(e.target.result);
+            reader.readAsDataURL(input.files[0]);
+        }
+    },
+
+    // ----------------------
+    // RENDER LOOP
+    // ----------------------
+    render: function () {
+        if (!this.canvas || !this.ctx || !this.state.roomImgObj) return;
+
+        const rect = this.container.getBoundingClientRect();
+        this.canvas.width = rect.width;
+        this.canvas.height = rect.height;
+
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        const rW = this.state.roomImgObj.width;
+        const rH = this.state.roomImgObj.height;
+        const rRatio = rW / rH;
+        const cRatio = w / h;
+
+        let drawW, drawH, drawX, drawY;
+
+        if (rRatio > cRatio) {
+            drawW = w;
+            drawH = w / rRatio;
+            drawX = 0;
+            drawY = (h - drawH) / 2;
+        } else {
+            drawH = h;
+            drawW = h * rRatio;
+            drawY = 0;
+            drawX = (w - drawW) / 2;
+        }
+
+        ctx.drawImage(this.state.roomImgObj, drawX, drawY, drawW, drawH);
+
+        // Wall Color / Lighting
+        if (this.state.wallColor || this.state.brightness !== 100 || this.state.contrast !== 100) {
+            ctx.save();
+            if (this.state.brightness !== 100) {
+                ctx.fillStyle = this.state.brightness < 100 ? `rgba(0,0,0,${(100 - this.state.brightness) / 200})` : `rgba(255,255,255,${(this.state.brightness - 100) / 200})`;
+                ctx.fillRect(drawX, drawY, drawW, drawH);
+            }
+            if (this.state.wallColor) {
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.fillStyle = this.state.wallColor;
+                ctx.fillRect(drawX, drawY, drawW, drawH);
+                ctx.globalCompositeOperation = 'source-over';
+            }
+            ctx.restore();
+        }
+
+        this.state.artworks.forEach(art => {
+            const img = new Image();
+            img.src = art.data.image_url;
+            if (img.complete) {
+                const baseSize = Math.min(w, h) * 0.4;
+                const aspect = (parseFloat(art.data.width) || 1) / (parseFloat(art.data.height) || 1);
+
+                let artW = baseSize * art.scale;
+                let artH = artW / aspect;
+
+                const cx = (art.x / 100) * w;
+                const cy = (art.y / 100) * h;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(art.rotation * Math.PI / 180);
+
+                if (this.state.spotlight) {
+                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                    ctx.shadowBlur = 40;
+                    ctx.shadowOffsetY = 20;
+                } else {
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowOffsetY = 10;
+                }
+
+                ctx.drawImage(img, -artW / 2, -artH / 2, artW, artH);
+
+                if (this.state.selectedArtId === art.id) {
+                    ctx.shadowColor = 'transparent';
+                    ctx.strokeStyle = '#3498db';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-artW / 2, -artH / 2, artW, artH);
+                }
+
+                ctx.restore();
+
+                if (this.state.showDimensions && this.state.selectedArtId === art.id) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.font = '12px sans-serif';
+                    const txt = art.data.dimensions || `${art.data.width}x${art.data.height}`;
+                    const tw = ctx.measureText(txt).width;
+                    ctx.fillRect(cx - tw / 2 - 4, cy - artH / 2 - 25, tw + 8, 20);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(txt, cx - tw / 2, cy - artH / 2 - 11);
+                }
+            }
+        });
+
+        if (this.state.showScaleReference) {
+            const refH = Math.min(w, h) * 0.25;
+            const refX = w - 50;
+            const refY = h - 50;
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillRect(refX, refY - refH, 10, refH);
+            ctx.fillText("6ft", refX - 10, refY + 15);
+        }
+    },
+
+    switchTab: function (tab) {
+        document.querySelectorAll('.viz-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[id^="viz-tab-"]').forEach(d => d.style.display = 'none');
+        const tabs = { 'controls': 0, 'room': 1, 'lighting': 2 };
+        document.querySelectorAll('.viz-tab')[tabs[tab]].classList.add('active');
+        document.getElementById('viz-tab-' + tab).style.display = 'block';
+    },
+
+    setWallColor: function (color) {
+        this.state.wallColor = color;
+        this.render();
+    },
+
+    updateLighting: function () {
+        this.state.brightness = parseInt(document.getElementById('viz-bright').value);
+        this.state.contrast = parseInt(document.getElementById('viz-contrast').value);
+        safeSetText('bright-val', this.state.brightness + '%');
+        safeSetText('contrast-val', this.state.contrast + '%');
+        this.render();
+    },
+
+    toggleSpotlight: function (val) {
+        this.state.spotlight = val;
+        this.render();
+    },
+
+    toggleDimensions: function (val) {
+        this.state.showDimensions = val;
+        this.render();
+    },
+
+    toggleScaleRef: function (val) {
+        this.state.showScaleReference = val;
+        this.render();
+    },
+
+    updateTransform: function () {
+        const scale = document.getElementById('viz-scale').value;
+        const rot = document.getElementById('viz-rot').value;
+        const art = this.state.artworks.find(a => a.id === this.state.selectedArtId);
+
+        if (art) {
+            art.scale = scale / 100;
+            art.rotation = rot;
+            safeSetText('scale-val', scale + '%');
+            safeSetText('rot-val', rot + '°');
+            this.render();
+        }
+    },
+
+    setupGestures: function () {
+        const canvas = this.canvas;
+
+        canvas.addEventListener('mousedown', e => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // HIT TEST (Top-most first)
+            for (let i = this.state.artworks.length - 1; i >= 0; i--) {
+                const art = this.state.artworks[i];
+                // Project click into art space
+                const cx = (art.x / 100) * w;
+                const cy = (art.y / 100) * h;
+
+                // Simple approx detection (ignoring rotation for hit test simplicity)
+                const baseSize = Math.min(w, h) * 0.4;
+                const aspect = (parseFloat(art.data.width) || 1) / (parseFloat(art.data.height) || 1);
+                let artW = baseSize * art.scale;
+                let artH = artW / aspect;
+
+                if (mx >= cx - artW / 2 && mx <= cx + artW / 2 && my >= cy - artH / 2 && my <= cy + artH / 2) {
+                    this.state.selectedArtId = art.id;
+                    this.updateUI();
+                    this.render();
+
+                    this.dragState.isDragging = true;
+                    this.dragState.startX = e.clientX;
+                    this.dragState.startY = e.clientY;
+                    return;
+                }
+            }
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (this.dragState.isDragging && this.state.selectedArtId) {
+                const dx = e.clientX - this.dragState.startX;
+                const dy = e.clientY - this.dragState.startY;
+
+                const art = this.state.artworks.find(a => a.id === this.state.selectedArtId);
+                if (art) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    art.x += (dx / rect.width) * 100;
+                    art.y += (dy / rect.height) * 100;
+                }
+
+                this.dragState.startX = e.clientX;
+                this.dragState.startY = e.clientY;
+                this.render();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            this.dragState.isDragging = false;
+        });
+    },
+
+    openAR: function () {
+        const modal = document.getElementById('ar-preview-modal');
+        modal.style.display = 'block';
+        this.startCamera();
+
+        const arCanvas = document.getElementById('ar-canvas');
+        const arCtx = arCanvas.getContext('2d');
+        const video = document.getElementById('ar-video');
+
+        const arLoop = () => {
+            if (modal.style.display === 'none') return;
+
+            arCanvas.width = video.videoWidth || window.innerWidth;
+            arCanvas.height = video.videoHeight || window.innerHeight;
+
+            arCtx.drawImage(video, 0, 0, arCanvas.width, arCanvas.height);
+
+            const art = this.state.artworks.find(a => a.id === this.state.selectedArtId);
+            if (art && art.data.image_url) {
+                const img = new Image();
+                img.src = art.data.image_url;
+                if (img.complete) {
+                    const scale = document.getElementById('ar-scale').value;
+                    const targetW = arCanvas.width * 0.5 * scale;
+                    const aspect = (parseFloat(art.data.width) || 1) / (parseFloat(art.data.height) || 1);
+                    const targetH = targetW / aspect;
+
+                    arCtx.drawImage(img, (arCanvas.width - targetW) / 2, (arCanvas.height - targetH) / 2, targetW, targetH);
+                }
+            }
+            requestAnimationFrame(arLoop);
+        };
+        requestAnimationFrame(arLoop);
+    },
+
+    closeAR: function () {
+        document.getElementById('ar-preview-modal').style.display = 'none';
+        this.stopCamera();
+    },
+
+    startCamera: async function () {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            const video = document.getElementById('ar-video');
+            video.srcObject = stream;
+            video.play();
+        } catch (e) {
+            alert("Camera access denied or unavailable.");
+        }
+    },
+
+    stopCamera: function () {
+        const video = document.getElementById('ar-video');
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(t => t.stop());
+            video.srcObject = null;
+        }
+    },
+    updateARScale: function (val) {
+        safeSetText('ar-scale-val', Math.round(val * 100) + '%');
+    },
+
+    openSaveModal: function () {
+        document.getElementById('save-session-modal').style.display = 'block';
+    },
+
+    confirmSaveSession: function () {
+        const name = document.getElementById('session-name-input').value;
+        if (!name) return alert("Enter a name");
+
+        const session = {
+            id: Date.now(),
+            name: name,
+            timestamp: Date.now(),
+            state: JSON.parse(JSON.stringify(this.state))
+        };
+        session.state.roomImgObj = null;
+
+        const saves = JSON.parse(localStorage.getItem('esm_viz_saves') || '[]');
+        saves.push(session);
+        localStorage.setItem('esm_viz_saves', JSON.stringify(saves));
+
+        document.getElementById('save-session-modal').style.display = 'none';
+        alert("Session Saved!");
+    },
+
+    openLoadModal: function () {
+        const modal = document.getElementById('load-session-modal');
+        const list = document.getElementById('sessions-list');
+        list.innerHTML = '';
+
+        // Add Compare Mode Toggle
+        const header = modal.querySelector('h3');
+        if (!document.getElementById('compare-mode-toggle')) {
+            const toggleDiv = document.createElement('div');
+            toggleDiv.style.fontSize = '0.8rem';
+            toggleDiv.style.display = 'flex';
+            toggleDiv.style.alignItems = 'center';
+            toggleDiv.style.gap = '5px';
+            toggleDiv.innerHTML = `<input type="checkbox" id="compare-mode-toggle" onchange="ESM_Visualizer.toggleCompareMode(this.checked)"> <label for="compare-mode-toggle">Compare Mode</label>`;
+            header.insertBefore(toggleDiv, header.lastElementChild);
+        }
+
+        const saves = JSON.parse(localStorage.getItem('esm_viz_saves') || '[]');
+        if (saves.length === 0) list.innerHTML = '<div style="color:#aaa; text-align:center;">No saved sessions found.</div>';
+
+        saves.forEach(s => {
             const div = document.createElement('div');
-            div.className = 'viz-photo';
-            div.innerHTML = `<img src="${photo.urls.small}" loading="lazy">`;
-            div.onclick = () => setRoomImage(photo.urls.regular);
-            container.appendChild(div);
-        });
+            div.className = 'card';
+            div.style.flexDirection = 'row';
+            div.style.padding = '10px';
+            div.style.alignItems = 'center';
 
-    } catch (e) {
-        console.error(e);
-        container.innerHTML = '<div style="color:var(--text-secondary);">Error loading photos.</div>';
-    }
-}
-
-// Controls Logic
-const scaleRange = document.getElementById('viz-scale');
-const rotRange = document.getElementById('viz-rot');
-
-if (scaleRange) {
-    // Avoid dupes
-    const newScale = scaleRange.cloneNode(true);
-    scaleRange.parentNode.replaceChild(newScale, scaleRange);
-
-    newScale.addEventListener('input', (e) => {
-        safeSetText('scale-val', e.target.value + '%');
-        updateArtTransform();
-    });
-}
-
-if (rotRange) {
-    // Avoid dupes
-    const newRot = rotRange.cloneNode(true);
-    rotRange.parentNode.replaceChild(newRot, rotRange);
-
-    newRot.addEventListener('input', (e) => {
-        safeSetText('rot-val', e.target.value + '°');
-        updateArtTransform();
-    });
-}
-
-function updateArtTransform() {
-    const overlay = document.getElementById('art-overlay-layer');
-    if (!overlay) return;
-
-    const scaleRange = document.getElementById('viz-scale');
-    const rotRange = document.getElementById('viz-rot');
-
-    const scale = scaleRange ? scaleRange.value / 100 : 0.7;
-    const rot = rotRange ? rotRange.value : 0;
-
-    if (vizState.art) {
-        // Using 300px as arbitrary base width for visualizer
-        const h = parseFloat(vizState.art.height) || 10;
-        const w = parseFloat(vizState.art.width) || 10;
-        const aspect = w / h;
-        const baseWidth = 300;
-
-        overlay.style.width = (baseWidth * scale) + 'px';
-        overlay.style.height = ((baseWidth / aspect) * scale) + 'px';
-        overlay.style.transform = `rotate(${rot}deg)`;
-    }
-}
-
-async function downloadVisualizerPDF() {
-    const { jsPDF } = window.jspdf;
-    const canvasArea = document.getElementById('viz-canvas');
-
-    try {
-        // Show loading state
-        const btn = document.getElementById('btn-download-pdf');
-        const originalText = btn.textContent;
-        btn.textContent = "Generating PDF...";
-
-        const canvas = await html2canvas(canvasArea, {
-            scale: 2, // Higher quality
-            useCORS: true,
-            backgroundColor: '#1a1a1a'
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.9);
-        const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'px',
-            format: [canvas.width, canvas.height]
-        });
-
-        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`ESM_Visualizer_${vizState.art ? vizState.art.title.replace(/[^a-z0-9]/gi, '_') : 'Scene'}.pdf`);
-
-        btn.textContent = originalText;
-    } catch (e) {
-        console.error(e);
-        alert("Could not generate PDF. Please try again.");
-        document.getElementById('btn-download-pdf').textContent = "Download Scene as PDF";
-    }
-}
-
-async function shareVisualizerScene() {
-    const canvasArea = document.getElementById('viz-canvas');
-    const btn = document.getElementById('btn-share-scene');
-    const originalText = btn.textContent;
-
-    // Debounce/Prevent double click
-    if (btn.textContent === "Preparing...") return;
-
-    btn.textContent = "Preparing...";
-
-    try {
-        // Capture canvas
-        const canvas = await html2canvas(canvasArea, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#1a1a1a'
-        });
-
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-                throw new Error("Canvas blob creation failed");
-            }
-
-            const file = new File([blob], "visualizer_scene.png", { type: "image/png" });
-
-            // Try Native Share
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: 'ESM Art Visualizer',
-                        text: 'Check out this artwork in my room!'
-                    });
-                    btn.textContent = originalText;
-                } catch (err) {
-                    // User likely cancelled share
-                    console.log("Share cancelled or failed", err);
-                    btn.textContent = originalText;
-                }
+            let actionHtml = '';
+            if (this.state.compareMode) {
+                const isSelected = this.state.selectedForCompare.includes(s.id);
+                actionHtml = `<input type="checkbox" ${isSelected ? 'checked' : ''} onchange="ESM_Visualizer.toggleSelectCompare(${s.id})">`;
             } else {
-                // Fallback: Clipboard
-                try {
-                    if (typeof ClipboardItem !== "undefined") {
-                        const item = new ClipboardItem({ "image/png": blob });
-                        await navigator.clipboard.write([item]);
-                        alert("Image copied to clipboard!");
-                    } else {
-                        throw new Error("Clipboard API not supported");
-                    }
-                    btn.textContent = originalText;
-                } catch (err) {
-                    console.error("Clipboard failed", err);
-                    // Verify if it's a permissions issue or context issue
-                    alert("Could not share natively. You can Download as PDF instead.");
-                    btn.textContent = originalText;
-                }
+                actionHtml = `
+                    <button class="btn-premium accent" onclick="ESM_Visualizer.loadSession(${s.id})">Load</button>
+                    <button class="btn-premium outline" style="margin-left:5px;" onclick="ESM_Visualizer.deleteSession(${s.id})">Del</button>
+                `;
             }
-        }, 'image/png');
 
-    } catch (e) {
-        console.error("Share Error:", e);
-        alert("Could not generate image for sharing.");
-        btn.textContent = originalText;
+            div.innerHTML = `
+                <div style="flex:1;">
+                    <div style="font-weight:bold; color:white;">${s.name}</div>
+                    <div style="font-size:0.8rem; color:#aaa;">${new Date(s.timestamp).toLocaleDateString()}</div>
+                </div>
+                ${actionHtml}
+             `;
+            list.appendChild(div);
+        });
+
+        // Add Compare Button if in compare mode
+        if (this.state.compareMode) {
+            const btn = document.createElement('button');
+            btn.className = 'btn-premium accent';
+            btn.style.marginTop = '10px';
+            btn.textContent = 'Compare Selected (2)';
+            btn.onclick = () => this.launchComparison();
+            list.appendChild(btn);
+        }
+
+        modal.style.display = 'block';
+    },
+
+    toggleCompareMode: function (val) {
+        this.state.compareMode = val;
+        this.state.selectedForCompare = [];
+        this.openLoadModal(); // refresh
+    },
+
+    toggleSelectCompare: function (id) {
+        if (this.state.selectedForCompare.includes(id)) {
+            this.state.selectedForCompare = this.state.selectedForCompare.filter(x => x !== id);
+        } else {
+            if (this.state.selectedForCompare.length >= 2) this.state.selectedForCompare.shift(); // Max 2
+            this.state.selectedForCompare.push(id);
+        }
+        this.openLoadModal();
+    },
+
+    launchComparison: function () {
+        if (this.state.selectedForCompare.length !== 2) return alert("Select exactly 2 sessions.");
+
+        const saves = JSON.parse(localStorage.getItem('esm_viz_saves') || '[]');
+        const s1 = saves.find(x => x.id === this.state.selectedForCompare[0]);
+        const s2 = saves.find(x => x.id === this.state.selectedForCompare[1]);
+
+        document.getElementById('load-session-modal').style.display = 'none';
+        document.getElementById('comparison-modal').style.display = 'flex';
+
+        this.renderStatic('compare-canvas-1', s1);
+        this.renderStatic('compare-canvas-2', s2);
+        safeSetText('compare-meta-1', s1.name);
+        safeSetText('compare-meta-2', s2.name);
+    },
+
+    renderStatic: function (canvasId, session) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = session.state.roomImage;
+        img.onload = () => {
+            canvas.width = 600;
+            canvas.height = 400;
+            ctx.clearRect(0, 0, 600, 400);
+
+            // Draw Room
+            const rW = img.width;
+            const rH = img.height;
+            const rRatio = rW / rH;
+            const cRatio = 600 / 400;
+            let drawW, drawH, drawX, drawY;
+
+            if (rRatio > cRatio) {
+                drawW = 600; drawH = 600 / rRatio; drawX = 0; drawY = (400 - drawH) / 2;
+            } else {
+                drawH = 400; drawW = 400 * rRatio; drawY = 0; drawX = (600 - drawW) / 2;
+            }
+            ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+            // Draw Arts
+            session.state.artworks.forEach(art => {
+                const aImg = new Image();
+                aImg.crossOrigin = "anonymous";
+                aImg.src = art.data.image_url;
+                aImg.onload = () => {
+                    const baseSize = Math.min(600, 400) * 0.4;
+                    const aspect = (parseFloat(art.data.width) || 1) / (parseFloat(art.data.height) || 1);
+                    let artW = baseSize * art.scale;
+                    let artH = artW / aspect;
+                    const cx = (art.x / 100) * 600;
+                    const cy = (art.y / 100) * 400;
+
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(art.rotation * Math.PI / 180);
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 10;
+                    ctx.drawImage(aImg, -artW / 2, -artH / 2, artW, artH);
+                    ctx.restore();
+                };
+            });
+        };
+    },
+
+    loadSession: function (id) {
+        const saves = JSON.parse(localStorage.getItem('esm_viz_saves') || '[]');
+        const s = saves.find(x => x.id === id);
+        if (s) {
+            this.state = s.state;
+            this.state.roomImgObj = null;
+            this.setRoomImage(this.state.roomImage);
+            if (this.state.artworks.length > 0) {
+                // this.state.selectedArtId = this.state.artworks[0].id; // Persisted
+            }
+            document.getElementById('viz-bright').value = this.state.brightness;
+            document.getElementById('viz-contrast').value = this.state.contrast;
+            document.getElementById('load-session-modal').style.display = 'none';
+            this.open({ id: 'restoring' });
+        }
+    },
+
+    deleteSession: function (id) {
+        let saves = JSON.parse(localStorage.getItem('esm_viz_saves') || '[]');
+        saves = saves.filter(s => s.id !== id);
+        localStorage.setItem('esm_viz_saves', JSON.stringify(saves));
+        this.openLoadModal();
+    },
+
+    downloadPDF: function () {
+        const canvas = this.canvas;
+        const link = document.createElement('a');
+        link.download = `esm-visualizer-${Date.now()}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
     }
-}
+};
 
-
-// Draggable & Gesture Logic
-function setupGestures() {
-    const dragItem = document.getElementById('art-overlay-layer');
-    if (!dragItem) return;
-
-    let isDragging = false;
-    let startX, startY;
-
-    // Pinch / Rotate state
-    let initialDist = 0;
-    let initialScale = 70;
-    let initialAngle = 0;
-    let startRotation = 0;
-    let isGesturing = false;
-
-    // Avoid dupes - cloneNode kills event listeners
-    const newDrag = dragItem.cloneNode(true);
-    dragItem.parentNode.replaceChild(newDrag, dragItem);
-
-    const getDist = (t1, t2) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-    const getAngle = (t1, t2) => Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
-
-    // Mouse Events
-    newDrag.addEventListener('mousedown', e => {
-        isDragging = true;
-        startX = e.clientX - newDrag.offsetLeft;
-        startY = e.clientY - newDrag.offsetTop;
-        newDrag.style.cursor = 'grabbing';
-        e.preventDefault();
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        if (newDrag) newDrag.style.cursor = 'grab';
-    });
-
-    document.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        e.preventDefault();
-        newDrag.style.left = (e.clientX - startX) + 'px';
-        newDrag.style.top = (e.clientY - startY) + 'px';
-    });
-
-    // Touch Events
-    newDrag.addEventListener('touchstart', e => {
-        if (e.touches.length === 1) {
-            isDragging = true;
-            isGesturing = false;
-            startX = e.touches[0].clientX - newDrag.offsetLeft;
-            startY = e.touches[0].clientY - newDrag.offsetTop;
-        } else if (e.touches.length === 2) {
-            isDragging = false;
-            isGesturing = true;
-            initialDist = getDist(e.touches[0], e.touches[1]);
-            initialAngle = getAngle(e.touches[0], e.touches[1]);
-
-            const scaleEl = document.getElementById('viz-scale');
-            const rotEl = document.getElementById('viz-rot');
-            initialScale = scaleEl ? parseFloat(scaleEl.value) : 70;
-            startRotation = rotEl ? parseFloat(rotEl.value) : 0;
-        }
-    }, { passive: false });
-
-    // Use document for touchmove to prevent scrolling while gesturing
-    // Note: This effectively disables scrolling while touching the art element if we prevent default
-    const dragHandler = (e) => {
-        if (!isDragging && !isGesturing) return;
-
-        // Only prevent default if we are actively dragging or gesturing
-        if (e.cancelable) e.preventDefault();
-
-        if (isDragging && e.touches.length === 1) {
-            newDrag.style.left = (e.touches[0].clientX - startX) + 'px';
-            newDrag.style.top = (e.touches[0].clientY - startY) + 'px';
-        } else if (isGesturing && e.touches.length === 2) {
-            // Pinch to Zoom
-            const currentDist = getDist(e.touches[0], e.touches[1]);
-            const scaleFactor = currentDist / initialDist;
-            let newScale = initialScale * scaleFactor;
-
-            // Constrain scale (matches slider 20-150)
-            newScale = Math.min(Math.max(newScale, 20), 150);
-
-            const scaleEl = document.getElementById('viz-scale');
-            if (scaleEl) {
-                scaleEl.value = newScale;
-                safeSetText('scale-val', Math.round(newScale) + '%');
-            }
-
-            // Two-finger Rotation
-            const currentAngle = getAngle(e.touches[0], e.touches[1]);
-            const angleDiff = currentAngle - initialAngle;
-            let newRot = startRotation + angleDiff;
-
-            // Constrain rotation (matches slider -15 to 15)
-            newRot = Math.min(Math.max(newRot, -15), 15);
-
-            const rotEl = document.getElementById('viz-rot');
-            if (rotEl) {
-                rotEl.value = newRot;
-                safeSetText('rot-val', Math.round(newRot) + '°');
-            }
-
-            updateArtTransform();
-        }
-    };
-
-    // Attach to the element itself for movement, or document?
-    // Attaching to document ensures we don't lose it if finger slides off, 
-    // but preventing default on document interferes with scroll.
-    // The previous code attached to document. Let's stick with that but be careful.
-    document.addEventListener('touchmove', dragHandler, { passive: false });
-
-    document.addEventListener('touchend', () => {
-        isDragging = false;
-        isGesturing = false;
-    });
-}
-
-// Wait for DOM
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {

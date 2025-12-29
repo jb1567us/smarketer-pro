@@ -1,22 +1,73 @@
+
 <?php
 // flush_cache.php
-require_once($_SERVER['DOCUMENT_ROOT'] . '/wp-load.php');
+echo "<pre>Starting Cache Flush...\n";
 
-if (function_exists('w3tc_flush_all')) {
-    w3tc_flush_all();
-    echo "✅ W3TC Cache Flushed.<br>";
+// 1. Load WordPress environment
+if (file_exists('wp-load.php')) {
+    require_once('wp-load.php');
+    echo "WordPress loaded.\n";
+    
+    // 2. Try Plugin Specific Flushes
+    if (function_exists('w3tc_flush_all')) {
+        w3tc_flush_all();
+        echo "W3 Total Cache flushed.\n";
+    }
+    if (function_exists('wp_cache_clear_cache')) {
+        wp_cache_clear_cache();
+        echo "WP Super Cache flushed.\n";
+    }
+    if (class_exists('autoptimizeCache')) {
+        autoptimizeCache::clearall();
+        echo "Autoptimize flushed.\n";
+    }
+    
+    // WP-Optimize / WPO Cache
+    // Often stores cache in wp-content/cache/wpo-cache
+    
+    // SpeedyCache
+    global $speedycache;
+    if (isset($speedycache) && method_exists($speedycache, 'purge_all')) {
+        $speedycache->purge_all();
+        echo "SpeedyCache flushed.\n";
+    }
+
+} else {
+    echo "wp-load.php not found. Proceeding with manual file deletion.\n";
 }
 
-if (function_exists('wp_cache_flush')) {
-    wp_cache_flush();
-    echo "✅ WP Object Cache Flushed.<br>";
+// 3. Manual Deletion of Cache Directory
+$cache_dir = 'wp-content/cache';
+if (is_dir($cache_dir)) {
+    echo "Deleting contents of $cache_dir...\n";
+    
+    $di = new RecursiveDirectoryIterator($cache_dir, FilesystemIterator::SKIP_DOTS);
+    $ri = new RecursiveIteratorIterator($di, RecursiveIteratorIterator::CHILD_FIRST);
+    
+    foreach ($ri as $file) {
+        if ($file->getFilename() === '.htaccess' || $file->getFilename() === 'index.php') continue; // Preserve basics if needed, but usually safe to nuke
+        
+        // Actually, let's just nuke everything except maybe the folder itself
+        try {
+            if ($file->isDir()) {
+                rmdir($file->getRealPath());
+            } else {
+                unlink($file->getRealPath());
+            }
+        } catch (Exception $e) {
+            echo "Failed to delete " . $file->getRealPath() . ": " . $e->getMessage() . "\n";
+        }
+    }
+    echo "Manual cache clean completed.\n";
+} else {
+    echo "No cache directory found at $cache_dir\n";
 }
 
-// Clear any other known caches
-if (class_exists('AutoptimizeCache')) {
-    AutoptimizeCache::clearall();
-    echo "✅ Autoptimize Cache Flushed.<br>";
+// 4. Reset Opcache
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+    echo "Opcache reset.\n";
 }
 
-echo "Done.";
+echo "Done.\n</pre>";
 ?>
