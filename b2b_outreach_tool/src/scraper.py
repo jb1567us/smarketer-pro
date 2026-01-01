@@ -10,6 +10,7 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
     base_url = config["search"]["searxng_url"]
     params = {
         "q": query,
+        "format": "html"
     }
     
     if categories:
@@ -22,8 +23,9 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
     }
     
     print(f"Searching SearXNG for: {query} (Target: {num_results})")
+    print(f"DEBUG: Scraper Params: {params}")
     
-    unique_links = set()
+    unique_links = {}
     page = 1
     
     while len(unique_links) < num_results:
@@ -49,24 +51,31 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
                     a_tag = article.find('a', href=True)
                     if a_tag:
                         url = a_tag['href']
+                        title = a_tag.get_text(strip=True)
+                        
                         if url.startswith('http') and url not in unique_links:
-                            unique_links.add(url)
+                            unique_links[url] = title
                             links_on_page += 1
                 
                 print(f"Page {page}: Found {links_on_page} new links. Total unique: {len(unique_links)}")
                 
                 if links_on_page == 0:
                      print("Zero links extracted from this page (parsing issue or end of results).")
+                     print(f"DEBUG: HTML DUMP (First 500 chars):\n{html[:500]}")
+                     if "captcha" in html.lower(): print("🚫 CAPTCHA DETECTED")
                      break
 
                 page += 1
-                if page > 10: # Safety break
+                if page > 500: # Increased from 10 to allow exhaustive scraping
+                    print("Hit safety page limit (500). Stopping.")
                     break
                     
         except Exception as e:
             print(f"Error scraping SearXNG page {page}: {e}")
             break
             
-    return list(unique_links)[:num_results]
+    # Return list of dicts
+    results = [{"url": u, "title": t} for u, t in unique_links.items()]
+    return results[:num_results]
             
 

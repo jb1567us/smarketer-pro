@@ -37,6 +37,12 @@ def generate_campaign_sequence(niche, pain_point, product_name, product_descript
     
     if isinstance(result, list):
         return result
+    elif isinstance(result, dict):
+        # Try to find a list value in the dict
+        for key, value in result.items():
+            if isinstance(value, list):
+                return value
+
     
     print("Copywriter failed to get valid JSON results.")
     return []

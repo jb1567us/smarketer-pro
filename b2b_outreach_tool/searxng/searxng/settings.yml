@@ -140,7 +140,7 @@ ui:
     simple_style: auto
   # Perform search immediately if a category selected.
   # Disable to select multiple categories at once and start the search manually.
-  search_on_category_select: true
+  search_on_category_select: false
   # Hotkeys: default or vim
   hotkeys: default
   # URL formatting: pretty, full or host
@@ -1047,6 +1047,11 @@ engines:
   - name: google scholar
     engine: google_scholar
     shortcut: gos
+
+  - name: google maps
+    engine: google_maps
+    shortcut: gm
+    disabled: false
 
   - name: google play apps
     engine: google_play

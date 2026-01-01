@@ -27,6 +27,9 @@ def init_db():
             confidence REAL,
             relevance_reason TEXT,
             contact_person TEXT,
+            company_name TEXT,
+            address TEXT,
+            phone_number TEXT,
             created_at INTEGER,
             contacted_at INTEGER
         );
@@ -74,7 +77,13 @@ def init_db():
         'business_type': 'TEXT',
         'confidence': 'REAL',
         'relevance_reason': 'TEXT',
-        'contact_person': 'TEXT'
+        'contact_person': 'TEXT',
+        'company_name': 'TEXT',
+        'address': 'TEXT',
+        'phone_number': 'TEXT',
+        'tech_stack': 'TEXT',
+        'qualification_score': 'INTEGER',
+        'qualification_reason': 'TEXT'
     }
     
     for col, dtype in new_columns.items():
@@ -90,7 +99,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def add_lead(url, email, source="search", category="default", industry=None, business_type=None, confidence=None, relevance_reason=None, contact_person=None):
+def add_lead(url, email, source="search", category="default", industry=None, business_type=None, confidence=None, relevance_reason=None, contact_person=None, company_name=None, address=None, phone_number=None, tech_stack=None, qualification_score=None, qualification_reason=None):
     """
     Adds a lead to the database. Returns True if added, False if duplicate.
     """
@@ -98,9 +107,9 @@ def add_lead(url, email, source="search", category="default", industry=None, bus
     c = conn.cursor()
     try:
         c.execute('''
-            INSERT INTO leads (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, int(time.time())))
+            INSERT INTO leads (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, int(time.time())))
         conn.commit()
         return True
     except sqlite3.IntegrityError:
@@ -130,13 +139,14 @@ def mark_contacted(email):
     conn.close()
 
 def get_leads_by_status(status="new"):
-    """Retrieves all leads with a specific status."""
+    """Retrieves all leads with a specific status, returning full details."""
     conn = get_connection()
+    conn.row_factory = sqlite3.Row # Access columns by name
     c = conn.cursor()
-    c.execute('SELECT url, email FROM leads WHERE status = ?', (status,))
+    c.execute('SELECT * FROM leads WHERE status = ?', (status,))
     results = c.fetchall()
     conn.close()
-    return [{'url': r[0], 'email': r[1]} for r in results]
+    return [dict(r) for r in results]
 
 def clear_all_leads():
     """Deletes ALL leads from the database. Dangerous!"""
@@ -214,3 +224,58 @@ def get_templates(niche, stage=None):
     results = [{'id': r[0], 'subject': r[1], 'body': r[2], 'pain_point_id': r[3]} for r in c.fetchall()]
     conn.close()
     return results
+
+def get_campaign_analytics():
+    """Aggregates campaign events by type."""
+    conn = get_connection()
+    c = conn.cursor()
+    # Count total events by type
+    c.execute('''
+        SELECT event_type, COUNT(*) 
+        FROM campaign_events 
+        GROUP BY event_type
+    ''')
+    results = dict(c.fetchall())
+    
+    # Get total unique leads targeted (approximate via SENT events)
+    c.execute("SELECT COUNT(DISTINCT lead_email) FROM campaign_events WHERE event_type='sent'")
+    total_leads_contacted = c.fetchone()[0]
+    
+    conn.close()
+    
+    return {
+        'sent': results.get('sent', 0),
+        'open': results.get('open', 0),
+        'click': results.get('click', 0),
+        'leads_contacted': total_leads_contacted
+    }
+
+def get_daily_engagement(days=30):
+    """Aggregates events by day for the last N days."""
+    conn = get_connection()
+    c = conn.cursor()
+    
+    # SQLite strftime to group by YYYY-MM-DD
+    c.execute(f'''
+        SELECT 
+            strftime('%Y-%m-%d', timestamp, 'unixepoch') as day,
+            event_type,
+            COUNT(*)
+        FROM campaign_events
+        WHERE timestamp > strftime('%s', 'now', '-{days} days')
+        GROUP BY day, event_type
+        ORDER BY day ASC
+    ''')
+    
+    rows = c.fetchall()
+    conn.close()
+    
+    # Transform into structure: {'2023-10-01': {'sent': 5, 'open': 2}, ...}
+    data = {}
+    for r in rows:
+        day, etype, count = r
+        if day not in data:
+            data[day] = {'sent': 0, 'open': 0, 'click': 0}
+        data[day][etype] = count
+        
+    return data

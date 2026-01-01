@@ -39,7 +39,8 @@ class LLMFactory:
                              print(f"[LLMFactory] Failed to initialize candidate {p_name}: {e}")
                 
                 if providers:
-                    cls._instance = SmartRouter(providers)
+                    strategy = router_config.get('strategy', 'priority') 
+                    cls._instance = SmartRouter(providers, strategy=strategy)
                     return cls._instance
                 else:
                     print("[LLMFactory] No valid router candidates initialized. Falling back.")
@@ -80,6 +81,8 @@ class LLMFactory:
 
         elif provider_name in ['gemini', 'google_ai_studio']:
             api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                print(f"DEBUG: GEMINI_API_KEY is None! Env dump: {list(os.environ.keys())}")
             model = model_name or 'gemini-flash-latest'
             return GeminiProvider(api_key, model)
 

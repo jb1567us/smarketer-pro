@@ -10,7 +10,7 @@ class OpenRouterProvider(LLMProvider):
         self.model = model
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
 
-    def _call_api(self, messages, response_format=None):
+    def _call_api(self, messages, response_format=None, **kwargs):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
@@ -24,20 +24,25 @@ class OpenRouterProvider(LLMProvider):
         if response_format:
             payload["response_format"] = response_format
 
+        # Default timeout 60s, but allow override via kwargs/args
+        timeout = kwargs.get('timeout', 60)
+        
         for attempt in range(3):
             try:
                 response = requests.post(
                     self.api_url,
                     headers=headers,
                     json=payload,
-                    timeout=60
+                    timeout=timeout
                 )
                 
+                if response.status_code != 200:
+                     print(f"  [OpenRouter] Status: {response.status_code}, Body: {response.text}")
+
                 if response.status_code == 429:
-                    wait_time = (attempt + 1) * 10
-                    print(f"  [OpenRouter] Rate limit hit. Retrying in {wait_time}s...")
-                    time.sleep(wait_time)
-                    continue
+                    # Fail immediately to let SmartRouter switch providers
+                    print("  [OpenRouter] Rate limit hit. Failing over...")
+                    response.raise_for_status()
                     
                 response.raise_for_status()
                 return response.json()
@@ -49,7 +54,7 @@ class OpenRouterProvider(LLMProvider):
 
     def generate_text(self, prompt, **kwargs):
         messages = [{"role": "user", "content": prompt}]
-        result = self._call_api(messages)
+        result = self._call_api(messages, **kwargs)
         if result:
             try:
                 return result['choices'][0]['message']['content']

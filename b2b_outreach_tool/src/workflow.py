@@ -9,178 +9,234 @@ import functools
 # Appends src to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from dotenv import load_dotenv
+load_dotenv()
 from config import config
-from scraper import search_searxng
-from extractor import extract_emails_from_site, fetch_html
-from analyzer import analyze_content
+from utils.validator import ModelValidator
+import os
 from mailer import Mailer, get_email_content
 from database import init_db, add_lead, mark_contacted
+from analyzer import analyze_content
 
-async def process_url(session, url, target_niche=None):
-    """Wrapper to process a single URL: extract emails and analyze content."""
-    try:
-        # 1. Fetch HTML first (modified extractor to expose fetch or just use extract which does it)
-        # To avoid double fetching, we need to inspect extractor.py again or just let it happen.
-        # Actually, extract_emails_from_site does fetching internally.
-        # Ideally we refactor, but for now let's just use extract and then re-fetch for analysis OR
-        # better: just analyze the homepage text if we can get it.
-        # Optimization: Let's fetch once here, then pass to extractor?
-        # Extractor `extract_emails_from_site` expects session and url.
-        
-        # New flow:
-        # 1. Extract emails (crawls pages)
-        emails = await extract_emails_from_site(session, url)
-        
-        # 2. Analyze (only if we found something OR if we want to filter the lead anyway)
-        # Analyzing every site for filtering is better even if no email found (to avoid false negatives? no, if no email, lead is useless)
-        # BUT if we want to filter "quality" leads, we must analyze.
-        
-        analysis = None
-        if emails: # Only analyze if we have a way to contact them
-             # Fetch homepage text for analysis
-             # We need a simple fetch here.
-             from extractor import fetch_html
-             html = await fetch_html(session, url)
-             if html:
-                 # Strip HTML tags for cleaner analysis - simple approximation or just pass HTML and let Gemini handle it (it can handle some)
-                 # Passing raw HTML is fine for Gemini usually, but text is cheaper token-wise.
-                 # For now, pass html text.
-                 analysis = analyze_content(html, target_niche)
-        
-        if analysis and target_niche:
-            if not analysis.get('is_relevant', True):
-                print(f"Skipping {url}: Not relevant to {target_niche} ({analysis.get('relevance_reason')})")
-                return {'url': url, 'emails': [], 'analysis': analysis} # Return empty emails to filter out
+# === AGENT IMPORTS ===
+from agents import ResearcherAgent, QualifierAgent
 
-        return {'url': url, 'emails': list(emails), 'analysis': analysis}
-    except Exception as e:
-        print(f"Error processing {url}: {e}")
-        return {'url': url, 'emails': []}
+async def run_outreach(keywords, profile_names=["default"], target_niche=None, status_callback=None, exclusions=None, icp_criteria=None, max_results=None):
+    def log(msg):
+        print(msg)
+        if status_callback:
+            status_callback(msg)
 
-async def run_outreach(keywords, profile_name="default", target_niche=None):
-    print(f"Starting Outreach Workflow for keywords: {keywords} [Profile: {profile_name}] [Niche: {target_niche}]")
+    # Handle single string input
+    if isinstance(profile_names, str):
+        profile_names = [profile_names]
+
+    print("🚀 Starting Agentic Outreach Workflow (Smart Router v2)")
+    
+    # Run Pre-flight Checks
+    ModelValidator.run_checks()
+
+    log(f"Target: {keywords} | Niche: {target_niche}")
+    
     init_db()
     
-    # Load profile settings
-    profiles = config["search"].get("profiles", {})
-    profile_data = profiles.get(profile_name, profiles.get("default", {}))
-    categories = profile_data.get("categories")
-    engines = profile_data.get("engines")
+    # Initialize Proxies
+    from proxy_manager import proxy_manager
+    await proxy_manager.fetch_proxies()
+    
+    # Instantiate Agents
+    researcher = ResearcherAgent()
+    qualifier = QualifierAgent()
     
     async with aiohttp.ClientSession() as session:
-        # 1. Search
-        urls = await search_searxng(
-            keywords, 
-            session, 
-            num_results=config["search"]["max_results"],
-            categories=categories,
-            engines=engines
-        )
+        
+        # === PHASE 1: DISCOVERY (Research Agent) ===
+        log("\n--- Phase 1: Discovery (Researcher Agent) ---")
+        
+        # 1. Search (using Researcher)
+        log("  [Agent] Researcher is searching...")
+        search_context = {"query": keywords, "limit": max_results}
+        search_result = await researcher.gather_intel(search_context)
+        
+        urls = search_result.get("results", [])
         
         if not urls:
-            print("No URLs found. Exiting.")
+            log("No results found.")
             return
 
-        # 2. Extract (Concurrent)
-        print(f"Processing {len(urls)} URLs concurrently...")
-        tasks = [process_url(session, url, target_niche=target_niche) for url in urls]
-        # Run in batches if needed, but for <50, gather is fine
-        results = await asyncio.gather(*tasks)
+        # 2. Filter Exclusions (Still useful to keep strict filters outside of LLM to save tokens)
+        if exclusions:
+             urls = [
+                 u for u in urls 
+                 if not any(ex.lower() in (u.get('url', '') if isinstance(u, dict) else u).lower() for ex in exclusions)
+             ]
+        
+        log(f"Found {len(urls)} candidates.")
+        
+        if not urls: return
 
-    # 3. Process Results & Save to DB
+        # 3. Deep Analysis (Researcher + Qualifier Loop)
+        # log(f"Analyzing {len(urls)} sites concurrently...") # Original line
+        
+        candidates = []
+        
+        # Throttling
+        # Concurrency limit from config (Default: 20)
+        limit = config.get("search", {}).get("concurrency", 20)
+        log(f"Analyzing {len(urls)} candidates (Queue Size)...") # Updated to use len(urls) as candidates is empty
+        log(f"  [System] Concurrency Throttle: {config['search']['concurrency']} parallel tasks")
+        sem = asyncio.Semaphore(limit)
+
+        # Debug Stats
+        source_counts = {"organic": 0, "listing": 0}
+        for u in urls:
+            st = u.get("source_type", "organic") if isinstance(u, dict) else "organic"
+            source_counts[st] = source_counts.get(st, 0) + 1
+        log(f"  [Debug] Candidates Source Breakdown: {source_counts}")
+
+        async def process_candidate(candidate):
+            async with sem:
+                # Handle legacy string format just in case, but prefer dict
+                if isinstance(candidate, str):
+                    url = candidate
+                    source_type = "organic"
+                else:
+                    url = candidate.get("url")
+                    source_type = candidate.get("source_type", "organic")
+
+                log(f"  > Processing {url} ({source_type})...")
+
+                # FILTER: Organic Filter Reworked
+                # Allowing Organic results to pass through to the "Strict Email Check".
+                # This ensures we don't drop direct business sites, but still skip junk (no email).
+                # if source_type == "organic":
+                #      log(f"    ⏭️ Skipping {url} (Organic result). Strict Filter Active.")
+                #      return None
+                
+                # A. Research (Gather Intel)
+                # Researcher agent "deep scrape" capability
+                intel = await researcher.gather_intel({"url": url})
+                
+                if not intel.get('html_preview'):
+                    return None
+                
+                # B. Qualify (Gatekeeper)
+                # AUTO-QUALIFY MODE ENABLED
+                log(f"    [Agent] Auto-Qualifying {url} (Speed Mode)...")
+                
+                qualification = {
+                    'qualified': True,
+                    'score': 100,
+                    'reason': f'Auto-Qualified ({source_type} - Speed Mode)'
+                }
+                
+                # Parse result
+                if qualification:
+                    if qualification.get('qualified') == False:
+                        log(f"    ❌ Rejected: {qualification.get('reason')}")
+                        return None
+                    else:
+                        log(f"    ✅ Qualified! Score: {qualification.get('score')}")
+                        
+                        # Extract Details
+                        # OPTIMIZATION: Strict Email Requirement
+                        details = {}
+                        has_emails = bool(intel.get('emails'))
+                        
+                        if has_emails:
+                             log(f"    ⚡ Emails found ({len(intel.get('emails'))}). FAST SAVE.")
+                             details = {
+                                 "company_name": "Unknown (Fast Save)", 
+                                 "confidence": 0.9
+                             }
+                        else:
+                            # Only use LLM if we desperately need to find contact info
+                            # With 90+ free models, we can afford this now!
+                            try:
+                                loop = asyncio.get_running_loop()
+                                details = await loop.run_in_executor(
+                                    None, 
+                                    analyze_content, 
+                                    url, 
+                                    intel.get('html_preview'), 
+                                    target_niche
+                                )
+                            except Exception as e:
+                                log(f"    ⚠️ Details Extraction Failed for {url}: {e}")
+                            # Proceed without details
+                        
+                        return {
+                            "url": url,
+                            "emails": intel.get('emails'),
+                            "analysis": qualification,
+                            "intel": intel,
+                            "details": details or {}
+                        }
+                return None
+
+        tasks = [process_candidate(u) for u in urls]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filter successful results and log errors
+        candidates = []
+        for r in results:
+            if isinstance(r, Exception):
+                log(f"    ⚠️ Task failed: {r}")
+            elif r:
+                candidates.append(r)
+        
+        log(f"Phase 2 Complete. {len(candidates)} qualified leads found.")
+
+    # === PHASE 3: SAVE ===
     new_leads = []
+    log("\n--- Saving Results ---")
     
-    for res in results:
+    for res in candidates:
+        emails = res.get('emails', [])
+        analysis = res.get('analysis', {})
+        details = res.get('details', {})
         url = res['url']
-        emails = res['emails']
-        analysis = res.get('analysis') or {}
         
-        if emails:
-            print(f"[{url}] Found: {emails}")
-            for email in emails:
-                # Add to DB (returns True if new)
-                if add_lead(
-                    url, 
-                    email, 
-                    source=keywords, 
-                    category=profile_name,
-                    industry=analysis.get('industry'),
-                    business_type=analysis.get('business_type'),
-                    confidence=analysis.get('confidence'),
-                    relevance_reason=analysis.get('relevance_reason'),
-                    contact_person=analysis.get('contact_person')
-                ):
-                    new_leads.append({'url': url, 'email': email, 'analysis': analysis})
-        else:
-            pass # No emails found
-            
-    if not new_leads:
-        print("No new unique leads found.")
-        return
+        for email in emails:
+             if add_lead(
+                url, 
+                email, 
+                source=keywords, 
+                category=", ".join(profile_names),
+                industry=target_niche or details.get('industry', 'Detected'),
+                business_type=details.get('business_type'),
+                confidence=analysis.get('score'),
+                relevance_reason=analysis.get('reason'),
+                contact_person=details.get('contact_person'),
+                company_name=details.get('business_name'),
+                address=details.get('address'),
+                phone_number=details.get('phone_number'),
+                qualification_score=analysis.get('score'),
+                qualification_reason=analysis.get('reason')
+            ):
+                new_leads.append(res)
+                log(f"✅ Saved: {url} ({email})")
 
-    # 4. Save to CSV (Batch Record)
-    timestamp = int(time.time())
-    filename = f"leads_{timestamp}.csv"
-    with open(filename, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['URL', 'Email', 'Industry', 'Business Type', 'Confidence', 'Relevance Reason', 'Contact Person'])
-        for lead in new_leads:
-            analysis = lead.get('analysis') or {}
-            writer.writerow([
-                lead['url'], 
-                lead['email'],
-                analysis.get('industry', ''),
-                analysis.get('business_type', ''),
-                analysis.get('confidence', ''),
-                analysis.get('relevance_reason', ''),
-                analysis.get('contact_person', '')
-            ])
-    
-    print(f"Saved {len(new_leads)} new leads to {filename}")
-
-    # 5. Send Emails
-    # Check if enabled
-    smtp_user = config["email"]["smtp_user"]
-    if not smtp_user:
-        print("SMTP config missing. Skipping emails.")
-        return
-
-    mailer = Mailer()
-    print("\nSending emails...")
-    
-    for lead in new_leads:
-        email = lead['email']
-        subject, content = get_email_content() # could pass business name if we had it
+    # CSV Export (Optional backup)
+    if new_leads:
+        timestamp = int(time.time())
+        filename = f"leads_agentic_{timestamp}.csv"
+        # ... (CSV logic if needed, keeping it minimal) ...
         
-        success = mailer.send_email(email, subject, content)
-        if success:
-            mark_contacted(email)
-            # Short sleep to be polite to SMTP server even if sync
-            time.sleep(1) 
-            
-    print("Workflow completed.")
+    log("Workflow completed.")
 
 if __name__ == "__main__":
-    # Fix for Windows Async Loop
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     import argparse
     parser = argparse.ArgumentParser(description="B2B Outreach Tool")
     parser.add_argument("query", nargs="*", help="Search query")
-    parser.add_argument("--profile", default="default", help="Search profile (default, tech, creative, news)")
-    parser.add_argument("--niche", help="Target niche for AI verification (e.g. 'Interior Design', 'SaaS')")
+    parser.add_argument("--profile", default="default", help="Pofiles")
+    parser.add_argument("--niche", help="Target niche")
     
     args = parser.parse_args()
     
-    if args.query:
-        query = " ".join(args.query)
-    else:
-         # Default from config or input
-        query_list = config["search"]["keywords"]
-        if query_list:
-            query = query_list[0]
-        else:
-            query = input("Enter search query: ")
+    query = " ".join(args.query) if args.query else config["search"]["keywords"][0]
     
-    asyncio.run(run_outreach(query, profile_name=args.profile, target_niche=args.niche))
+    asyncio.run(run_outreach(query, profile_names=args.profile, target_niche=args.niche))

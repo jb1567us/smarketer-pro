@@ -57,3 +57,49 @@ def analyze_content(url, content, target_niche=None):
         "is_relevant": False,
         "relevance_reason": "LLM Error"
     }
+
+def analyze_lead_qualification(url, content, icp_criteria):
+    """
+    Analyzes if a lead meets the Ideal Customer Profile (ICP) criteria.
+    Returns (score, reason) where score is 0-100.
+    """
+    if not content or not icp_criteria:
+        return 0, "No content or criteria provided"
+
+    # Truncate content
+    truncated_content = content[:15000]
+
+    prompt = f"""
+    Act as a Lead Qualification Specialist.
+    Review the website content for {url} against the following Ideal Customer Profile (ICP).
+
+    ICP Criteria:
+    {icp_criteria}
+
+    Content:
+    {truncated_content}
+
+    Task:
+    1. Score the lead from 0 to 100 based on how well it fits the ICP.
+       - 100: Perfect match (meets all 'must haves', no 'deal breakers').
+       - 0: Complete mismatch (violates 'must haves' or has 'deal breakers').
+    2. Provide a concise reason for the score (1 sentence).
+
+    Return JSON:
+    {{
+        "score": integer,
+        "reason": "string"
+    }}
+    """
+
+    try:
+        provider = LLMFactory.get_provider()
+        result = provider.generate_json(prompt)
+        
+        if result:
+            return result.get("score", 0), result.get("reason", "Analysis failed")
+    except Exception as e:
+        print(f"Qualification error: {e}")
+        return 0, f"Error: {e}"
+
+    return 0, "Unknown error"
