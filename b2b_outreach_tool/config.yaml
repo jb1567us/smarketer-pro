@@ -2,7 +2,7 @@ search:
   engine: searxng
   searxng_url: http://localhost:8081/search
   default_depth: 1
-  max_results: 2000
+  max_results: 50
   concurrency: 5
   keywords: []
   exclude_patterns:
@@ -104,10 +104,6 @@ llm:
   router:
     candidates:
     - provider: groq
-      model_name: allam-2-7b
-    - provider: groq
-      model_name: canopylabs/orpheus-arabic-saudi
-    - provider: groq
       model_name: canopylabs/orpheus-v1-english
     - provider: groq
       model_name: groq/compound
@@ -128,17 +124,11 @@ llm:
     - provider: groq
       model_name: meta-llama/llama-prompt-guard-2-86m
     - provider: groq
-      model_name: moonshotai/kimi-k2-instruct
-    - provider: groq
-      model_name: moonshotai/kimi-k2-instruct-0905
-    - provider: groq
       model_name: openai/gpt-oss-120b
     - provider: groq
       model_name: openai/gpt-oss-20b
     - provider: groq
       model_name: openai/gpt-oss-safeguard-20b
-    - provider: groq
-      model_name: qwen/qwen3-32b
     - provider: groq
       model_name: whisper-large-v3
     - provider: groq
@@ -148,8 +138,6 @@ llm:
     - provider: gemini
       model_name: gemini-1.5-pro
     - provider: openrouter
-      model_name: alibaba/tongyi-deepresearch-30b-a3b:free
-    - provider: openrouter
       model_name: allenai/olmo-3-32b-think:free
     - provider: openrouter
       model_name: allenai/olmo-3.1-32b-think:free
@@ -157,8 +145,6 @@ llm:
       model_name: arcee-ai/trinity-mini:free
     - provider: openrouter
       model_name: cognitivecomputations/dolphin-mistral-24b-venice-edition:free
-    - provider: openrouter
-      model_name: deepseek/deepseek-r1-0528:free
     - provider: openrouter
       model_name: google/gemini-2.0-flash-exp:free
     - provider: openrouter
@@ -172,8 +158,6 @@ llm:
     - provider: openrouter
       model_name: google/gemma-3n-e4b-it:free
     - provider: openrouter
-      model_name: kwaipilot/kat-coder-pro:free
-    - provider: openrouter
       model_name: meta-llama/llama-3.1-405b-instruct:free
     - provider: openrouter
       model_name: meta-llama/llama-3.2-3b-instruct:free
@@ -185,10 +169,6 @@ llm:
       model_name: mistralai/mistral-7b-instruct:free
     - provider: openrouter
       model_name: mistralai/mistral-small-3.1-24b-instruct:free
-    - provider: openrouter
-      model_name: moonshotai/kimi-k2:free
-    - provider: openrouter
-      model_name: nex-agi/deepseek-v3.1-nex-n1:free
     - provider: openrouter
       model_name: nousresearch/hermes-3-llama-3.1-405b:free
     - provider: openrouter
@@ -202,20 +182,6 @@ llm:
     - provider: openrouter
       model_name: openai/gpt-oss-20b:free
     - provider: openrouter
-      model_name: qwen/qwen-2.5-vl-7b-instruct:free
-    - provider: openrouter
-      model_name: qwen/qwen3-4b:free
-    - provider: openrouter
-      model_name: qwen/qwen3-coder:free
-    - provider: openrouter
-      model_name: tngtech/deepseek-r1t-chimera:free
-    - provider: openrouter
-      model_name: tngtech/deepseek-r1t2-chimera:free
-    - provider: openrouter
-      model_name: tngtech/tng-r1t-chimera:free
-    - provider: openrouter
-      model_name: xiaomi/mimo-v2-flash:free
-    - provider: openrouter
       model_name: z-ai/glm-4.5-air:free
     - provider: huggingface
       model_name: meta-llama/Meta-Llama-3-8B-Instruct
@@ -223,8 +189,6 @@ llm:
       model_name: mistralai/Mistral-7B-Instruct-v0.2
     - provider: ollama
       model_name: codellama:latest
-    - provider: ollama
-      model_name: deepseek-r1:latest
     - provider: ollama
       model_name: llama3:latest
     - provider: ollama
@@ -272,9 +236,58 @@ email:
   template_file: config/email_template.html
 blocklist:
   domains:
-  - example.com
-  - wix.com
-  - wordpress.com
+  - apple.com
+  - itunes.apple.com
+  - shopify.com
+  - myshopify.com
+  - amazon.com
+  - wikipedia.org
+  - statista.com
+  - semrush.com
+  - ahrefs.com
+  - moz.com
+  - clutch.co
+  - upcity.com
+  - g2.com
+  - trustpilot.com
+  - yellowpages.com
+  - yelp.com
+  - tripadvisor.com
+  - facebook.com
+  - twitter.com
+  - x.com
+  - instagram.com
+  - linkedin.com
+  - youtube.com
+  - vimeo.com
+  - cnn.com
+  - bbc.com
+  - nytimes.com
+  - forbes.com
+  - bloomberg.com
+  - reuters.com
+  - businessinsider.com
+  - techcrunch.com
+  - wired.com
+  - forbes.com
+  - entrepreneur.com
+  - inc.com
+  - fastcompany.com
+  - hbr.org
+  - reddit.com
+  - quora.com
+  - medium.com
+  - substack.com
+  - beehiiv.com
+  - typeform.com
+  - google.com
+  - bing.com
+  - yahoo.com
+  - duckduckgo.com
+  - hayscaldwelledp.com
+  - jbgoodwin.com
+  - kwsanantonio.com
+  - kwmemorial.com
   usernames:
   - sentry
   - noreply

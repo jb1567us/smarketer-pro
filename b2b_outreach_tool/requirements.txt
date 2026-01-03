@@ -8,3 +8,4 @@ flask
 streamlit
 pandas
 python-dotenv
+playwright

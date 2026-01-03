@@ -5,6 +5,24 @@ import concurrent.futures
 from config import config
 from llm.factory import LLMFactory
 
+NON_ENGLISH_KEYWORDS = [
+    "arabic", "saudi", "allam", "orpheus",
+    "kimi", "moonshot", "qwen", "alibaba", "tongyi",
+    "deepseek", "kat-coder", "xiaomi", "mimo", "glm",
+    "chimera", "z-ai", "kwaipilot", "nex-agi"
+]
+
+def is_english_model(model_id):
+    """Simple heuristic to filter out non-English models based on keywords."""
+    model_id_lower = model_id.lower()
+    for kw in NON_ENGLISH_KEYWORDS:
+        if kw in model_id_lower:
+            # Special case: allow 'canopylabs/orpheus-v1-english'
+            if "orpheus-v1-english" in model_id_lower:
+                return True
+            return False
+    return True
+
 def fetch_openrouter_models(api_key):
     try:
         response = requests.get(
@@ -62,7 +80,8 @@ def fetch_openrouter_free_models(api_key):
                         continue
                         
                     # Also check if it's a text model (usually context_length > 0)
-                    free_models.append(mid)
+                    if is_english_model(mid):
+                        free_models.append(mid)
             except (ValueError, TypeError):
                 continue
                 
@@ -217,7 +236,8 @@ def get_free_models_for_provider(provider_name):
         
     elif provider_name == 'gemini':
         # Gemini Free Tier models
-        return ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-flash-latest"]
+        models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-flash-latest"]
+        return [m for m in models if is_english_model(m)]
         
     elif provider_name == 'huggingface':
         # Many are free endpoint compatible

@@ -68,6 +68,32 @@ def init_db():
             timestamp INTEGER
         );
     ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS creative_content (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_type TEXT, -- Designer, Social Media, etc.
+            content_type TEXT, -- image, text, json
+            title TEXT,
+            body TEXT,
+            metadata TEXT, -- JSON string for extra fields
+            created_at INTEGER
+        );
+    ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS wp_sites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            url TEXT,
+            username TEXT,
+            app_password TEXT,
+            cpanel_url TEXT,
+            cpanel_user TEXT,
+            cpanel_pass TEXT,
+            created_at INTEGER
+        );
+    ''')
     
     # Simple migration: check if columns exist, if not add them
     # List of new columns to check and add
@@ -279,3 +305,77 @@ def get_daily_engagement(days=30):
         data[day][etype] = count
         
     return data
+
+def save_creative_content(agent_type, content_type, title, body, metadata=None):
+    """Saves generated creative content to the library."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    meta_json = json.dumps(metadata) if metadata else "{}"
+    c.execute('''
+        INSERT INTO creative_content (agent_type, content_type, title, body, metadata, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (agent_type, content_type, title, body, meta_json, int(time.time())))
+    conn.commit()
+    conn.close()
+    return True
+
+def get_creative_library():
+    """Retrieves all saved creative content."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM creative_content ORDER BY created_at DESC')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def delete_creative_item(item_id):
+    """Deletes a specific creative item."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM creative_content WHERE id = ?', (item_id,))
+    conn.commit()
+    conn.close()
+
+def save_wp_site(name, url, username, app_password, cp_url=None, cp_user=None, cp_pass=None):
+    """Saves or updates a WordPress site's credentials."""
+    conn = get_connection()
+    c = conn.cursor()
+    # Check if a site with this name already exists
+    c.execute('SELECT id FROM wp_sites WHERE name = ?', (name,))
+    existing = c.fetchone()
+    
+    if existing:
+        c.execute('''
+            UPDATE wp_sites 
+            SET url = ?, username = ?, app_password = ?, cpanel_url = ?, cpanel_user = ?, cpanel_pass = ?
+            WHERE name = ?
+        ''', (url, username, app_password, cp_url, cp_user, cp_pass, name))
+    else:
+        c.execute('''
+            INSERT INTO wp_sites (name, url, username, app_password, cpanel_url, cpanel_user, cpanel_pass, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (name, url, username, app_password, cp_url, cp_user, cp_pass, int(time.time())))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+def get_wp_sites():
+    """Retrieves all saved WordPress sites."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM wp_sites ORDER BY name ASC')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def delete_wp_site(site_id):
+    """Deletes a saved WordPress site."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM wp_sites WHERE id = ?', (site_id,))
+    conn.commit()
+    conn.close()

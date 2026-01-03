@@ -14,12 +14,21 @@ load_dotenv()
 # Ensure src is in path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from database import get_connection, get_pain_points, save_template, get_templates, init_db, clear_all_leads, delete_leads, get_campaign_analytics, get_daily_engagement
+from database import (
+    get_connection, get_pain_points, save_template, get_templates, init_db,
+    clear_all_leads, delete_leads, get_campaign_analytics, get_daily_engagement,
+    save_wp_site, get_wp_sites, delete_wp_site,
+    save_creative_content, get_creative_library, delete_creative_item
+)
 from workflow import run_outreach
 from campaign_manager import start_campaign_step_research, start_campaign_step_copy, start_campaign_step_send, refine_campaign_step_research
 from mailer import Mailer
 from config import config, reload_config
-from agents import ResearcherAgent, QualifierAgent, CopywriterAgent, ReviewerAgent, SyntaxAgent, UXAgent, ManagerAgent, GraphicsDesignerAgent
+from agents import (
+    ResearcherAgent, QualifierAgent, CopywriterAgent, ReviewerAgent, 
+    SyntaxAgent, UXAgent, ManagerAgent, GraphicsDesignerAgent, WordPressAgent,
+    SocialMediaAgent, AdCopyAgent, BrainstormerAgent, PersonaAgent
+)
 
 st.set_page_config(page_title="B2B Outreach Agent", layout="wide", page_icon="🚀")
 
@@ -103,8 +112,7 @@ def process_csv_upload(uploaded_file, default_source="import", default_category=
 def main():
     st.title("🚀 B2B Outreach Agent")
 
-    menu = ["Dashboard", "Lead Discovery", "Campaign Manager", "Agent Lab", "Analytics", "Settings"]
-    menu = ["Dashboard", "Lead Discovery", "Campaign Manager", "Agent Lab", "Analytics", "Settings"]
+    menu = ["Dashboard", "Lead Discovery", "Campaign Manager", "Agent Lab", "Creative Library", "Analytics", "Settings"]
     choice = st.sidebar.selectbox("Navigation", menu)
 
     with st.sidebar:
@@ -572,11 +580,16 @@ def main():
 
     elif choice == "Agent Lab":
         st.header("🧪 Agent Lab")
-        st.write("Interact with individual agents to test their capabilities.")
+        st.write("Interact with specialized agents to boost your marketing creativity.")
         
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["Researcher", "Qualifier", "Copywriter", "Reviewer", "Syntax", "UX", "Manager", "Designer"])
+        tab_names = [
+            "Researcher", "Qualifier", "Copywriter", "Reviewer", 
+            "Social Media", "Ad Copy", "Brainstormer", "Persona",
+            "Designer", "WordPress", "Manager", "System Agents"
+        ]
+        tabs = st.tabs(tab_names)
         
-        with tab1:
+        with tabs[0]: # Researcher
             st.subheader("🕵️‍♀️ Researcher Agent")
             st.caption("Finds leads and gathers deep info.")
             res_mode = st.radio("Mode", ["Search Query", "Deep Scrape URL"], horizontal=True)
@@ -596,7 +609,7 @@ def main():
                         result = asyncio.run(agent.gather_intel(context))
                         st.json(result)
 
-        with tab2:
+        with tabs[1]: # Qualifier
             st.subheader("🛡️ Qualifier Agent")
             st.caption("Evaluates if a lead matches the ICP.")
             q_html = st.text_area("Lead Data (HTML or Text)", height=150, placeholder="Paste raw text or html here...")
@@ -611,7 +624,7 @@ def main():
                         result = agent.think(ctx)
                         st.json(result)
 
-        with tab3:
+        with tabs[2]: # Copywriter
             st.subheader("✍️ Copywriter Agent")
             st.caption("Drafts cold emails.")
             c_info = st.text_area("Lead Info", value="Business: Tech Startup\nContact: John Doe\nPain: Manual data entry")
@@ -627,9 +640,9 @@ def main():
                         st.markdown(f"**Subject:** {result.get('subject_line')}")
                         st.markdown(result.get('body'))
 
-        with tab4:
+        with tabs[3]:
             st.subheader("⚖️ Reviewer Agent")
-            st.caption("Critiques content.")
+            st.caption("Critiques content for impact and clarity.")
             r_content = st.text_area("Content to Review", height=150)
             
             if st.button("Critique"):
@@ -637,30 +650,262 @@ def main():
                     agent = ReviewerAgent()
                     result = agent.think(r_content)
                     st.json(result)
+                    if st.button("💾 Save Review"):
+                        save_creative_content("Reviewer", "json", "Review Result", str(result))
+                        st.toast("Saved to Library!")
 
-        with tab5:
-            st.subheader("🔧 Syntax Agent")
-            st.caption("Fixes structure and grammar.")
-            s_content = st.text_area("Content to Fix", value="Hello [Name], we are from {{Company}}.")
+        with tabs[4]:
+            st.subheader("📱 Social Media Agent")
+            st.caption("Generate high-engagement posts.")
+            sm_context = st.text_area("What is the post about?", placeholder="e.g. A new AI tool for B2B outreach...")
+            sm_platform = st.selectbox("Platform", ["LinkedIn", "Twitter/X", "Instagram", "Facebook"])
             
-            if st.button("Fix Syntax"):
-                with st.spinner("Fixing..."):
-                    agent = SyntaxAgent()
-                    result = agent.think(s_content)
-                    st.json(result)
-
-        with tab6:
-            st.subheader("🎨 UX Agent")
-            st.caption("Suggests visualizations.")
-            ux_data = st.text_area("Data JSON", value='{"revenue": [10, 20, 30], "month": ["Jan", "Feb", "Mar"]}')
+            if st.button("Generate Post"):
+                with st.spinner("Writing..."):
+                    agent = SocialMediaAgent()
+                    res = agent.think(f"Platform: {sm_platform}\nTopic: {sm_context}")
+                    st.session_state['last_sm'] = res
+                    st.json(res)
             
-            if st.button("Suggest UI"):
-                with st.spinner("Designing..."):
-                    agent = UXAgent()
-                    result = agent.think(ux_data)
-                    st.json(result)
+            if 'last_sm' in st.session_state:
+                if st.button("💾 Save Post to Library"):
+                    save_creative_content("Social Media", "json", f"{sm_platform} Post", json.dumps(st.session_state['last_sm']))
+                    st.toast("Saved!")
 
-        with tab7:
+        with tabs[5]:
+            st.subheader("🎯 Ad Copy Agent")
+            st.caption("Write high-converting ads.")
+            ad_context = st.text_area("Product Details", placeholder="e.g. 24/7 lead generation software...")
+            
+            if st.button("Generate Ad Copy"):
+                with st.spinner("Drafting..."):
+                    agent = AdCopyAgent()
+                    res = agent.think(ad_context)
+                    st.session_state['last_ad'] = res
+                    st.json(res)
+            
+            if 'last_ad' in st.session_state:
+                if st.button("💾 Save Ad to Library"):
+                    save_creative_content("Ad Copy", "json", "Ad Snippet", json.dumps(st.session_state['last_ad']))
+                    st.toast("Saved!")
+
+        with tabs[6]:
+            st.subheader("💡 Brainstormer Agent")
+            st.caption("Creative angles and campaign hooks.")
+            bs_context = st.text_input("Niche or Problem", placeholder="e.g. Small biz owners struggling with SEO")
+            
+            if st.button("Get Creative Angles"):
+                with st.spinner("Ideating..."):
+                    agent = BrainstormerAgent()
+                    res = agent.think(bs_context)
+                    st.session_state['last_bs'] = res
+                    st.json(res)
+            
+            if 'last_bs' in st.session_state:
+                if st.button("💾 Save Ideas to Library"):
+                    save_creative_content("Brainstormer", "json", "Campaign Ideas", json.dumps(st.session_state['last_bs']))
+                    st.toast("Saved!")
+
+        with tabs[7]:
+            st.subheader("👤 Persona Agent")
+            st.caption("Build detailed customer personas.")
+            p_context = st.text_input("Target Market", placeholder="e.g. Real Estate Agents in Canada")
+            
+            if st.button("Build Persona"):
+                with st.spinner("Analyzing..."):
+                    agent = PersonaAgent()
+                    res = agent.think(p_context)
+                    st.session_state['last_persona'] = res
+                    st.json(res)
+            
+            if 'last_persona' in st.session_state:
+                if st.button("💾 Save Persona to Library"):
+                    save_creative_content("Persona", "json", f"Persona: {p_context}", json.dumps(st.session_state['last_persona']))
+                    st.toast("Saved!")
+
+        with tabs[8]:
+            st.subheader("🎨 Graphics Designer Agent")
+            st.caption("Generates free AI images.")
+            d_concept = st.text_input("Image Concept", value="Modern minimalist office workspace with plants, 8k resolution")
+            
+            if st.button("Generate Image"):
+                with st.spinner("Dreaming up your image..."):
+                    try:
+                        designer = GraphicsDesignerAgent()
+                        result = designer.think(d_concept)
+                        st.session_state['last_image'] = result
+                        
+                        # Prioritize local path for reliability
+                        display_source = result.get('local_path') or result['image_url']
+                        st.image(display_source, caption=result['revised_prompt'])
+                        st.markdown(f"[🔗 View Image in New Tab (Direct Link)]({result['image_url']})")
+                        st.success("Image Generated!")
+                    except Exception as e:
+                        st.error(f"Error in Designer: {e}")
+            
+            if 'last_image' in st.session_state:
+                if st.button("💾 Save Image to Library"):
+                    res = st.session_state['last_image']
+                    save_creative_content(
+                        "Designer", "image", 
+                        res['description'][:30], 
+                        res.get('local_path') or res['image_url'],
+                        metadata={"origin_url": res['image_url'], "prompt": res['revised_prompt']}
+                    )
+                    st.toast("Image saved to library!")
+
+        with tabs[9]:
+            st.subheader("🌐 WordPress Expert Agent")
+            st.caption("Install and manage WordPress sites.")
+            
+            # --- Site Persistence Layer ---
+            saved_sites = get_wp_sites()
+            site_options = ["None (Manual)"] + [s['name'] for s in saved_sites]
+            
+            col_sel, col_mgr = st.columns([2, 1])
+            with col_sel:
+                selected_site_name = st.selectbox("📂 Select Saved Site", site_options, key="wp_site_selector")
+            
+            selected_site = next((s for s in saved_sites if s['name'] == selected_site_name), None)
+            
+            with col_mgr:
+                with st.expander("🛠️ Manage Sites"):
+                    new_site_name = st.text_input("Site Nickname", placeholder="e.g. My Blog")
+                    if st.button("💾 Save Current as New/Update"):
+                        # This will use values from the form below
+                        save_wp_site(
+                            new_site_name or (selected_site['name'] if selected_site else "Unnamed"),
+                            st.session_state.get('wp_site_url', ''),
+                            st.session_state.get('wp_site_user', ''),
+                            st.session_state.get('wp_site_pass', ''),
+                            st.session_state.get('wp_cp_url', ''),
+                            st.session_state.get('wp_cp_user', ''),
+                            st.session_state.get('wp_cp_pass', '')
+                        )
+                        st.success("Site saved!")
+                        time.sleep(1)
+                        st.rerun()
+                    
+                    if selected_site:
+                        if st.button("🗑️ Delete Selected Site"):
+                            delete_wp_site(selected_site['id'])
+                            st.warning("Site deleted.")
+                            time.sleep(1)
+                            st.rerun()
+            
+            st.divider()
+            
+            # Pre-populate fields if site selected
+            default_url = selected_site['url'] if selected_site else ""
+            default_user = selected_site['username'] if selected_site else ""
+            default_pass = selected_site['app_password'] if selected_site else ""
+            default_cp_url = selected_site['cpanel_url'] if selected_site else ""
+            default_cp_user = selected_site['cpanel_user'] if selected_site else ""
+            default_cp_pass = selected_site['cpanel_pass'] if selected_site else ""
+            
+            wp_mode = st.radio("Toolbox", ["Installation", "Content Management (API)"], horizontal=True, key="wp_toolbox_mode")
+            
+            if wp_mode == "Installation":
+                install_sub_mode = st.selectbox("Install Method", ["Docker Compose", "cPanel Automation"])
+                
+                if install_sub_mode == "Docker Compose":
+                    st.info("Generate a `docker-compose.yaml` file for local development.")
+                    project_name = st.text_input("Project Name", value="my_wordpress")
+                    if st.button("Generate Config"):
+                        agent = WordPressAgent()
+                        config_text = agent.generate_install_config(project_name)
+                        st.code(config_text, language="yaml")
+                        st.download_button("Download docker-compose.yaml", config_text, file_name="docker-compose.yaml")
+                
+                else:
+                    st.info("🌍 cPanel Automation (Beta)")
+                    st.caption("Auto-install WordPress via Softaculous.")
+                    cp_url = st.text_input("cPanel URL", value=default_cp_url, placeholder="https://hostname.com:2083", key="wp_cp_url")
+                    cp_user = st.text_input("cPanel Username", value=default_cp_user, key="wp_cp_user")
+                    cp_pass = st.text_input("cPanel Password", value=default_cp_pass, type="password", key="wp_cp_pass")
+                    cp_domain = st.text_input("Target Domain", placeholder="example.com", key="wp_cp_domain")
+                    
+                    if st.button("🚀 Start cPanel Install"):
+                        if cp_url and cp_user and cp_pass and cp_domain:
+                            with st.spinner("Automating cPanel... (Headless Browser running)"):
+                                agent = WordPressAgent()
+                                result = asyncio.run(agent.cpanel_install_wp(cp_url, cp_user, cp_pass, cp_domain))
+                                if "error" in result:
+                                    st.error(result["error"])
+                                else:
+                                    st.success("WordPress Installed!")
+                                    st.json(result)
+                        else:
+                            st.warning("All fields required.")
+            
+            else:
+                st.info("Manage an existing WordPress site via REST API.")
+                wp_url = st.text_input("Site URL", value=default_url, placeholder="https://example.com", key="wp_site_url")
+                wp_user = st.text_input("Username", value=default_user, placeholder="admin", key="wp_site_user")
+                
+                col_pass, col_auto = st.columns([3, 1])
+                with col_pass:
+                    wp_pass = st.text_input("Application Password", value=default_pass, type="password", help="Generate this in Users -> Profile -> Application Passwords", key="wp_site_pass")
+                with col_auto:
+                    st.write("")
+                    st.write("")
+                    if st.button("🤖 Auto-Get"):
+                        if wp_url and wp_user:
+                            # We need the original admin password for automation
+                            admin_pass = st.text_input("Admin Password (temporary for automation)", type="password")
+                            if admin_pass:
+                                with st.spinner("Retrieving App Password..."):
+                                    agent = WordPressAgent()
+                                    res = asyncio.run(agent.automate_app_password(wp_url, wp_user, admin_pass))
+                                    if "app_password" in res:
+                                        st.success("Retrieved!")
+                                        st.code(res["app_password"])
+                                        st.session_state['wp_site_pass'] = res["app_password"]
+                                    else:
+                                        st.error(res.get("error", "Failed"))
+                            else:
+                                st.info("Enter Admin Pass first.")
+                        else:
+                            st.warning("URL and User required.")
+                
+                wp_action = st.selectbox("Action", ["List Posts", "Create Post", "Create Page"], key="wp_site_action")
+                
+                if wp_action == "List Posts":
+                    if st.button("Fetch Posts"):
+                        if wp_url and wp_user and wp_pass:
+                            with st.spinner("Fetching..."):
+                                agent = WordPressAgent()
+                                results = asyncio.run(agent.manage_content(wp_url, wp_user, wp_pass, "list_posts"))
+                                if isinstance(results, list):
+                                    for p in results:
+                                        st.write(f"- **{p['title']['rendered']}** (ID: {p['id']})")
+                                else:
+                                    st.error(results.get('error', 'Unknown error'))
+                        else:
+                            st.warning("Please provide credentials.")
+
+                elif wp_action in ["Create Post", "Create Page"]:
+                    c_title = st.text_input("Title", key="wp_content_title")
+                    c_body = st.text_area("Content (HTML/Text)", key="wp_content_body")
+                    c_status = st.selectbox("Status", ["draft", "publish", "future"], key="wp_content_status")
+                    
+                    if st.button("Submit Content"):
+                        if wp_url and wp_user and wp_pass and c_title:
+                            with st.spinner("Running..."):
+                                agent = WordPressAgent()
+                                action_key = "create_post" if wp_action == "Create Post" else "create_page"
+                                data = {"title": c_title, "content": c_body, "status": c_status}
+                                result = asyncio.run(agent.manage_content(wp_url, wp_user, wp_pass, action_key, data))
+                                
+                                if "id" in result:
+                                    st.success(f"Successfully created! ID: {result['id']}")
+                                    st.json(result)
+                                else:
+                                    st.error(result.get('error', 'Failed to create content.'))
+                        else:
+                            st.warning("Missing required fields.")
+
+        with tabs[10]:
             st.subheader("👔 Manager Agent")
             st.caption("Autonomous Orchestrator.")
             m_goal = st.text_input("Goal", value="Find 3 leads for a SEO agency in Chicago")
@@ -671,20 +916,72 @@ def main():
                     result = asyncio.run(manager.run_mission(m_goal))
                     st.json(result)
 
-        with tab8:
-            st.subheader("🎨 Graphics Designer Agent")
-            st.caption("Generates free AI images.")
-            d_concept = st.text_input("Image Concept", value="Modern minimalist office workspace with plants, 8k resolution")
+        with tabs[11]:
+            st.subheader("System Agents")
+            st.caption("Internal utility agents for formatting and UX.")
+            s_tab1, s_tab2 = st.tabs(["Syntax Agent", "UX Agent"])
             
-            if st.button("Generate Image"):
-                with st.spinner("Dreaming up your image..."):
-                    designer = GraphicsDesignerAgent()
-                    result = designer.think(d_concept)
-                    
-                    st.image(result['image_url'], caption=result['revised_prompt'])
-                    st.success("Image Generated!")
-                    with st.expander("Debug Details"):
+            with s_tab1:
+                s_content = st.text_area("Content to Fix", value="Hello [Name], we are from {{Company}}.")
+                if st.button("Fix Syntax"):
+                    with st.spinner("Fixing..."):
+                        agent = SyntaxAgent()
+                        result = agent.think(s_content)
                         st.json(result)
+            
+            with s_tab2:
+                ux_data = st.text_area("Data JSON", value='{"revenue": [10, 20, 30], "month": ["Jan", "Feb", "Mar"]}')
+                if st.button("Suggest UI"):
+                    with st.spinner("Designing..."):
+                        agent = UXAgent()
+                        result = agent.think(ux_data)
+                        st.json(result)
+
+    elif choice == "Creative Library":
+        st.header("📚 Creative Library")
+        st.write("Manage your saved marketing assets.")
+        
+        library = get_creative_library()
+        
+        if not library:
+            st.info("No saved items yet. Use the Agent Lab to create and save content!")
+        else:
+            # Filter by agent type
+            types = ["All"] + sorted(list(set([i['agent_type'] for i in library])))
+            filter_type = st.selectbox("📁 Filter by Agent Type", types)
+            
+            display_items = library if filter_type == "All" else [i for i in library if i['agent_type'] == filter_type]
+            
+            for item in display_items:
+                with st.expander(f"📌 {item['agent_type']}: {item['title']} ({time.strftime('%Y-%m-%d', time.localtime(item['created_at']))})", expanded=False):
+                    if item['content_type'] == 'image':
+                        st.image(item['body'])
+                        st.caption(f"Prompt: {item['title']}")
+                        st.markdown(f"[Download Image](file://{item['body']})")
+                    else:
+                        try:
+                            import json
+                            content = json.loads(item['body'])
+                            st.json(content)
+                            
+                            # Simple text export
+                            from io import BytesIO
+                            buf = BytesIO()
+                            buf.write(item['body'].encode())
+                            st.download_button(
+                                label="📥 Download as text",
+                                data=buf.getvalue(),
+                                file_name=f"{item['title'].replace(' ', '_')}.txt",
+                                mime="text/plain"
+                            )
+                        except:
+                            st.write(item['body'])
+                    
+                    if st.button(f"🗑️ Delete Item", key=f"del_{item['id']}"):
+                        delete_creative_item(item['id'])
+                        st.toast("Item deleted.")
+                        time.sleep(1)
+                        st.rerun()
 
     elif choice == "Settings":
         st.subheader("⚙️ Configuration")

@@ -31,7 +31,8 @@ class ManagerAgent(BaseAgent):
             "You have access to: Researcher, Qualifier, Copywriter.\n"
             "Break this down into steps. For this MVP, we assume a standard flow: Research -> Qualify -> Write.\n"
             "Identify the 'Search Queries' needed for the Researcher."
-            "Return JSON: {'search_queries': [str], 'icp_criteria': str, 'value_proposition': str}"
+            "Extract the number of leads requested if specified (default to 5 if not clear)."
+            "Return JSON: {'search_queries': [str], 'icp_criteria': str, 'value_proposition': str, 'limit': int}"
         )
         
         plan = self.provider.generate_json(plan_prompt)
@@ -39,6 +40,8 @@ class ManagerAgent(BaseAgent):
         if not plan:
             return {"error": "Failed to generate plan."}
             
+        limit = plan.get('limit', 5)
+        
         report = {
             "plan": plan,
             "leads": []
@@ -46,11 +49,12 @@ class ManagerAgent(BaseAgent):
         
         # 2. Execute Research
         for query in plan.get('search_queries', [])[:1]: # Limit to 1 query for safety/cost
-            search_res = await self.researcher.gather_intel({"query": query})
+            search_res = await self.researcher.gather_intel({"query": query, "limit": limit})
             
             # 3. Process Leads
             if 'results' in search_res:
-                for url in search_res['results'][:3]: # Limit to 3 leads
+                for url_info in search_res['results'][:limit]: 
+                    url = url_info['url']
                     lead_intel = await self.researcher.gather_intel({"url": url})
                     
                     if not lead_intel.get('html_preview'): continue

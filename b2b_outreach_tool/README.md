@@ -1,41 +1,79 @@
-# B2B Outreach Tool
+# 🚀 B2B Outreach Tool
 
-Automated lead generation and outreach toolkit.
+An industry-agnostic, multi-agent AI system for high-volume, quality-driven lead generation and personalized outreach.
 
-## Setup
+## ✨ Key Features
 
-1. **Install Python Dependencies:**
+- **🧠 Multi-Agent Orchestration**: A specialized workforce of AI agents:
+  - **Manager**: Plans campaigns and delegates tasks.
+  - **Researcher**: Deep-dives into prospect websites to find pain points.
+  - **Qualifier**: Gates leads against your Ideal Customer Profile (ICP).
+  - **Copywriter**: Crafts hyper-personalized, relevant outreach copy.
+  - **Designer**: Generates custom visual assets for campaigns.
+- **💎 Premium Web Interface**: A sleek Streamlit dashboard featuring:
+  - Interactive **Campaign Manager** with a guided stepper workflow.
+  - Real-time **Lead Discovery** with visual status indicators.
+  - Automated **Niche Analysis** and ICP definition tools.
+- **🛡️ Quality Gate (ICP Verification)**: AI-driven filtering ensures you only outreach to high-relevance leads, saving resources and protecting your domain reputation.
+- **🔌 Smart LLM Router**: Seamless integration with Groq, OpenAI, Gemini, Cohere, and OpenRouter with automatic provider verification and failover.
+- **🔍 Advanced Search Engine**: Integrated SearXNG backend for privacy-focused, multi-engine results with intelligent domain blocklists.
 
-    ```powershell
-    pip install -r requirements.txt
-    ```
+## 🛠️ Getting Started
 
-2. **Start Local Search Engine (SearXNG):**
+### 1. Prerequisites
 
-    ```powershell
-    cd searxng
-    docker-compose up -d
-    cd ..
-    ```
+- Python 3.10+
+- Docker (for SearXNG)
 
-3. **Configure SMTP (Optional for sending emails):**
-    Set environment variables `SMTP_USER` and `SMTP_PASS`.
-
-## Usage
-
-Run the workflow to find leads:
-
-```powershell
-python src/workflow.py "your search query"
-```
-
-Example:
+### 2. Installation
 
 ```powershell
-python src/workflow.py "software agencies Austin"
+pip install -r requirements.txt
 ```
 
-## Structure
+### 3. Setup SearXNG
 
-- `src/`: Python source code (scraper, extractor, workflow).
-- `searxng/`: Docker configuration for local search engine.
+```powershell
+cd searxng
+docker-compose up -d
+cd ..
+```
+
+### 4. Configuration
+
+Create a `.env` file or set environment variables:
+
+- `GROQ_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, etc.
+- `SMTP_USER`, `SMTP_PASS` (for email outreach)
+- `DATABASE_URL` (optional, defaults to `leads.db`)
+
+## 🚀 Usage
+
+### Web Application (Recommended)
+
+Launch the premium dashboard to manage campaigns visually:
+
+```powershell
+streamlit run src/app.py
+```
+
+### Command Line
+
+Run the workflow directly for high-speed lead discovery:
+
+```powershell
+python src/workflow.py "your search query" --niche "target industry"
+```
+
+*Example:* `python src/workflow.py "AI startups Austin" --niche "SaaS companies"`
+
+## 📂 Project Structure
+
+- `src/agents/`: Specialized AI agent definitions.
+- `src/llm/`: Smart router and provider abstractions.
+- `src/ui/`: Streamlit dashboard components and styles.
+- `src/workflow.py`: Core orchestration logic for lead processing.
+- `config.yaml`: Central configuration for search engines, blocklists, and ICP defaults.
+
+---
+*Built with ❤️ for advanced agentic outreach.*

@@ -76,9 +76,10 @@ class ResearcherAgent(BaseAgent):
                     else:
                         final_urls.append({"url": url, "source_type": "organic"})
             
-            # Deduplicate by URL
+            # Deduplicate by URL and cap to limit
             unique = {item['url']: item for item in final_urls}.values()
-            return {"action": "search_completed", "results": list(unique)}
+            results = list(unique)[:limit]
+            return {"action": "search_completed", "results": results}
 
     async def _deep_scrape(self, url):
         async with aiohttp.ClientSession() as session:
