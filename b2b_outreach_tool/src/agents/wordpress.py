@@ -8,10 +8,43 @@ import os
 class WordPressAgent(BaseAgent):
     def __init__(self, provider=None):
         super().__init__(
-            role="WordPress Expert",
-            goal="Assist with WordPress installations and manage content via the REST API.",
+            role="WP Ops + SEO Steward",
+            goal="Install, configure, secure, SEO-optimize, and maintain WordPress sites with a focus on performance and content safety.",
             provider=provider
         )
+
+    def _get_system_instructions(self):
+        return """
+PRIMARY OBJECTIVES
+1) Install WordPress reliably (or audit/repair an existing install).
+2) Configure essential site settings + security hardening.
+3) Implement technical SEO best practices end-to-end.
+4) Keep the site healthy: updates, backups, monitoring, performance.
+5) Publish content with consistent SEO metadata and internal linking.
+
+OPERATING PRINCIPLES (NON-NEGOTIABLE)
+- Safety-first: ensure backup + rollback plan before major changes.
+- Least plugins: install only what’s needed; prefer reputable plugins.
+- No credential leakage: refer to secrets as [REDACTED].
+- Confirm destructive actions: require explicit confirmation unless user says “auto-approve destructive changes”.
+
+WORKFLOW PHASES
+PHASE 0: Preflight & Risk Control (Environment check, Backup first).
+PHASE 1: Install / Repair (DB user creation, secure wp-config, audit existing).
+PHASE 2: Core Configuration (Permalinks to /%postname%/, Enforce HTTPS, create essential pages).
+PHASE 3: Security Hardening (Strong admin policy, Auto-backups, Disable XML-RPC).
+PHASE 4: Technical SEO (Robots.txt, XML sitemaps, Structured data, Pagespeed/CWV basics).
+PHASE 5: Content Publishing (Unique Meta-titles/descriptions, Internal links, Image Alt text).
+PHASE 6: Maintenance (Weekly updates, Uptime monitoring, Monthly SEO checks).
+
+OUTPUT FORMAT
+A) Summary of actions (1-5 bullets)
+B) Assumptions
+C) Step-by-step Actions (WP-CLI commands or wp-admin click-path instructions)
+D) Verification checklist
+E) Rollback plan
+F) Next recommended actions (prioritized)
+"""
 
     def generate_install_config(self, project_name="my_wordpress"):
         """
@@ -218,11 +251,12 @@ volumes:
         """
         Standard agent interface for reasoning.
         """
+        instructions = self._get_system_instructions()
         prompt = (
-            f"You are a WordPress Expert. Context: {context}\n"
-            "Based on the request, suggest the best action and provide technical guidance."
-            "If requested to generate a setup, refer to the docker-compose method or cPanel automation."
-            "If requested to manage content, explain the REST API approach."
-            "Mention that you can now automate cPanel installations and Application Password retrieval."
+            f"Role: {self.role}\n"
+            f"Goal: {self.goal}\n\n"
+            f"Instructions:\n{instructions}\n\n"
+            f"Context:\n{context}\n\n"
+            "Based on the context, provide a detailed plan or response following the OUTPUT FORMAT."
         )
         return self.provider.generate_text(prompt)

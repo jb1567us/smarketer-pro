@@ -27,7 +27,7 @@ from config import config, reload_config
 from agents import (
     ResearcherAgent, QualifierAgent, CopywriterAgent, ReviewerAgent, 
     SyntaxAgent, UXAgent, ManagerAgent, GraphicsDesignerAgent, WordPressAgent,
-    SocialMediaAgent, AdCopyAgent, BrainstormerAgent, PersonaAgent
+    SocialMediaAgent, AdCopyAgent, BrainstormerAgent, PersonaAgent, ProductManagerAgent
 )
 
 st.set_page_config(page_title="B2B Outreach Agent", layout="wide", page_icon="🚀")
@@ -585,7 +585,7 @@ def main():
         tab_names = [
             "Researcher", "Qualifier", "Copywriter", "Reviewer", 
             "Social Media", "Ad Copy", "Brainstormer", "Persona",
-            "Designer", "WordPress", "Manager", "System Agents"
+            "Designer", "WordPress", "Manager", "Product Manager", "System Agents"
         ]
         tabs = st.tabs(tab_names)
         
@@ -917,6 +917,31 @@ def main():
                     st.json(result)
 
         with tabs[11]:
+            st.subheader("💡 Product Manager Agent")
+            st.caption("Invent and specify product functionality.")
+            pm_idea = st.text_area("Product Idea", placeholder="e.g. A subscription-based platform for pet sitters...")
+            
+            if st.button("Generate Specs"):
+                if pm_idea:
+                    with st.spinner("Ideating & Specifying..."):
+                        agent = ProductManagerAgent()
+                        res = agent.think(pm_idea)
+                        st.session_state['last_pm_spec'] = res
+                        st.json(res)
+                else:
+                    st.warning("Please provide a product idea.")
+            
+            if 'last_pm_spec' in st.session_state:
+                if st.button("💾 Save Specs to Library"):
+                    spec = st.session_state['last_pm_spec']
+                    save_creative_content(
+                        "Product Manager", "json", 
+                        f"Specs: {spec.get('product_name', 'Unnamed Product')}", 
+                        json.dumps(spec)
+                    )
+                    st.toast("Saved to Library!")
+
+        with tabs[12]:
             st.subheader("System Agents")
             st.caption("Internal utility agents for formatting and UX.")
             s_tab1, s_tab2 = st.tabs(["Syntax Agent", "UX Agent"])
