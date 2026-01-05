@@ -20,14 +20,23 @@ class SmartRouter(LLMProvider):
 
     def _get_providers_for_request(self):
         """Returns ordered providers based on strategy, skipping blacklisted ones."""
+        from config import config
         now = time.time()
+        mode = config.get('project', {}).get('performance_mode', 'paid')
         
-        # Filter out blacklisted providers
+        # Filter out blacklisted providers AND check mode
         active_providers = []
         for p in self.providers:
-            p_name = p.__class__.__name__
-            m_name = getattr(p, 'model', 'unknown')
-            key = (p_name, m_name)
+            p_name = p.__class__.__name__.lower()
+            m_name = getattr(p, 'model', 'unknown').lower()
+            key = (p.__class__.__name__, getattr(p, 'model', 'unknown'))
+            
+            # Check Mode Constraints
+            if mode == 'free':
+                # Only allow Ollama or models marked explicitly as free
+                is_free = 'ollama' in p_name or ':free' in m_name
+                if not is_free:
+                    continue
             
             if key in self._blacklist:
                 if now < self._blacklist[key]:
@@ -38,6 +47,12 @@ class SmartRouter(LLMProvider):
                     del self._blacklist[key]
             
             active_providers.append(p)
+
+        if not active_providers and mode == 'free':
+             print("  [SmartRouter] WARNING: No free providers available/active. Switching to PAID/ALL for fallback.")
+             # Fallback logic: retry without free constraint? Or let it fail to valid 'paid' fallback?
+             # Let's try to find ANY active provider if free ones failed
+             active_providers = self.providers
 
         if not active_providers:
             # If all are blacklisted, reset and try all (emergency fallback)

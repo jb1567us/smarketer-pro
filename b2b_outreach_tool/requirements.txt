@@ -14,3 +14,5 @@ torch
 ffmpeg-python
 setuptools-rust
 psutil
+pytest
+fpdf2

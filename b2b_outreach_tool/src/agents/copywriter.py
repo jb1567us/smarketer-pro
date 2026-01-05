@@ -9,24 +9,44 @@ class CopywriterAgent(BaseAgent):
             provider=provider
         )
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         """
         Context should include:
         - Lead info (Business type, pain points, contact name)
         - Value Proposition (what we are selling)
         - Enrichment Data (Intent signals, social profiles, social_intel)
         """
-        instructions = (
-            "Draft a cold email for this lead.\n"
-            "Rules:\n"
-            "1. Use a hook relevant to their specific business.\n"
-            "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences to show deep research.\n"
-            "3. Keep it under 150 words.\n"
-            "4. End with a soft call to action (e.g. 'Worth a chat?').\n"
-            "5. Do NOT use generic fluff like 'I hope this finds you well'.\n\n"
-            "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
-        )
-        return self.provider.generate_json(f"Context for Email:\n{context}\n\n{instructions}")
+        from config import config
+        personalization_level = config.get('campaign', {}).get('personalization', 'hyper')
+        
+        base_instructions = ""
+        if personalization_level == 'generic':
+             base_instructions = (
+                "Draft a professional cold email for this lead.\n"
+                "Rules:\n"
+                "1. Use a clear, standard value proposition.\n"
+                "2. Keep it under 100 words.\n"
+                "3. Focus on general industry benefits rather than specific company details.\n"
+                "4. Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': 'Generic mode active'}"
+             )
+        else:
+            # Hyper personalization (default)
+            base_instructions = (
+                "Draft a highly personalized cold email for this lead.\n"
+                "Rules:\n"
+                "1. Use a hook relevant to their specific business.\n"
+                "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences to show deep research.\n"
+                "3. Keep it under 150 words.\n"
+                "4. End with a soft call to action (e.g. 'Worth a chat?').\n"
+                "5. Do NOT use generic fluff like 'I hope this finds you well'.\n\n"
+                "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
+            )
+        
+        full_instructions = base_instructions
+        if instructions:
+            full_instructions += f"\n\nADDITIONAL USER INSTRUCTIONS:\n{instructions}"
+            
+        return self.provider.generate_json(f"Context for Email:\n{context}\n\n{full_instructions}")
 
     def generate_dsr_copy(self, context):
         """

@@ -247,15 +247,18 @@ volumes:
                 await browser.close()
                 return {"error": f"cPanel automation failed: {str(e)}"}
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         """
         Standard agent interface for reasoning.
         """
-        instructions = self._get_system_instructions()
+        base_instructions = self._get_system_instructions()
+        if instructions:
+             base_instructions += f"\n\nADDITIONAL USER INSTRUCTIONS:\n{instructions}"
+
         prompt = (
             f"Role: {self.role}\n"
             f"Goal: {self.goal}\n\n"
-            f"Instructions:\n{instructions}\n\n"
+            f"Instructions:\n{base_instructions}\n\n"
             f"Context:\n{context}\n\n"
             "Based on the context, provide a detailed plan or response following the OUTPUT FORMAT."
         )

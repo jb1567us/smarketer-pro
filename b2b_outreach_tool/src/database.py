@@ -62,6 +62,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS campaign_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             lead_email TEXT,
+            lead_id INTEGER,
+            campaign_id INTEGER,
             template_id INTEGER,
             event_type TEXT, -- sent, open, click
             event_data TEXT, -- optional details
@@ -216,6 +218,112 @@ def init_db():
             created_at INTEGER
         );
     ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS link_wheels (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            money_site_url TEXT,
+            strategy TEXT,
+            tier_plan_json TEXT,
+            status TEXT DEFAULT 'active',
+            created_at INTEGER
+        );
+    ''')
+
+    # === AFFILIATE MODULE: PUBLISHER SIDE (My Links) ===
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS my_affiliate_programs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            program_name TEXT,
+            login_url TEXT,
+            username TEXT,
+            dashboard_url TEXT,
+            notes TEXT,
+            created_at INTEGER
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS my_affiliate_links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            program_id INTEGER,
+            target_url TEXT,
+            cloaked_slug TEXT, -- e.g. 'shopify' for /go/shopify
+            category TEXT,
+            status TEXT DEFAULT 'active', -- active, broken, paused
+            commission_rate TEXT, -- e.g. "20%" or "$50 CPA"
+            click_count INTEGER DEFAULT 0,
+            last_checked_at INTEGER,
+            created_at INTEGER,
+            FOREIGN KEY(program_id) REFERENCES my_affiliate_programs(id)
+        );
+    ''')
+
+    # === AFFILIATE MODULE: BRAND SIDE (My Partners) ===
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS partners (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            email TEXT UNIQUE,
+            website TEXT,
+            social_channels_json TEXT, -- enriched data
+            payment_info TEXT, -- PayPal email etc.
+            status TEXT DEFAULT 'pending', -- pending, active, suspended
+            created_at INTEGER
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS partner_contracts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER,
+            contract_type TEXT, -- CPA, RevShare
+            terms TEXT, -- e.g "20" for 20%
+            start_date INTEGER,
+            end_date INTEGER,
+            status TEXT DEFAULT 'active',
+            FOREIGN KEY(partner_id) REFERENCES partners(id)
+        );
+    ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS partner_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER,
+            event_type TEXT, -- click, sign_up, sale
+            event_value REAL,
+            source_url TEXT,
+            timestamp INTEGER,
+            commission_generated REAL DEFAULT 0,
+            status TEXT DEFAULT 'approved', -- approved, reversed
+            FOREIGN KEY(partner_id) REFERENCES partners(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS payouts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            partner_id INTEGER,
+            amount REAL,
+            period_start INTEGER,
+            period_end INTEGER,
+            status TEXT DEFAULT 'due', -- due, paid
+            transaction_ref TEXT,
+            created_at INTEGER,
+            paid_at INTEGER,
+            FOREIGN KEY(partner_id) REFERENCES partners(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS strategy_presets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            description TEXT,
+            instruction_template TEXT,
+            created_at INTEGER
+        );
+    ''')
     
     # Simple migration: check if columns exist, if not add them
     # List of new columns to check and add
@@ -268,6 +376,14 @@ def init_db():
             print(f"Migrating Tasks: Adding '{col}' column...")
             c.execute(f'ALTER TABLE tasks ADD COLUMN {col} {dtype}')
 
+    # Migrate campaign_events
+    try:
+        c.execute('SELECT lead_id FROM campaign_events LIMIT 1')
+    except sqlite3.OperationalError:
+        print("Migrating campaign_events: Adding 'lead_id' and 'campaign_id'...")
+        c.execute('ALTER TABLE campaign_events ADD COLUMN lead_id INTEGER')
+        c.execute('ALTER TABLE campaign_events ADD COLUMN campaign_id INTEGER')
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS platform_credentials (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -291,6 +407,24 @@ def init_db():
         );
     ''')
 
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        );
+    ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS custom_agents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            role TEXT,
+            goal TEXT,
+            system_prompt TEXT,
+            created_at INTEGER
+        );
+    ''')
+    
     conn.commit()
     conn.close()
 
@@ -461,14 +595,14 @@ def delete_leads(lead_ids):
     conn.commit()
     conn.close()
 
-def log_campaign_event(email, event_type, template_id=None, event_data=None):
+def log_campaign_event(email, event_type, template_id=None, event_data=None, lead_id=None, campaign_id=None):
     """Logs an event (sent, open, click) for a lead."""
     conn = get_connection()
     c = conn.cursor()
     c.execute('''
-        INSERT INTO campaign_events (lead_email, template_id, event_type, event_data, timestamp)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (email, template_id, event_type, event_data, int(time.time())))
+        INSERT INTO campaign_events (lead_email, template_id, event_type, event_data, timestamp, lead_id, campaign_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (email, template_id, event_type, event_data, int(time.time()), lead_id, campaign_id))
     conn.commit()
     conn.close()
 
@@ -583,6 +717,39 @@ def get_daily_engagement(days=30):
         
     return data
 
+# === LINK WHEEL FUNCTIONS ===
+
+def save_link_wheel(money_site_url, strategy, plan_json):
+    """Saves a generated Link Wheel plan."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO link_wheels (money_site_url, strategy, tier_plan_json, created_at)
+        VALUES (?, ?, ?, ?)
+    ''', (money_site_url, strategy, plan_json, int(time.time())))
+    lw_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return lw_id
+
+def get_link_wheels():
+    """Retrieves all saved link wheels."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM link_wheels ORDER BY created_at DESC')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def delete_link_wheel(lw_id):
+    """Deletes a link wheel plan."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM link_wheels WHERE id = ?', (lw_id,))
+    conn.commit()
+    conn.close()
+
 def save_creative_content(agent_type, content_type, title, body, metadata=None):
     """Saves generated creative content to the library."""
     conn = get_connection()
@@ -657,7 +824,70 @@ def delete_wp_site(site_id):
     conn.commit()
     conn.close()
 
-# === CAMPAIGN MANAGEMENT FUNCTIONS ===
+def save_setting(key, value):
+    """Saves a global application setting."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO settings (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value
+    ''', (key, str(value)))
+    conn.commit()
+    conn.close()
+
+def get_setting(key, default=None):
+    """Retrieves a global application setting."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('SELECT value FROM settings WHERE key = ?', (key,))
+    result = c.fetchone()
+    conn.close()
+    return result[0] if result else default
+
+
+
+
+def create_custom_agent(name, role, goal, system_prompt=None):
+    """Creates a new custom agent."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO custom_agents (name, role, goal, system_prompt, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (name, role, goal, system_prompt, int(time.time())))
+    agent_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return agent_id
+
+def get_custom_agents():
+    """Retrieves all custom agents."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM custom_agents ORDER BY name ASC')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def get_custom_agent(agent_id):
+    """Retrieves a specific custom agent."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM custom_agents WHERE id = ?', (agent_id,))
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else None
+
+def delete_custom_agent(agent_id):
+    """Deletes a custom agent."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM custom_agents WHERE id = ?', (agent_id,))
+    conn.commit()
+    conn.close()
 
 def create_campaign(name, niche, product_name, product_context):
     """Creates a new campaign and returns its ID."""
@@ -672,6 +902,49 @@ def create_campaign(name, niche, product_name, product_context):
     conn.commit()
     conn.close()
     return campaign_id
+
+# === STRATEGY PRESETS FUNCTIONS ===
+
+def save_strategy_preset(name, description, instruction_template):
+    """Saves a new strategy preset."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO strategy_presets (name, description, instruction_template, created_at)
+        VALUES (?, ?, ?, ?)
+    ''', (name, description, instruction_template, int(time.time())))
+    preset_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return preset_id
+
+def get_strategy_presets():
+    """Retrieves all strategy presets."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM strategy_presets ORDER BY created_at DESC')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def get_strategy_preset(preset_id):
+    """Retrieves a single strategy preset."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM strategy_presets WHERE id = ?', (preset_id,))
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else None
+
+def delete_strategy_preset(preset_id):
+    """Deletes a strategy preset."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM strategy_presets WHERE id = ?', (preset_id,))
+    conn.commit()
+    conn.close()
 
 def update_campaign_step(campaign_id, step):
     """Updates the current step of a campaign."""

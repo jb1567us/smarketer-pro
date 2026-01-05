@@ -43,6 +43,22 @@ def reload_config():
     global config
     config.clear()
     config.update(load_config())
+    _inject_env_config()
+
+def _inject_env_config():
+    """Injects environment variables into the config dictionary."""
+    if 'ftp' not in config:
+        config['ftp'] = {}
+    
+    # FTP Overrides from Env
+    if os.getenv('FTP_HOST'): config['ftp']['host'] = os.getenv('FTP_HOST')
+    if os.getenv('FTP_USER'): config['ftp']['user'] = os.getenv('FTP_USER')
+    if os.getenv('FTP_PASS'): config['ftp']['pass'] = os.getenv('FTP_PASS')
+    if os.getenv('FTP_PORT'): config['ftp']['port'] = os.getenv('FTP_PORT')
+
+# Initial injection
+_inject_env_config()
+
 
 
 def get_smtp_config():

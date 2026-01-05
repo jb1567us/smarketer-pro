@@ -35,7 +35,18 @@ class AnalyticsBridge:
         # Here we simulate the DB recording directly
         print(f"[Analytics] Recording {event_type} for Campaign {campaign_id}, Lead {lead_id}")
         # Insert into a new 'analytics_events' table (which we'd need to create)
-        pass
+        # Fetch lead to get email
+        from database import get_lead_by_id, log_campaign_event
+        lead = get_lead_by_id(lead_id)
+        email = lead['email'] if lead else 'unknown'
+        
+        log_campaign_event(
+            email=email, 
+            event_type=event_type, 
+            lead_id=lead_id, 
+            campaign_id=campaign_id,
+            event_data=meta
+        )
 
     def get_campaign_performance(self, campaign_id):
         """

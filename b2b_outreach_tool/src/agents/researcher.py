@@ -119,6 +119,9 @@ class ResearcherAgent(BaseAgent):
                 url = res['url']
                 title = res['title']
                 
+                # Preserving metadata
+                meta = {"title": title, "snippet": res.get("snippet", "")}
+
                 if list_parser.is_listicle(title, url):
                     print(f"  [Researcher] Detected Aggregator/List: {title} ({url})")
                     print(f"  [Researcher] Expanding list to find direct business links...")
@@ -129,14 +132,14 @@ class ResearcherAgent(BaseAgent):
                             print(f"  [Researcher] Extracted {len(extracted)} potential business links from list.")
                             # Mark as high-quality "listing" leads
                             for e_url in extracted:
-                                final_urls.append({"url": e_url, "source_type": "listing"})
+                                final_urls.append({"url": e_url, "source_type": "listing", **meta})
                         else:
-                            final_urls.append({"url": url, "source_type": "organic"}) # Fallback
+                            final_urls.append({"url": url, "source_type": "organic", **meta}) # Fallback
                     except Exception as e:
                         print(f"  [Researcher] Error expanding list {url}: {e}")
-                        final_urls.append({"url": url, "source_type": "organic"})
-                    else:
-                        final_urls.append({"url": url, "source_type": "organic"})
+                        final_urls.append({"url": url, "source_type": "organic", **meta})
+                else:
+                     final_urls.append({"url": url, "source_type": "organic", **meta})
             
             # Deduplicate by URL and cap to limit
             unique = {item['url']: item for item in final_urls}.values()
@@ -254,7 +257,10 @@ class ResearcherAgent(BaseAgent):
         # based on context if we were able to fetch a preview, or just return placeholder.
         return "Recent activity detected (Simulated): Active in B2B Tech discussions."
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         # The researcher thinks via async gather_intel mostly, 
         # but if we need a synchronous 'opinion' on data, we use this.
-        return self.provider.generate_text(f"Analyze this research data:\n{context}")
+        prompt = f"Analyze this research data:\n{context}"
+        if instructions:
+            prompt += f"\n\nAdditional Instructions:\n{instructions}"
+        return self.provider.generate_text(prompt)

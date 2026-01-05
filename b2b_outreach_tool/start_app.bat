@@ -5,6 +5,13 @@ echo       🚀 Starting B2B Outreach Tool System 🚀
 echo ===================================================
 echo.
 
+:: 0. Check Proxy Freshness
+echo [0/2] Checking Proxy Freshness...
+python src/proxy_manager.py --check
+if %ERRORLEVEL% NEQ 0 (
+    echo Warning: Proxy check failed. Proceeding anyway...
+)
+
 :: 1. Start Search Engine (SearXNG)
 echo [1/2] Initializing SearXNG (Docker)...
 if exist "searxng\docker-compose.yaml" (

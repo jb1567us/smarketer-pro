@@ -40,8 +40,84 @@ class SEOExpertAgent(BaseAgent):
         """
         return self.provider.generate_json(prompt)
 
-    def audit_site(self, url):
-        return self.run(f"Perform a technical SEO audit for the website: {url}")
+    async def audit_site(self, url):
+        import aiohttp
+        from bs4 import BeautifulSoup
+        from extractor import fetch_html
+        
+        async with aiohttp.ClientSession() as session:
+            # Fetch real content
+            html = await fetch_html(session, url)
+            
+            if not html:
+                return {
+                    "site_audit": {
+                        "score": 0,
+                        "top_issues": ["Could not access website"],
+                        "quick_fixes": ["Check if the URL is correct", "Ensure site is online and not blocking bots"]
+                    },
+                    "note": "We attempted to scrape the site but got no content."
+                }
+            
+            # Python-based Metrics Extraction
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            title_tag = soup.find('title')
+            title = title_tag.get_text().strip() if title_tag else "Missing"
+            title_len = len(title)
+            
+            meta_desc_tag = soup.find('meta', attrs={"name": "description"})
+            meta_desc = meta_desc_tag['content'].strip() if meta_desc_tag else "Missing"
+            meta_len = len(meta_desc)
+            
+            h1_tags = soup.find_all('h1')
+            h1_count = len(h1_tags)
+            h1_content = [h.get_text().strip() for h in h1_tags][:3] # Top 3
+            
+            images = soup.find_all('img')
+            img_count = len(images)
+            missing_alt = sum(1 for img in images if not img.get('alt'))
+            
+            metrics = {
+                "title": title,
+                "title_length": title_len,
+                "meta_description_length": meta_len,
+                "h1_count": h1_count,
+                "h1_content": h1_content,
+                "total_images": img_count,
+                "images_missing_alt": missing_alt
+            }
+            
+            # Truncate for token limits
+            context_content = html[:15000]
+            
+            prompt = f"""
+            Perform a technical SEO audit based on the following REAL data:
+            
+            HARD METRICS (Derived from Code):
+            {json.dumps(metrics, indent=2)}
+            
+            PAGE CONTENT PREVIEW (First 15k chars):
+            {context_content}
+            
+            INSTRUCTIONS:
+            1. Use the HARD METRICS to provide factual, non-hallucinated advice (e.g., "Title is {title_len} chars" rather than "Title seems short").
+            2. If H1 count is 0, flag it as critical. If > 1, warn about focus.
+            3. Check Meta Description length (ideal: 150-160).
+            4. Analyze the text content for keyword usage.
+            """
+            
+            result = self.run(prompt)
+            
+            # Robustness: Handle if LLM returns a list [ { ... } ]
+            if isinstance(result, list) and len(result) > 0 and isinstance(result[0], dict):
+                result = result[0]
+            
+            # Inject Hard Metrics into the result for display
+            if isinstance(result, dict):
+                result['metrics'] = metrics
+                
+            return result
 
     def research_keywords(self, niche):
         return self.run(f"Identify high-value, low-competition keywords for the niche: {niche}")

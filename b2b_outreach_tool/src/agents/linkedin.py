@@ -8,14 +8,14 @@ class LinkedInAgent(BaseAgent):
             provider=provider
         )
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         """
         Context should include:
         - Lead info (Name, Company, Bio)
         - LinkedIn profile highlights (from enrichment)
         - Intent signals
         """
-        instructions = (
+        base_instructions = (
             "Draft a LinkedIn message for this lead.\n"
             "Rules:\n"
             "1. Maximum 300 characters for connection requests, 600 for InMail.\n"
@@ -28,7 +28,12 @@ class LinkedInAgent(BaseAgent):
             "  'personalization_strategy': str\n"
             "}"
         )
-        return self.provider.generate_json(f"Lead Context:\n{context}\n\n{instructions}")
+        
+        full_instructions = base_instructions
+        if instructions:
+            full_instructions += f"\n\nADDITIONAL USER INSTRUCTIONS:\n{instructions}"
+
+        return self.provider.generate_json(f"Lead Context:\n{context}\n\n{full_instructions}")
 
     def generate_comment(self, post_content):
         """

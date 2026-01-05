@@ -14,18 +14,18 @@ class BaseAgent:
         """
         Constructs the prompt and calls the LLM.
         """
-        system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\n"
-        full_prompt = f"{system_msg}Context:\n{context}\n\nInstructions:\n{instructions}"
+        system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\nCRITICAL: Do NOT hallucinate. Only use provided information or verifiable facts. if you don't know, say 'Unknown'."
+        full_prompt = f"{system_msg}\n\nContext:\n{context}\n\nInstructions:\n{instructions}"
         return self.provider.generate_text(full_prompt)
 
-    async def think_async(self, context):
+    async def think_async(self, context, instructions=None):
         """
         To be implemented by subclasses.
         Async version of think.
         """
         raise NotImplementedError("Subclasses must implement think_async()")
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         """
         To be implemented by subclasses. 
         Should return the agent's output based on value.
@@ -36,7 +36,7 @@ class BaseAgent:
         """
         Refines the previous output based on feedback.
         """
-        system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\n"
+        system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\nCRITICAL: Do NOT hallucinate."
         history_str = f"\n\nConversation History:\n{history}" if history else ""
         full_prompt = (
             f"{system_msg}"
@@ -52,7 +52,7 @@ class BaseAgent:
         """
         Discusses the output without committing to a new version.
         """
-        system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\nYou are having a discussion about the output you just generated. Do NOT generate a new version of the full output yet unless specifically asked to 'apply' or 'commit'. Just chat and provide guidance/answers."
+        system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\nYou are having a discussion about the output you just generated. Do NOT generate a new version of the full output yet unless specifically asked to 'apply' or 'commit'. Just chat and provide guidance/answers. CRITICAL: Do NOT hallucinate."
         history_str = f"\n\nConversation History:\n{history}" if history else ""
         full_prompt = (
             f"{system_msg}"

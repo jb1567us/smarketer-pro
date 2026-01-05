@@ -116,5 +116,5 @@ class ProxyAgent(BaseAgent):
                 pass
             return None
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         return f"I have analyzed the current proxy health and suggest a re-harvest. Context: {context}"

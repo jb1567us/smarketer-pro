@@ -13,15 +13,19 @@ class GraphicsDesignerAgent(BaseAgent):
             provider=provider
         )
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         """
         Context: The concept or description of the image needed.
         Returns: A URL to the generated image.
         """
+        extra_guidance = ""
+        if instructions:
+            extra_guidance = f"\nAdditional Guidance:\n{instructions}"
+
         # 1. Refine the prompt using LLM to be "Stable Diffusion friendly"
         refine_prompt = (
             f"Convert this concept into a detailed, high-quality image generation prompt for Stable Diffusion.\n"
-            f"Concept: {context}\n"
+            f"Concept: {context}\n{extra_guidance}\n"
             "Focus on lighting, style (e.g. photorealistic, cinematic, corporate memphis), and composition.\n"
             "Return ONLY the refined prompt in English. DO NOT include any Arabic, notes, explanations, or meta-commentary. "
             "Your entire response will be used as a URL parameter, so keep it concise and strictly image-focused."

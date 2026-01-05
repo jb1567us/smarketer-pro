@@ -6,14 +6,21 @@ class CreativeAgent(BaseAgent):
     def __init__(self, role, goal, provider=None):
         super().__init__(role, goal, provider=provider)
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         """Standard JSON response for creative agents."""
-        instructions = (
+        base_instructions = (
             "Analyze the provided context and generate high-quality creative output.\n"
             "Return the result ONLY as a RAW JSON object with appropriate fields (e.g., 'title', 'body', 'platform').\n"
             "No markdown, no backticks, no explanations."
         )
-        response = self.prompt(context, instructions)
+        
+        full_instructions = base_instructions
+        if instructions:
+             full_instructions = f"{instructions}\n\n{base_instructions}" # Prepend or append? Let's prepend user instructions or mix.
+             # Actually, user instructions should probably GUIDE the creative output.
+             full_instructions = f"{base_instructions}\n\nADDITIONAL GUIDANCE:\n{instructions}"
+
+        response = self.prompt(context, full_instructions)
         try:
             # Clean possible markdown wrapping
             clean_res = response.strip().replace('```json', '').replace('```', '').strip()

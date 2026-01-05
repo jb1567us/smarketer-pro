@@ -2,6 +2,8 @@ import json
 import asyncio
 from database import update_lead_enrichment, get_lead_by_id
 from agents import ResearcherAgent
+from config import config
+
 
 class EnrichmentManager:
     def __init__(self):
@@ -44,10 +46,13 @@ class EnrichmentManager:
             print(f"  [Enrichment] Error enriching {url}: {e}")
             return {"error": str(e)}
 
-    async def batch_enrich_leads(self, lead_ids, concurrency=3):
+    async def batch_enrich_leads(self, lead_ids, concurrency=None):
         """
         Enriches multiple leads in parallel.
         """
+        if concurrency is None:
+            mode = config.get('project', {}).get('performance_mode', 'paid')
+            concurrency = config.get('project', {}).get('concurrency_settings', {}).get(mode, {}).get('scrape', 3)
         semaphore = asyncio.Semaphore(concurrency)
         
         async def sem_enrich(lid):

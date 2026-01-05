@@ -12,3 +12,8 @@ from .wordpress import WordPressAgent
 from .pm import ProductManagerAgent
 from .linkedin import LinkedInAgent
 from .seo_agent import SEOExpertAgent
+from .video_agent import VideoAgent
+from .influencer_agent import InfluencerAgent
+from .social_listener import SocialListeningAgent
+from .image_agent import ImageGenAgent
+

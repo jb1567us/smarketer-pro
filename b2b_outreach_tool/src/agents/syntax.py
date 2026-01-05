@@ -9,15 +9,20 @@ class SyntaxAgent(BaseAgent):
             provider=provider
         )
 
-    def think(self, context):
+    def think(self, context, instructions=None):
         """
         Context should be text or code to validate.
         """
-        instructions = (
+        base_instructions = (
             "Inspect the provided text for:\n"
             "1. Unresolved placeholders (e.g., [Name], {{Company}}).\n"
             "2. Grammatical errors or awkward phrasing.\n"
             "3. Formatting issues.\n\n"
             "Return a JSON object with keys: 'has_errors' (boolean), 'corrected_content' (string), 'issues_found' (list of strings)."
         )
-        return self.provider.generate_json(f"Content to Validate:\n{context}\n\n{instructions}")
+        
+        full_instructions = base_instructions
+        if instructions:
+             full_instructions += f"\n\nADDITIONAL INSTRUCTIONS:\n{instructions}"
+
+        return self.provider.generate_json(f"Content to Validate:\n{context}\n\n{full_instructions}")

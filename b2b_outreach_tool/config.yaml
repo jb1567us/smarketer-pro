@@ -5,18 +5,6 @@ search:
   max_results: 50
   concurrency: 5
   keywords: []
-  exclude_patterns:
-  - .gov
-  - .edu
-  - .mil
-  - .org
-  - wikipedia
-  - facebook
-  - twitter
-  - linkedin
-  - instagram
-  - tiktok
-  - pinterest
   profiles:
     default:
       categories:
@@ -85,6 +73,29 @@ search:
       - google
       - bing
       - lexis web
+project:
+  performance_mode: 'paid' # 'free' or 'paid'
+  concurrency_settings:
+    free:
+      search: 2
+      scrape: 2
+    paid:
+      search: 10
+      scrape: 10
+  exclude_patterns:
+
+  - .gov
+  - .edu
+  - .mil
+  - .org
+  - wikipedia
+  - facebook
+  - twitter
+  - linkedin
+  - instagram
+  - tiktok
+  - pinterest
+
 proxies:
   enabled: true
   source_url: https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt
@@ -210,6 +221,16 @@ llm:
     strategy: priority
   model_name: gemini-flash-latest
   ollama_base_url: http://localhost:11434
+image_gen:
+  default_provider: openai # or stability
+  openai:
+    model: dall-e-3
+  stability:
+    model: stable-diffusion-xl-1024-v1-0
+campaign:
+  personalization: 'hyper' # 'generic' or 'hyper'
+
+
 extraction:
   user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
     like Gecko) Chrome/91.0.4472.124 Safari/537.36

@@ -6,11 +6,16 @@ import os
 import subprocess
 import yaml
 import re
+import sys
+import time
+import json
+import argparse
 
 class ProxyManager:
     def __init__(self):
         self.proxies = []
         self.bad_proxies = set()
+        self.status_file = os.path.join(os.path.dirname(__file__), "proxy_status.json")
         self.config = config.get("proxies", {})
         self.enabled = self.config.get("enabled", False)
         self.source_url = self.config.get("source_url", "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt")
@@ -82,8 +87,17 @@ class ProxyManager:
         return proxy
 
     async def update_searxng_config(self):
-        """Injects harvested proxies into SearXNG settings.yml and restarts Docker."""
-        if not self.proxies:
+        """Injects OR REMOVES proxies from SearXNG settings.yml based on self.enabled."""
+        
+        settings_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "searxng", "searxng", "settings.yml")
+        docker_compose_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "searxng", "docker-compose.yaml")
+
+        if not self.enabled:
+            # We need to remove the proxies block
+            print(f"[{self.__class__.__name__}] Cleaning up proxies from settings.yml (Disabled Mode)")
+             # Reuse logic below but with empty list or specific removal
+            pass 
+        elif not self.proxies:
             print("No proxies to inject.")
             return False, "No proxies available to inject."
 
@@ -106,9 +120,17 @@ class ProxyManager:
             #       - http://ip:port
             
             proxy_list_yaml = "    all://:\n"
-            for p in self.proxies:
-                if not p.startswith("http"): p = f"http://{p}"
-                proxy_list_yaml += f"      - {p}\n"
+            if self.enabled:
+                for p in self.proxies:
+                    if not p.startswith("http"): p = f"http://{p}"
+                    proxy_list_yaml += f"      - {p}\n"
+            else:
+                # If disabled, we effectively want an empty list or commented out.
+                # Since SearXNG might expect a list if the key exists, let's just make the replacement string empty 
+                # OR commented out.
+                # But our replacement strategy below relies on finding the block.
+                # Let's say we empty it.
+                proxy_list_yaml = "    # Proxies disabled by user preference\n    # all://:\n"
 
             # 3. Regex Replacement to inject into 'outgoing' block safely-ish
             # We look for 'outgoing:' and try to find 'proxies:' inside it or append it.
@@ -227,5 +249,113 @@ class ProxyManager:
             self.bad_proxies.add(clean_proxy)
             print(f"Removed bad proxy: {clean_proxy}. Remaining: {len(self.proxies)}")
 
+    async def enable_proxies(self):
+        """Enables upstream proxies and triggers a fresh harvest if needed."""
+        self.enabled = True
+        print(f"[{self.__class__.__name__}] Enabling proxies...")
+        
+        # Logic fix: If we are enabling, we MUST inject.
+        # If we have proxies in memory, inject them. 
+        # If not, we must harvest regardless of 'freshness' timestamp because 
+        # settings.yml might have been wiped by a previous Disable.
+        
+        if not self.proxies:
+             print(f"[{self.__class__.__name__}] No proxies in memory. Forcing harvest...")
+             await self.fetch_proxies()
+        
+        if self.proxies:
+            success, msg = await self.update_searxng_config()
+            self._save_status()
+            return success, msg
+        else:
+            return False, "Failed to enable: Could not harvest any proxies."
+
+    async def disable_proxies(self):
+        """Disables upstream proxies and removes them from SearXNG config."""
+        self.enabled = False
+        print(f"[{self.__class__.__name__}] Disabling proxies...")
+        
+        # Remove from SearXNG
+        success, msg = await self.update_searxng_config()
+        self._save_status()
+        
+        if success:
+            return True, "Proxies disabled and removed from configuration."
+        return False, f"Failed to disable proxies: {msg}"
+
+    async def ensure_fresh_proxies(self):
+        """Checks if proxies are fresh (checked within 24h). If not, harvests and updates SearXNG."""
+        if not self.enabled:
+             print(f"[{self.__class__.__name__}] Proxies are DISABLED. Skipping startup check.")
+             return
+
+        print(f"[{self.__class__.__name__}] Checking proxy freshness...")
+        
+        is_fresh = self._check_status()
+        if is_fresh:
+            print(f"[{self.__class__.__name__}] Proxies are fresh. Skipping startup harvest.")
+            return
+
+        print(f"[{self.__class__.__name__}] Proxies are STALE or MISSING. Initiating fresh harvest...")
+        
+        # Harvest
+        await self.fetch_proxies()
+        
+        if self.proxies:
+            # Update SearXNG
+            success, msg = await self.update_searxng_config()
+            if success:
+                print(f"[{self.__class__.__name__}] {msg}")
+                self._save_status()
+            else:
+                print(f"[{self.__class__.__name__}] Warning: Failed to update SearXNG: {msg}")
+        else:
+            print(f"[{self.__class__.__name__}] Critical: Harvest yielded no proxies.")
+
+    def _check_status(self, max_age_hours=24):
+        """Returns True if valid status file exists and is recent."""
+        if not os.path.exists(self.status_file):
+            return False
+            
+        try:
+            with open(self.status_file, 'r') as f:
+                data = json.load(f)
+                
+            last_updated = data.get("last_updated", 0)
+            if time.time() - last_updated < (max_age_hours * 3600):
+                return True
+                
+            return False # Too old
+        except Exception as e:
+            print(f"Error reading status file: {e}")
+            return False
+
+    def _save_status(self):
+        """Update the freshness timestamp."""
+        try:
+            with open(self.status_file, 'w') as f:
+                json.dump({
+                    "last_updated": time.time(),
+                    "params": {"count": len(self.proxies), "enabled": self.enabled}
+                }, f)
+        except Exception as e:
+            print(f"Error saving status file: {e}")
+
 # Global instance
 proxy_manager = ProxyManager()
+
+if __name__ == "__main__":
+    # Ensure we can import modules if run as script
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
+    parser = argparse.ArgumentParser(description="Proxy Manager CLI")
+    parser.add_argument("--check", action="store_true", help="Check freshness and update if stale")
+    args = parser.parse_args()
+    
+    if args.check:
+        try:
+            asyncio.run(proxy_manager.ensure_fresh_proxies())
+        except Exception as e:
+            print(f"Startup check failed: {e}")
+            sys.exit(1)
+

@@ -80,6 +80,12 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
                     print("Hit safety page limit (500). Stopping.")
                     break
                     
+        except aiohttp.ClientConnectorError as e:
+            if page == 1:
+                # Critical: Cannot even start. Likely Docker is down.
+                raise ConnectionError(f"Could not connect to SearXNG at {base_url}. Ensure Docker is running.") from e
+            print(f"Connection lost during paging: {e}")
+            break
         except Exception as e:
             print(f"Error scraping SearXNG page {page}: {e}")
             break
