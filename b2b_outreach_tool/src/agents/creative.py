@@ -21,13 +21,42 @@ class CreativeAgent(BaseAgent):
         except Exception as e:
             return {"error": "Failed to parse JSON", "raw": response}
 
+    def tune(self, context, previous_response, instructions, history=None):
+        """Standard JSON response for tuning creative agents."""
+        tune_instructions = (
+            f"REFINE the previous output based on these instructions:\n{instructions}\n\n"
+            "Return the result ONLY as a RAW JSON object. No markdown, no backticks, no explanations."
+        )
+        # We need to construct the prompt manually here to ensure JSON format, 
+        # or call base tune and then parse. Let's call base tune and parse.
+        response = super().tune(context, previous_response, tune_instructions, history=history)
+        try:
+            clean_res = response.strip().replace('```json', '').replace('```', '').strip()
+            return json.loads(clean_res)
+        except Exception as e:
+            return {"error": "Failed to parse JSON during tuning", "raw": response}
+
+    def discuss(self, context, previous_response, message, history=None):
+        """Standard discussion for creative agents (returns plain text)."""
+        return super().discuss(context, previous_response, message, history=history)
+
 class SocialMediaAgent(CreativeAgent):
     def __init__(self, provider=None):
         super().__init__(
             role="Expert Social Media Strategist",
-            goal="Generate high-engagement social media posts for various platforms.",
+            goal="Generate high-engagement social media posts for various platforms, including TikTok and Instagram.",
             provider=provider
         )
+
+    def generate_tiktok_strategy(self, niche, product_name):
+        context = f"Niche: {niche}, Product: {product_name}, Platform: TikTok"
+        instructions = "Generate a viral TikTok strategy including video hooks, trending audio types, and hashtag clusters. Return JSON."
+        return self.think(f"{context}\n\n{instructions}")
+
+    def generate_instagram_strategy(self, niche, product_name):
+        context = f"Niche: {niche}, Product: {product_name}, Platform: Instagram"
+        instructions = "Generate an Instagram strategy covering Reels, Stories, and Grid posts. Include aesthetic direction. Return JSON."
+        return self.think(f"{context}\n\n{instructions}")
 
 class AdCopyAgent(CreativeAgent):
     def __init__(self, provider=None):

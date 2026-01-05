@@ -31,11 +31,21 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
     while len(unique_links) < num_results:
         params["pageno"] = page
         
+        from proxy_manager import proxy_manager
+        proxy = proxy_manager.get_proxy()
+        
+        # FIX: Do NOT use a proxy if connecting to a local instance
+        # The proxy is for SearXNG -> Google, not App -> SearXNG
+        if "localhost" in base_url or "127.0.0.1" in base_url:
+            proxy = None
+
         try:
-            async with session.get(base_url, params=params, headers=headers) as response:
+            async with session.get(base_url, params=params, headers=headers, proxy=proxy, timeout=15) as response:
                 if response.status != 200:
-                    print(f"SearXNG returned {response.status} on page {page}")
-                    break
+                    print(f"SearXNG returned {response.status} on page {page} using proxy {proxy}")
+                    if response.status in [403, 429] and proxy:
+                        proxy_manager.remove_proxy(proxy)
+                    break 
                 
                 html = await response.text()
                 soup = BeautifulSoup(html, 'html.parser')

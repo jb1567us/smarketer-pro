@@ -95,6 +95,128 @@ def init_db():
         );
     ''')
     
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS digital_sales_rooms (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id INTEGER,
+            lead_id INTEGER,
+            site_id INTEGER,
+            title TEXT,
+            slug TEXT,
+            content_json TEXT, -- Stores copy + image URLs
+            status TEXT DEFAULT 'draft', -- draft, published
+            wp_page_id INTEGER, -- The ID on the WordPress side
+            public_url TEXT,
+            created_at INTEGER,
+            FOREIGN KEY(campaign_id) REFERENCES campaigns(id),
+            FOREIGN KEY(lead_id) REFERENCES leads(id),
+            FOREIGN KEY(site_id) REFERENCES wp_sites(id)
+        );
+    ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS sequences (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id INTEGER,
+            name TEXT,
+            created_at INTEGER,
+            FOREIGN KEY(campaign_id) REFERENCES campaigns(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS sequence_steps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sequence_id INTEGER,
+            step_number INTEGER,
+            touch_type TEXT, -- email, linkedin, twitter
+            delay_days INTEGER,
+            content_json TEXT,
+            FOREIGN KEY(sequence_id) REFERENCES sequences(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS sequence_enrollments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lead_id INTEGER,
+            sequence_id INTEGER,
+            current_step_index INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'active', -- active, paused, replied, completed
+            last_touch_at INTEGER,
+            next_scheduled_at INTEGER,
+            FOREIGN KEY(lead_id) REFERENCES leads(id),
+            FOREIGN KEY(sequence_id) REFERENCES sequences(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS campaigns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            niche TEXT,
+            product_name TEXT,
+            product_context TEXT,
+            selected_pain_point_id INTEGER,
+            current_step INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'draft',
+            created_at INTEGER,
+            updated_at INTEGER,
+            FOREIGN KEY(selected_pain_point_id) REFERENCES pain_points(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS campaign_leads (
+            campaign_id INTEGER,
+            lead_id INTEGER,
+            PRIMARY KEY (campaign_id, lead_id),
+            FOREIGN KEY(campaign_id) REFERENCES campaigns(id),
+            FOREIGN KEY(lead_id) REFERENCES leads(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS deals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lead_id INTEGER,
+            title TEXT,
+            value REAL,
+            stage TEXT DEFAULT 'Discovery', -- Discovery, Qualification, Proposal, Negotiation, Closed Won, Closed Lost
+            probability INTEGER,
+            close_date INTEGER,
+            created_at INTEGER,
+            FOREIGN KEY(lead_id) REFERENCES leads(id)
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lead_id INTEGER,
+            description TEXT,
+            due_date INTEGER,
+            priority TEXT DEFAULT 'Medium', -- Low, Medium, High, Urgent
+            task_type TEXT DEFAULT 'Task', -- Call, Email, Meeting, Research, Follow-up
+            status TEXT DEFAULT 'pending', -- pending, completed
+            created_at INTEGER,
+            FOREIGN KEY(lead_id) REFERENCES leads(id)
+        );
+    ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS scheduled_posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_type TEXT,
+            platforms TEXT, -- JSON list of platforms
+            content TEXT,
+            scheduled_at INTEGER,
+            status TEXT DEFAULT 'pending', -- pending, posted, failed
+            metadata TEXT,
+            created_at INTEGER
+        );
+    ''')
+    
     # Simple migration: check if columns exist, if not add them
     # List of new columns to check and add
     new_columns = {
@@ -109,8 +231,20 @@ def init_db():
         'phone_number': 'TEXT',
         'tech_stack': 'TEXT',
         'qualification_score': 'INTEGER',
-        'qualification_reason': 'TEXT'
+        'qualification_reason': 'TEXT',
+        'linkedin_url': 'TEXT',
+        'twitter_url': 'TEXT',
+        'instagram_url': 'TEXT',
+        'intent_signals': 'TEXT',
+        'company_bio': 'TEXT'
     }
+    
+    # Check email_templates for campaign_id
+    try:
+        c.execute('SELECT campaign_id FROM email_templates LIMIT 1')
+    except sqlite3.OperationalError:
+        print("Migrating email_templates: Adding 'campaign_id' column...")
+        c.execute('ALTER TABLE email_templates ADD COLUMN campaign_id INTEGER')
     
     for col, dtype in new_columns.items():
         try:
@@ -122,12 +256,114 @@ def init_db():
             except sqlite3.OperationalError as e:
                 print(f"Migration warning for {col}: {e}")
 
+    # Migrate tasks table
+    task_columns = {
+        'priority': 'TEXT DEFAULT "Medium"',
+        'task_type': 'TEXT DEFAULT "Task"'
+    }
+    for col, dtype in task_columns.items():
+        try:
+            c.execute(f'SELECT {col} FROM tasks LIMIT 1')
+        except sqlite3.OperationalError:
+            print(f"Migrating Tasks: Adding '{col}' column...")
+            c.execute(f'ALTER TABLE tasks ADD COLUMN {col} {dtype}')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS platform_credentials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            platform_name TEXT UNIQUE,
+            username TEXT,
+            password TEXT,
+            api_key TEXT,
+            meta_json TEXT, -- any extra fields like 'blog_id' or 'client_secret'
+            updated_at INTEGER
+        );
+    ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS captcha_settings (
+            id INTEGER PRIMARY KEY DEFAULT 1,
+            provider TEXT, -- 'none', '2captcha', 'anticaptcha'
+            api_key TEXT,
+            enabled INTEGER DEFAULT 0,
+            updated_at INTEGER,
+            CHECK (id = 1)
+        );
+    ''')
+
     conn.commit()
     conn.close()
 
+def save_platform_credential(platform_name, username=None, password=None, api_key=None, meta_json=None):
+    """Saves or updates credentials for an SEO platform."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO platform_credentials (platform_name, username, password, api_key, meta_json, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(platform_name) DO UPDATE SET
+            username=excluded.username,
+            password=excluded.password,
+            api_key=excluded.api_key,
+            meta_json=excluded.meta_json,
+            updated_at=excluded.updated_at
+    ''', (platform_name, username, password, api_key, meta_json, int(time.time())))
+    conn.commit()
+    conn.close()
+
+def get_platform_credentials(platform_name=None):
+    """Retrieves credentials for one or all platforms."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    if platform_name:
+        c.execute('SELECT * FROM platform_credentials WHERE platform_name = ?', (platform_name,))
+        result = c.fetchone()
+        conn.close()
+        return dict(result) if result else None
+    else:
+        c.execute('SELECT * FROM platform_credentials')
+        results = c.fetchall()
+        conn.close()
+        return [dict(r) for r in results]
+
+def delete_platform_credential(platform_name):
+    """Removes credentials for a platform."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM platform_credentials WHERE platform_name = ?', (platform_name,))
+    conn.commit()
+    conn.close()
+
+def save_captcha_settings(provider, api_key, enabled):
+    """Saves or updates captcha settings."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO captcha_settings (id, provider, api_key, enabled, updated_at)
+        VALUES (1, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            provider=excluded.provider,
+            api_key=excluded.api_key,
+            enabled=excluded.enabled,
+            updated_at=excluded.updated_at
+    ''', (provider, api_key, 1 if enabled else 0, int(time.time())))
+    conn.commit()
+    conn.close()
+
+def get_captcha_settings():
+    """Retrieves captcha settings."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM captcha_settings WHERE id = 1')
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else {"provider": "none", "api_key": "", "enabled": 0}
+
 def add_lead(url, email, source="search", category="default", industry=None, business_type=None, confidence=None, relevance_reason=None, contact_person=None, company_name=None, address=None, phone_number=None, tech_stack=None, qualification_score=None, qualification_reason=None):
     """
-    Adds a lead to the database. Returns True if added, False if duplicate.
+    Adds a lead to the database. Returns ID if added, None if duplicate.
     """
     conn = get_connection()
     c = conn.cursor()
@@ -136,10 +372,11 @@ def add_lead(url, email, source="search", category="default", industry=None, bus
             INSERT INTO leads (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, int(time.time())))
+        lead_id = c.lastrowid
         conn.commit()
-        return True
+        return lead_id
     except sqlite3.IntegrityError:
-        return False
+        return None
     finally:
         conn.close()
 
@@ -173,6 +410,36 @@ def get_leads_by_status(status="new"):
     results = c.fetchall()
     conn.close()
     return [dict(r) for r in results]
+
+def get_lead_by_id(lead_id):
+    """Retrieves a single lead by its ID."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM leads WHERE id = ?', (lead_id,))
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else None
+
+def update_lead_enrichment(lead_id, enrichment_data):
+    """Updates lead with enriched intelligence."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE leads 
+        SET linkedin_url = ?, twitter_url = ?, instagram_url = ?, intent_signals = ?, company_bio = ?, tech_stack = ?
+        WHERE id = ?
+    ''', (
+        enrichment_data.get('linkedin_url'),
+        enrichment_data.get('twitter_url'),
+        enrichment_data.get('instagram_url'),
+        enrichment_data.get('intent_signals'),
+        enrichment_data.get('company_bio'),
+        enrichment_data.get('tech_stack'),
+        lead_id
+    ))
+    conn.commit()
+    conn.close()
 
 def clear_all_leads():
     """Deletes ALL leads from the database. Dangerous!"""
@@ -227,27 +494,37 @@ def get_pain_points(niche):
     conn.close()
     return results
 
-def save_template(niche, pain_point_id, stage, subject, body):
+def save_template(niche, pain_point_id, stage, subject, body, campaign_id=None):
     """Saves an email template."""
     conn = get_connection()
     c = conn.cursor()
     c.execute('''
-        INSERT INTO email_templates (niche, pain_point_id, stage, subject, body_template, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (niche, pain_point_id, stage, subject, body, int(time.time())))
+        INSERT INTO email_templates (niche, pain_point_id, stage, subject, body_template, campaign_id, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (niche, pain_point_id, stage, subject, body, campaign_id, int(time.time())))
     conn.commit()
     conn.close()
 
-def get_templates(niche, stage=None):
-    """Retrieves templates for a niche, optionally filtered by stage."""
+def get_templates(niche=None, stage=None, campaign_id=None):
+    """Retrieves templates for a niche or campaign, optionally filtered by stage."""
     conn = get_connection()
     c = conn.cursor()
-    if stage:
-        c.execute('SELECT id, subject, body_template, pain_point_id FROM email_templates WHERE niche = ? AND stage = ?', (niche, stage))
-    else:
-        c.execute('SELECT id, subject, body_template, pain_point_id FROM email_templates WHERE niche = ?', (niche,))
     
-    results = [{'id': r[0], 'subject': r[1], 'body': r[2], 'pain_point_id': r[3]} for r in c.fetchall()]
+    query = 'SELECT id, subject, body_template, pain_point_id, campaign_id FROM email_templates WHERE 1=1'
+    params = []
+    
+    if niche:
+        query += ' AND niche = ?'
+        params.append(niche)
+    if stage:
+        query += ' AND stage = ?'
+        params.append(stage)
+    if campaign_id:
+        query += ' AND campaign_id = ?'
+        params.append(campaign_id)
+        
+    c.execute(query, params)
+    results = [{'id': r[0], 'subject': r[1], 'body': r[2], 'pain_point_id': r[3], 'campaign_id': r[4]} for r in c.fetchall()]
     conn.close()
     return results
 
@@ -377,5 +654,395 @@ def delete_wp_site(site_id):
     conn = get_connection()
     c = conn.cursor()
     c.execute('DELETE FROM wp_sites WHERE id = ?', (site_id,))
+    conn.commit()
+    conn.close()
+
+# === CAMPAIGN MANAGEMENT FUNCTIONS ===
+
+def create_campaign(name, niche, product_name, product_context):
+    """Creates a new campaign and returns its ID."""
+    conn = get_connection()
+    c = conn.cursor()
+    now = int(time.time())
+    c.execute('''
+        INSERT INTO campaigns (name, niche, product_name, product_context, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (name, niche, product_name, product_context, now, now))
+    campaign_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return campaign_id
+
+def update_campaign_step(campaign_id, step):
+    """Updates the current step of a campaign."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE campaigns 
+        SET current_step = ?, updated_at = ?
+        WHERE id = ?
+    ''', (step, int(time.time()), campaign_id))
+    conn.commit()
+    conn.close()
+
+def update_campaign_pain_point(campaign_id, pain_point_id):
+    """Updates the selected pain point for a campaign."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE campaigns 
+        SET selected_pain_point_id = ?, updated_at = ?
+        WHERE id = ?
+    ''', (pain_point_id, int(time.time()), campaign_id))
+    conn.commit()
+    conn.close()
+
+def get_campaign(campaign_id):
+    """Retrieves full details of a single campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM campaigns WHERE id = ?', (campaign_id,))
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else None
+
+def get_all_campaigns():
+    """Retrieves all campaigns, ordered by most recent."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM campaigns ORDER BY updated_at DESC')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def delete_campaign(campaign_id):
+    """Deletes a campaign and its associated leads/templates."""
+    conn = get_connection()
+    c = conn.cursor()
+    # 1. Delete lead associations
+    c.execute('DELETE FROM campaign_leads WHERE campaign_id = ?', (campaign_id,))
+    # 2. Delete templates
+    c.execute('DELETE FROM email_templates WHERE campaign_id = ?', (campaign_id,))
+    # 3. Delete campaign
+    c.execute('DELETE FROM campaigns WHERE id = ?', (campaign_id,))
+    conn.commit()
+    conn.close()
+
+def add_lead_to_campaign(campaign_id, lead_id):
+    """Links a lead to a campaign."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO campaign_leads (campaign_id, lead_id) VALUES (?, ?)', (campaign_id, lead_id))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        pass # Already linked
+    finally:
+        conn.close()
+
+def get_campaign_leads(campaign_id):
+    """Retrieves all leads associated with a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('''
+        SELECT l.* 
+        FROM leads l
+        JOIN campaign_leads cl ON l.id = cl.lead_id
+        WHERE cl.campaign_id = ?
+    ''', (campaign_id,))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+# === DIGITAL SALES ROOM (DSR) FUNCTIONS ===
+
+def create_dsr(campaign_id, lead_id, title, content_json, site_id=None):
+    """Creates a new Digital Sales Room entry."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO digital_sales_rooms (campaign_id, lead_id, site_id, title, content_json, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (campaign_id, lead_id, site_id, title, content_json, int(time.time())))
+    dsr_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return dsr_id
+
+def update_dsr_wp_info(dsr_id, wp_page_id, public_url, status='published'):
+    """Updates DSR with WordPress deployment info."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE digital_sales_rooms 
+        SET wp_page_id = ?, public_url = ?, status = ?
+        WHERE id = ?
+    ''', (wp_page_id, public_url, status, dsr_id))
+    conn.commit()
+    conn.close()
+
+def get_dsrs_for_campaign(campaign_id):
+    """Returns all DSRs associated with a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM digital_sales_rooms WHERE campaign_id = ?', (campaign_id,))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def get_dsr_by_lead(campaign_id, lead_id):
+    """Gets a DSR for a specific lead in a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM digital_sales_rooms WHERE campaign_id = ? AND lead_id = ?', (campaign_id, lead_id))
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else None
+
+# === CADENCE / SEQUENCE FUNCTIONS ===
+
+def create_sequence(campaign_id, name):
+    """Creates a new outreach sequence."""
+    conn = get_connection()
+    c = conn.cursor()
+    import time
+    c.execute('INSERT INTO sequences (campaign_id, name, created_at) VALUES (?, ?, ?)',
+              (campaign_id, name, int(time.time())))
+    seq_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return seq_id
+
+def add_sequence_step(sequence_id, step_number, touch_type, delay_days, content_json):
+    """Adds a step to a sequence."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO sequence_steps (sequence_id, step_number, touch_type, delay_days, content_json)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (sequence_id, step_number, touch_type, delay_days, content_json))
+    conn.commit()
+    conn.close()
+
+def enroll_lead_in_sequence(lead_id, sequence_id):
+    """Enrolls a lead in a sequence and schedules the first touch."""
+    conn = get_connection()
+    c = conn.cursor()
+    import time
+    now = int(time.time())
+    c.execute('''
+        INSERT INTO sequence_enrollments (lead_id, sequence_id, current_step_index, status, next_scheduled_at)
+        VALUES (?, ?, 0, 'active', ?)
+    ''', (lead_id, sequence_id, now))
+    conn.commit()
+    conn.close()
+
+def get_due_enrollments():
+    """Returns all enrollments that are due for a touch."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    import time
+    c.execute('''
+        SELECT se.*, l.email, l.contact_person, l.company_name
+        FROM sequence_enrollments se
+        JOIN leads l ON se.lead_id = l.id
+        WHERE se.status = 'active' AND se.next_scheduled_at <= ?
+    ''', (int(time.time()),))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def get_sequence_steps(sequence_id):
+    """Returns all steps for a sequence, ordered by step number."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM sequence_steps WHERE sequence_id = ? ORDER BY step_number ASC', (sequence_id,))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def get_campaign_sequences(campaign_id):
+    """Returns all sequences for a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM sequences WHERE campaign_id = ?', (campaign_id,))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def update_enrollment_progress(enrollment_id, next_step_index, next_scheduled_at, status='active'):
+    """Updates enrollment status and schedules next touch."""
+    conn = get_connection()
+    c = conn.cursor()
+    import time
+    c.execute('''
+        UPDATE sequence_enrollments 
+        SET current_step_index = ?, last_touch_at = ?, next_scheduled_at = ?, status = ?
+        WHERE id = ?
+    ''', (next_step_index, int(time.time()), next_scheduled_at, status, enrollment_id))
+    conn.commit()
+    conn.close()
+
+# === CRM / DEAL MANAGEMENT FUNCTIONS ===
+
+def create_deal(lead_id, title, value, stage='Discovery', probability=20, close_date=None):
+    """Creates a new deal for a lead."""
+    conn = get_connection()
+    c = conn.cursor()
+    now = int(time.time())
+    c.execute('''
+        INSERT INTO deals (lead_id, title, value, stage, probability, close_date, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (lead_id, title, value, stage, probability, close_date, now))
+    deal_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return deal_id
+
+def get_deals():
+    """Retrieves all deals with lead info."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('''
+        SELECT d.*, l.company_name, l.contact_person, l.email
+        FROM deals d
+        JOIN leads l ON d.lead_id = l.id
+        ORDER BY d.created_at DESC
+    ''')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def update_deal_stage(deal_id, stage, probability):
+    """Updates the stage and probability of a deal."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE deals 
+        SET stage = ?, probability = ?
+        WHERE id = ?
+    ''', (stage, probability, deal_id))
+    conn.commit()
+    conn.close()
+
+# === TASK MANAGEMENT FUNCTIONS ===
+
+def create_task(lead_id, description, due_date, priority='Medium', task_type='Task'):
+    """Creates a new task for a lead."""
+    conn = get_connection()
+    c = conn.cursor()
+    now = int(time.time())
+    c.execute('''
+        INSERT INTO tasks (lead_id, description, due_date, priority, task_type, status, created_at)
+        VALUES (?, ?, ?, ?, ?, 'pending', ?)
+    ''', (lead_id, description, due_date, priority, task_type, now))
+    task_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return task_id
+
+def update_task(task_id, **kwargs):
+    """Updates task fields dynamically."""
+    if not kwargs:
+        return
+    conn = get_connection()
+    c = conn.cursor()
+    
+    fields = []
+    params = []
+    for key, value in kwargs.items():
+        fields.append(f"{key} = ?")
+        params.append(value)
+    
+    params.append(task_id)
+    query = f"UPDATE tasks SET {', '.join(fields)} WHERE id = ?"
+    c.execute(query, params)
+    conn.commit()
+    conn.close()
+
+def delete_task(task_id):
+    """Deletes a task by ID."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+
+def get_tasks(status=None):
+    """Retrieves tasks, optionally filtered by status."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    query = '''
+        SELECT t.*, l.company_name, l.contact_person
+        FROM tasks t
+        LEFT JOIN leads l ON t.lead_id = l.id
+    '''
+    params = []
+    if status:
+        query += ' WHERE t.status = ?'
+        params.append(status)
+    query += ' ORDER BY t.due_date ASC'
+    
+    c.execute(query, params)
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def mark_task_completed(task_id):
+    """Marks a task as completed."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("UPDATE tasks SET status = 'completed' WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+# === SOCIAL SCHEDULER FUNCTIONS ===
+
+def save_scheduled_post(agent_type, platforms, content, scheduled_at, metadata=None):
+    """Saves a post to be scheduled for social media."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    now = int(time.time())
+    c.execute('''
+        INSERT INTO scheduled_posts (agent_type, platforms, content, scheduled_at, status, metadata, created_at)
+        VALUES (?, ?, ?, ?, 'pending', ?, ?)
+    ''', (agent_type, json.dumps(platforms), content, scheduled_at, json.dumps(metadata or {}), now))
+    post_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return post_id
+
+def get_scheduled_posts(status=None):
+    """Retrieves scheduled posts, optionally filtered by status."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    query = 'SELECT * FROM scheduled_posts'
+    params = []
+    if status:
+        query += ' WHERE status = ?'
+        params.append(status)
+    query += ' ORDER BY scheduled_at ASC'
+    
+    c.execute(query, params)
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def delete_scheduled_post(post_id):
+    """Deletes a scheduled post."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM scheduled_posts WHERE id = ?', (post_id,))
     conn.commit()
     conn.close()

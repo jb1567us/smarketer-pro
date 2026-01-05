@@ -9,3 +9,8 @@ streamlit
 pandas
 python-dotenv
 playwright
+openai-whisper
+torch
+ffmpeg-python
+setuptools-rust
+psutil

@@ -1,0 +1,35 @@
+Allow for custom preset strategies in the strategy laboratory
+
+Add ability to generate videos possibly create a video generation layer with a few apis choosing from the different ones depending on what task it's best suited for
+
+Turn image generation into a layer with the use of a few different apis and more advanced options for the image manipulation.
+
+will need affiiate tracking software
+
+
+cpanel/wordpress installation and management
+
+
+rate limit issues make to add ollama cloud to smart router
+
+email tracking System that utilizes the ability to pull in from multiple email provider apis so as to maximize free email provider usage.
+
+***Ability to use the Agent lab as a creativity site. Ability to save content 
+
+***Wordpress expert agent That can install a brand new installation of Wordpress can manage posts and pages and everything related to wordPress.
+
+Need to miter and check and see if the logic has improved for what websites and what data picks and what it filters out
+
+We need sort of two speeds free apis versus paid and how that affects performance and what's capable with the system(concurrency for example). Free is kind of slow and throttled but with the paid API things can move along much quicker and we can adjust our settings based upon that. 
+
+B2C version needed
+
+Incorporate tick tock and Instagram for posting as well and research.
+
+Add an affiliate marketing management section
+
+
+
+Let's have two different levels with personalization generic for quicker campaigns and hyper personalization for more detailed but probably a little slower longer time taking campaigns
+
+We need a robust proxy harvester similar to the one in scrape box

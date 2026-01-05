@@ -20,8 +20,9 @@ from analyzer import analyze_content
 
 # === AGENT IMPORTS ===
 from agents import ResearcherAgent, QualifierAgent
+from enrichment_manager import EnrichmentManager
 
-async def run_outreach(keywords, profile_names=["default"], target_niche=None, status_callback=None, exclusions=None, icp_criteria=None, max_results=None):
+async def run_outreach(keywords, profile_names=["default"], target_niche=None, status_callback=None, exclusions=None, icp_criteria=None, max_results=None, auto_enrich=False):
     def log(msg):
         print(msg)
         if status_callback:
@@ -121,18 +122,30 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
                     return None
                 
                 # B. Qualify (Gatekeeper)
-                # AUTO-QUALIFY MODE ENABLED
-                log(f"    [Agent] Auto-Qualifying {url} (Speed Mode)...")
-                
-                qualification = {
-                    'qualified': True,
-                    'score': 100,
-                    'reason': f'Auto-Qualified ({source_type} - Speed Mode)'
-                }
+                if icp_criteria:
+                    log(f"    [Agent] Qualifier is evaluating {url} against ICP...")
+                    
+                    # Construct context for qualifier
+                    q_context = f"Company URL: {url}\nIndustry: {target_niche}\nContent Preview: {intel.get('html_preview', '')[:3000]}\n\nICP Criteria:\n{icp_criteria}"
+                    
+                    try:
+                        qualification = qualifier.think(q_context)
+                    except Exception as e:
+                        log(f"    ⚠️ Qualification failed for {url}: {e}")
+                        qualification = {'qualified': True, 'score': 50, 'reason': 'Error during qualification, allowing as neutral.'}
+                else:
+                    # AUTO-QUALIFY MODE ENABLED (only if no criteria provided)
+                    log(f"    [Agent] Auto-Qualifying {url} (No ICP criteria provided)...")
+                    
+                    qualification = {
+                        'qualified': True,
+                        'score': 100,
+                        'reason': f'Auto-Qualified ({source_type} - No strict ICP)'
+                    }
                 
                 # Parse result
                 if qualification:
-                    if qualification.get('qualified') == False:
+                    if not qualification.get('qualified'):
                         log(f"    ❌ Rejected: {qualification.get('reason')}")
                         return None
                     else:
@@ -198,7 +211,7 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
         url = res['url']
         
         for email in emails:
-             if add_lead(
+             lead_id = add_lead(
                 url, 
                 email, 
                 source=keywords, 
@@ -213,9 +226,17 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
                 phone_number=details.get('phone_number'),
                 qualification_score=analysis.get('score'),
                 qualification_reason=analysis.get('reason')
-            ):
+            )
+             if lead_id:
                 new_leads.append(res)
                 log(f"✅ Saved: {url} ({email})")
+                
+                if auto_enrich:
+                    log(f"  [Workflow] Auto-Enriching {url}...")
+                    em = EnrichmentManager()
+                    # We can do this sync here as we are already in an async function 
+                    # but we are in a loop. To keep it simple, we await it.
+                    await em.enrich_lead(lead_id)
 
     # CSV Export (Optional backup)
     if new_leads:

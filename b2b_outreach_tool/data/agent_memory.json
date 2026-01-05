@@ -1,0 +1,9 @@
+{
+    "TestAgent": {
+        "test_persistence_key": {
+            "content": "This is a test learning fact.",
+            "metadata": {},
+            "timestamp": "2026-01-03T00:46:06.301640"
+        }
+    }
+}

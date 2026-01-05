@@ -56,7 +56,7 @@ def refine_campaign_step_research(niche, kept_points, feedback, product_context=
         save_pain_points(niche, result)
     return get_pain_points(niche)
 
-def start_campaign_step_copy(niche, pain_point, product_name, product_description):
+def start_campaign_step_copy(niche, pain_point, product_name, product_description, campaign_id=None):
     # === AGENT PIPELINE ===
     print("  [Agent] Copywriter is drafting...")
     
@@ -94,6 +94,18 @@ def start_campaign_step_copy(niche, pain_point, product_name, product_descriptio
         "subject": draft.get('subject_line'),
         "body": draft.get('body')
     }]
+    
+    # Save to DB if campaign_id is present
+    if campaign_id:
+        save_template(
+            niche=niche,
+            pain_point_id=pain_point['id'],
+            stage="intro",
+            subject=draft.get('subject_line'),
+            body=draft.get('body'),
+            campaign_id=campaign_id
+        )
+        
     return sequence
 
 def start_campaign_step_send(leads, confirmation=False):

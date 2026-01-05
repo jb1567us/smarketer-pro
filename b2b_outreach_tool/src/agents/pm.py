@@ -28,3 +28,25 @@ class ProductManagerAgent(BaseAgent):
         
         prompt = f"Product Idea: {product_idea}\n\n{instructions}"
         return self.provider.generate_json(prompt)
+
+    def generate_campaign_strategy(self, niche, product_context):
+        """
+        Generates a high-level outreach strategy and campaign concept.
+        """
+        instructions = (
+            f"Develop a high-level outreach strategy for a campaign in the '{niche}' niche.\n"
+            f"Product Context: {product_context}\n"
+            "Focus on:\n"
+            "1. Ideal Customer Profile (ICP) refinement.\n"
+            "2. High-leverage search queries.\n"
+            "3. Core emotional hooks for the copywriter.\n"
+            "4. Multi-channel touchpoint pattern (Email vs LinkedIn).\n\n"
+            "Return JSON: {\n"
+            "  'strategy_name': str,\n"
+            "  'icp_refined': str,\n"
+            "  'queries': [str],\n"
+            "  'copy_hooks': [str],\n"
+            "  'channel_mix': str\n"
+            "}"
+        )
+        return self.provider.generate_json(instructions)

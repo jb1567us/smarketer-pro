@@ -10,3 +10,5 @@ from .designer import GraphicsDesignerAgent
 from .creative import SocialMediaAgent, AdCopyAgent, BrainstormerAgent, PersonaAgent
 from .wordpress import WordPressAgent
 from .pm import ProductManagerAgent
+from .linkedin import LinkedInAgent
+from .seo_agent import SEOExpertAgent
