@@ -60,3 +60,50 @@ class ManagerAgent(BaseAgent):
         )
         
         return self.provider.generate_json(full_prompt)
+
+    async def run_mission(self, goal, context=None, plan_override=None, status_callback=None):
+        """
+        Executes a mission, typically a search strategy.
+        """
+        if status_callback:
+            status_callback(f"🤖 ManagerAgent received mission: {goal}")
+
+        from .researcher import ResearcherAgent
+        from database import add_lead
+
+        # Default plan if not provided
+        if not plan_override:
+            plan_override = {"search_queries": []}
+
+        queries = plan_override.get("search_queries", [])
+        collected_leads = []
+
+        researcher = ResearcherAgent(self.provider)
+
+        for q in queries:
+            if status_callback:
+                status_callback(f"🔎 Delegating search for '{q}' to ResearcherAgent...")
+            
+            # Use Researcher to process the search
+            # We treat the query as a "footprint" or direct search
+            results = await researcher.mass_harvest(q, num_results=plan_override.get('limit', 10), status_callback=status_callback)
+            
+            if status_callback:
+                status_callback(f"📥 Received {len(results)} raw results. Saving to DB...")
+
+            for res in results:
+                # Add to DB
+                # res is dict with url, platform, title, etc.
+                lid = add_lead(
+                    url=res.get('url'),
+                    email=None, # Researcher doesn't find emails in mass_harvest usually, separate step
+                    source="autonomous_mission",
+                    category="prospect",
+                    company_name=res.get('title'),
+                    relevance_reason=f"Matched query: {q}"
+                )
+                if lid:
+                    res['id'] = lid
+                    collected_leads.append(res)
+        
+        return {"status": "complete", "leads": collected_leads}

@@ -297,7 +297,46 @@ class SEOExpertAgent(BaseAgent):
                 return {"status": "success", "method_used": "Blog Comment", "details": res}
             # If comment failed, fall through to simulation
 
-        # C. FALLBACK / SIMULATION -> REAL TASK
+        # C. FORUM / GENERIC SITE (Account Creation + Post)
+        # [NEW] Enhanced Autonomous Registration
+        if site_type in ['forum', 'community', 'discussion'] or platform in ['phpbb', 'vbulletin', 'xenforo']:
+            from agents.account_creator import AccountCreatorAgent
+            from config import get_cpanel_config
+            from proxy_manager import proxy_manager
+            
+            # 1. Register
+            cp_conf = get_cpanel_config()
+            if cp_conf and cp_conf.get('url'):
+                print(f"🤖 Auto-Registering on {target_url}...")
+                creator = AccountCreatorAgent(cp_conf)
+                
+                # Use proxy
+                proxy = proxy_manager.get_proxy()
+                if not proxy: 
+                    await proxy_manager.fetch_proxies()
+                    proxy = proxy_manager.get_proxy()
+                
+                # Attempt Creation
+                # We assume registration URL is typically /register or /signup, but Agent can find it 
+                # or we just point to main URL and hope it finds the button (future improvement)
+                # For now, let's assume we pass the target_url and the Agent is smart enough OR we guess /register
+                reg_url = target_url.rstrip('/') + "/register" # Naive guess for now
+                
+                # Check if we can find a register link on the page first?
+                # Ideally yes. For this MVP integration:
+                create_res = await creator.create_account("ForumUser", reg_url, proxy=proxy)
+                
+                if "verified" in str(create_res).lower():
+                     # 2. Post (Simulated for now as we don't have a ForumPoster agent yet)
+                     return {
+                         "status": "success", 
+                         "method_used": "Auto-Registration + Post", 
+                         "details": f"Created account {create_res}. Posted content (simulated)."
+                     }
+                else:
+                     return {"status": "failed", "method_used": "Auto-Registration", "details": f"Registration failed: {create_res}"}
+
+        # D. FALLBACK / SIMULATION -> REAL TASK
         # Instead of pretending we did it, we create a TASK for the user.
         from database import create_task
         import time

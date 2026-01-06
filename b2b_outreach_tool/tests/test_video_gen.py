@@ -52,3 +52,34 @@ class TestVideoGen(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class TestSmartRouterLogic(unittest.TestCase):
+    def setUp(self):
+        from video_gen.manager import VideoGenManager
+        self.manager = VideoGenManager()
+
+    def test_smart_routing_logic(self):
+        # 1. Verify Browser Providers exist
+        providers = self.manager.list_providers()
+        self.assertIn("smart", providers)
+        
+        # 2. Test Routing
+        # Reset Mock Usage
+        self.manager.usage_stats = {}
+        
+        # Test: Cinematic -> Prefer Luma (if default logic holds and tags match)
+        # Note: We rely on the hardcoded capabilities in browser_providers.py
+        p = self.manager.smart_route("test prompt", "Cinematic")
+        self.assertTrue(hasattr(p, 'name'))
+        print(f"Selected Provider for Cinematic: {p.name}")
+
+    def test_limits_logic(self):
+        from datetime import datetime
+        today = datetime.now().strftime("%Y-%m-%d")
+        
+        # Mock Luma as full
+        self.manager.usage_stats["luma"] = {today: 999}
+        
+        p = self.manager.smart_route("test prompt", "Cinematic")
+        # Should NOT be luma
+        self.assertNotEqual(p.name, "luma", "Should fallback if over limit")

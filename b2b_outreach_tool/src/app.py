@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 import psutil
 import json
 
+if platform.system() == 'Windows':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 load_dotenv()
 
 # Ensure src is in path
@@ -47,7 +50,9 @@ from mailer import Mailer
 from ui.reports_ui import render_reports_page
 from ui.video_ui import render_video_studio
 from ui.dsr_ui import render_dsr_page
+from ui.dsr_ui import render_dsr_page
 from ui.dashboard_ui import render_dashboard
+from ui.account_creator_ui import render_account_creator_ui
 from config import config, reload_config
 from proxy_manager import proxy_manager
 from agents import (
@@ -271,7 +276,7 @@ def main():
                 "Dashboard",
                 "--- SALES CRM ---", "CRM Dashboard", "Pipeline (Deals)", "Tasks", "DSR Manager",
                 "--- MARKETING ---", "Campaigns", "Social Scheduler", "Creative Library", "Video Studio", "Strategy Laboratory", "Reports",
-                "--- LEAD GEN ---", "Lead Discovery", "Mass Tools",
+                "--- LEAD GEN ---", "Lead Discovery", "Mass Tools", "Account Creator",
                 "--- SEO ---", "SEO Audit", "Keyword Research", "Link Wheel Builder",
                 "--- SYSTEM ---", "Automation Hub", "Workflow Builder", "Agent Factory", "Analytics", "Proxy Lab", "Settings"
             ]
@@ -351,12 +356,15 @@ def main():
                     st.session_state['current_view'] = "Link Wheel Builder"
                     st.rerun()
 
-            with st.expander("🕵️ Lead Gen", expanded=st.session_state['current_view'] in ["Lead Discovery", "Mass Tools"]):
+            with st.expander("🕵️ Lead Gen", expanded=st.session_state['current_view'] in ["Lead Discovery", "Mass Tools", "Account Creator"]):
                 if st.button("Lead Discovery", use_container_width=True): 
                     st.session_state['current_view'] = "Lead Discovery"
                     st.rerun()
                 if st.button("Mass Tools", use_container_width=True): 
                     st.session_state['current_view'] = "Mass Tools"
+                    st.rerun()
+                if st.button("Account Creator", use_container_width=True): 
+                    st.session_state['current_view'] = "Account Creator"
                     st.rerun()
 
             with st.expander("⚙️ Systems", expanded=st.session_state['current_view'] in ["Automation Hub", "Agent Factory", "Analytics", "Proxy Lab", "Settings"]):
@@ -682,6 +690,8 @@ def main():
     elif choice == "Reports":
         render_reports_page()
 
+    elif choice == "Account Creator":
+        render_account_creator_ui()
 
 
     elif choice == "Automation Hub":

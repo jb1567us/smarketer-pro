@@ -21,22 +21,31 @@ class BrowserManager:
         # Ensure sessions dir exists
         os.makedirs(os.path.dirname(self.storage_path), exist_ok=True)
 
-    async def launch(self, headless=True):
+    async def launch(self, headless=True, proxy=None):
         """
         Launches the browser and context.
         Loads existing storage state if available.
+        proxy: dict with 'server', 'username', 'password' (optional)
         """
         self.playwright = await async_playwright().start()
         
-        # Launch options
-        self.browser = await self.playwright.chromium.launch(
-            headless=headless,
-            args=[
+        launch_args = {
+            "headless": headless,
+            "args": [
                 '--disable-blink-features=AutomationControlled',
                 '--no-sandbox',
                 '--disable-infobars'
             ]
-        )
+        }
+        
+        if proxy:
+            # Playwright proxy format: {'server': 'http://myproxy.com:3128', 'username': 'user', 'password': 'pwd'}
+            if isinstance(proxy, str):
+                launch_args["proxy"] = {"server": proxy}
+            else:
+                launch_args["proxy"] = proxy
+
+        self.browser = await self.playwright.chromium.launch(**launch_args)
         
         # Load state if exists
         state_file = self.storage_path if os.path.exists(self.storage_path) else None
@@ -44,7 +53,8 @@ class BrowserManager:
         # Create Context
         self.context = await self.browser.new_context(
             storage_state=state_file,
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            locale="en-US"
         )
         
         self.page = await self.context.new_page()

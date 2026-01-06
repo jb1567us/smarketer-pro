@@ -35,6 +35,52 @@ def render_video_studio():
                     with st.spinner(f"Launching {p_name} login window... Check your taskbar!"):
                         asyncio.run(p.login_interactive())
                     st.success("Session saved!")
+                    
+                # [NEW] Create Account Button
+                from video_gen.auth_configs import VIDEO_AUTH_CONFIGS
+                if p_name in VIDEO_AUTH_CONFIGS:
+                    if st.button(f"🆕 Register {p_name.title()}", key=f"reg_{p_name}"):
+                        st.info("Starting Auto-Registration Agent...")
+                        
+                        # Initialize Agent
+                        from agents.account_creator import AccountCreatorAgent
+                        from config import get_cpanel_config
+                        from proxy_manager import proxy_manager
+                        
+                        cp_conf = get_cpanel_config()
+                        if not cp_conf or not cp_conf.get('url'):
+                            st.error("cPanel not configured!")
+                        else:
+                            agent = AccountCreatorAgent(cp_conf)
+                            
+                            # Proxy logic
+                            proxy = proxy_manager.get_proxy()
+                            if not proxy: 
+                                asyncio.run(proxy_manager.fetch_proxies())
+                                proxy = proxy_manager.get_proxy()
+                            
+                            st.write(f"Using Proxy: {proxy}")
+                            
+                            # Run
+                            reg_url = VIDEO_AUTH_CONFIGS[p_name]['registration_url']
+                            
+                            with st.status(f"Creating {p_name} account...", expanded=True):
+                                async def run_creation():
+                                    return await agent.create_account(
+                                        p_name,
+                                        reg_url,
+                                        account_details={},
+                                        proxy=proxy
+                                    )
+                                try:
+                                    res = asyncio.run(run_creation())
+                                    st.write(res)
+                                    if "verified" in str(res).lower():
+                                        st.success("Account Created! You can now Login.")
+                                    else:
+                                        st.warning("Check results above.")
+                                except Exception as e:
+                                    st.error(f"Failed: {e}")
 
     with tab_gen:
         col_settings, col_preview = st.columns([1, 2])

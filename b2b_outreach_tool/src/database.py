@@ -426,6 +426,21 @@ def init_db():
     ''')
 
     c.execute('''
+        CREATE TABLE IF NOT EXISTS managed_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            platform_name TEXT,
+            email TEXT,
+            username TEXT,
+            password TEXT, -- Encrypted or plain, depending on security requirements
+            verification_status TEXT DEFAULT 'pending', -- pending, verified, banned
+            proxy_used TEXT,
+            created_at INTEGER,
+            last_login_at INTEGER,
+            metadata TEXT -- JSON for cookies, recovery codes, etc.
+        );
+    ''')
+
+    c.execute('''
         CREATE TABLE IF NOT EXISTS agent_work_products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             agent_role TEXT,
@@ -1454,5 +1469,50 @@ def delete_scheduled_post(post_id):
     conn = get_connection()
     c = conn.cursor()
     c.execute('DELETE FROM scheduled_posts WHERE id = ?', (post_id,))
+    conn.commit()
+    conn.close()
+
+# === MANAGED ACCOUNTS FUNCTIONS ===
+
+def save_managed_account(platform_name, email, username, password, proxy_used=None, metadata=None):
+    """Saves a newly created account."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    now = int(time.time())
+    c.execute('''
+        INSERT INTO managed_accounts (platform_name, email, username, password, proxy_used, metadata, created_at, last_login_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (platform_name, email, username, password, proxy_used, json.dumps(metadata or {}), now, now))
+    account_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return account_id
+
+def get_managed_accounts(platform_name=None, status=None):
+    """Retrieves managed accounts."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    query = 'SELECT * FROM managed_accounts WHERE 1=1'
+    params = []
+    
+    if platform_name:
+        query += ' AND platform_name = ?'
+        params.append(platform_name)
+    if status:
+        query += ' AND verification_status = ?'
+        params.append(status)
+        
+    c.execute(query, params)
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def update_managed_account_status(account_id, status):
+    """Updates the status of a managed account."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('UPDATE managed_accounts SET verification_status = ? WHERE id = ?', (status, account_id))
     conn.commit()
     conn.close()

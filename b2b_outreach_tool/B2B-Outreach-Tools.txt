@@ -1,4 +1,11 @@
+ERROR  Unable to deploy
+The app’s code is not connected to a remote GitHub repository. To deploy on Streamlit Community Cloud, please put your code in a GitHub repository and publish the current branch. Read more in our documentation.
 
+C panel manager needs to be developed further maybe into its own agent if it isn't already once you give the login information to access C panel it shall be able to fully control and utilize ALL that's there  including wordpress and softaculous as well as getting in ftp login information as well as the email creation and other functions already done. This will allow for full cpanel automation
+
+We need a self healing feature like for instance if you go to log in on a certain site and you go there but the page has changed and you can no longer click what you used to click I want the AI to be able to diagnose and use its intelligence to figure out what is the proper method for logging in and then do so that way. That's just one example but if a piece of code starts to break within the system I want it to be able to self repair it
+
+Develop an account creator that'll use an email to log into and verify new accounts. Have automation connected with C panel and the email that's available from that. Create accounts with emails. Tomorrow those accounts via the email either through the smtp or through cpanel. Use AI logic to interpret the registration page. maybe Use proxies so it looks like each email is coming from a different sender location?
 
 I know that video generation uses Apis but I also know that there are free to use video generation via website via web page not api. Can I use browser automation to do video generation and then import that into my projects in this tool?Check the entire sayings configuration make sure that everything is under the right tab where it belongs
 

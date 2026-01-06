@@ -45,22 +45,45 @@ class KlingAIProvider(BrowserVideoProvider):
         )
 
     async def _navigate_to_login(self, page):
-        await page.goto("https://kling.kuaishou.com/en") # Or actual login URL
+        """Automates navigation to the login modal per user instructions."""
+        print(f"[{self.name}] Navigating to global landing page...")
+        await page.goto("https://klingai.com/global/")
+        
+        # 1. Click "Experience Now" (top right)
+        print(f"[{self.name}] Clicking 'Experience Now'...")
+        try:
+            # Try specific class first, then text fallback
+            await page.click("div.try-now-btn", timeout=10000)
+        except Exception:
+            await page.click("text='Experience Now'", timeout=10000)
+            
+        # 2. On app page, click "Sign In" (bottom left)
+        print(f"[{self.name}] Waiting for app interface and clicking 'Sign In'...")
+        # Wait for the sidebar sign-in button
+        # Selector discovered via subagent: span containing "Sign In"
+        await page.wait_for_selector("span:has-text('Sign In')", timeout=15000)
+        await page.click("span:has-text('Sign In')")
+        
+        print(f"[{self.name}] Login modal should now be visible.")
 
     async def generate_video(self, prompt, style="realistic", negative_prompt=None):
         bm = BrowserManager(self.session_id)
         page = await bm.launch(headless=True)
         
         try:
-            # 1. Go to Creation Page
-            print("[Kling] Navigating to creation page...")
-            await page.goto("https://klingai.com/text-to-video") # Placeholder URL, adjust to real one
-            # Note: The real URL might be diff, user needs to verify
+            # 1. Go to App Interface directly
+            print("[Kling] Navigating to app interface...")
+            await page.goto("https://app.klingai.com/global/") 
             
-            # Check for login redirect
-            if "login" in page.url:
+            # Check for login redirect or "Sign In" button presence
+            # If we see "Sign In", session is likely expired or not loaded
+            try:
+                await page.wait_for_selector("span:has-text('Sign In')", timeout=5000)
                 await bm.close()
-                return {"status": "failed", "error": "Session expired. Please re-authenticate in Auth Hub."}
+                return {"status": "failed", "error": "Session expired or not logged in. Please re-authenticate in Auth Hub."}
+            except Exception:
+                # No "Sign In" button found within 5s, we assume we are in.
+                pass
 
             # 2. Input Prompt
             # Selectors need to be discovered/updated by user or via inspection

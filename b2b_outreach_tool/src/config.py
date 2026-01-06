@@ -77,3 +77,13 @@ def get_smtp_config():
         password = os.getenv(var_name, "")
         
     return c["smtp_server"], c["smtp_port"], user, password
+
+def get_cpanel_config():
+    """Helper to get cPanel config."""
+    c = config.get("cpanel", {})
+    return {
+        'url': os.getenv('CPANEL_URL', config.get('cpanel', {}).get('url')),
+        'user': os.getenv('CPANEL_USER', config.get('cpanel', {}).get('user')),
+        'token': os.getenv('CPANEL_TOKEN', config.get('cpanel', {}).get('token')),
+        'domain': os.getenv('CPANEL_DOMAIN', config.get('cpanel', {}).get('domain'))
+    }
