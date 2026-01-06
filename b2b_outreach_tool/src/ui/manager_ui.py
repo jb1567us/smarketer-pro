@@ -5,7 +5,11 @@ from agents.manager import ManagerAgent
 from utils.recorder import WorkflowRecorder
 from utils.voice_manager import VoiceManager
 from workflow import run_outreach
-from workflow_manager import save_workflow, list_workflows, load_workflow
+from workflow_manager import save_workflow, list_workflows, load_workflow, extract_steps_from_workflow
+from utils.agent_registry import get_agent_class
+from memory import Memory
+from discovery_engine import DiscoveryEngine
+import random
 
 def render_manager_ui():
     st.header("🤖 Manager Agent")
@@ -26,11 +30,19 @@ def render_manager_ui():
         vm.start_listening()
         st.session_state['voice_manager'] = vm
 
+    if 'memory_system' not in st.session_state:
+        st.session_state['memory_system'] = Memory()
+
+    if 'discovery_engine' not in st.session_state:
+        st.session_state['discovery_engine'] = DiscoveryEngine()
+
     agent = st.session_state['manager_agent']
     recorder = st.session_state['workflow_recorder']
     voice = st.session_state['voice_manager']
+    memory = st.session_state['memory_system']
+    discovery = st.session_state['discovery_engine']
 
-    # Sidebar Voice Status
+    # Sidebar Voice Status & Discovery
     with st.sidebar:
         st.subheader("🎙️ Voice Control")
         
@@ -53,6 +65,31 @@ def render_manager_ui():
             voice.stop_listening()
             st.warning("Voice Listener Disabled")
 
+        st.divider()
+        st.subheader("🧠 Memory & Learning")
+        if st.button("View Learned Context"):
+            st.text(memory.get_context())
+        
+        new_pref = st.text_input("Add Preference", placeholder="e.g. 'I like formal tone'")
+        if st.button("Save Preference"):
+            if new_pref:
+                memory.add_preference(new_pref)
+                st.success("Preference saved!")
+
+        st.divider()
+        # Discovery Engine Trigger
+        if st.button("🎲 Discovery Mode"):
+            with st.spinner("Finding serendipitous opportunities..."):
+                intel = asyncio.run(discovery.get_serendipitous_finding(current_niche="B2B"))
+                if intel:
+                    st.session_state['manager_messages'].append({
+                        "role": "assistant", 
+                        "content": f"**{intel['title']}**\n\n{intel['content']}\n\n[Read More]({intel['url']})"
+                    })
+                    st.rerun()
+                else:
+                    st.warning("Nothing found right now.")
+
         st.subheader("Transcript")
         if 'transcript_log' not in st.session_state:
             st.session_state['transcript_log'] = []
@@ -63,8 +100,6 @@ def render_manager_ui():
 
     # Process Voice Queue
     voice_command = None
-    
-    # Process ALL events in queue
     while True:
         event = voice.get_latest_event()
         if not event:
@@ -72,18 +107,16 @@ def render_manager_ui():
             
         if event['type'] == 'command':
             voice_command = event['payload']
-            # Also log to transcript
             st.session_state['transcript_log'].append(f"Command: {voice_command}")
             st.toast(f"Voice Command: {voice_command}")
             
         elif event['type'] == 'transcription':
-            # Live hearing (noisy)
             text = event['payload']
             st.session_state['transcript_log'].append(f"{text}")
-            st.rerun() # Rerun to update transcript view immediately
+            st.rerun() 
             
         elif event['type'] == 'status':
-            st.rerun() # Refresh to show new status
+            st.rerun()
 
     # Display Chat
     for msg in st.session_state['manager_messages']:
@@ -91,9 +124,6 @@ def render_manager_ui():
             st.markdown(msg["content"])
 
     # Chat Input
-    # We combine voice command and text input. 
-    # Since chat_input is unique, we prioritize it, but if voice exists, we use that.
-    
     user_input = st.chat_input("What should we do?")
     
     final_prompt = None
@@ -113,19 +143,14 @@ def render_manager_ui():
             with st.spinner("Manager is thinking..."):
                 response_json = agent.think(
                     final_prompt, 
-                    intent_history=st.session_state['manager_messages'][-5:] # Last 5 messages context
+                    intent_history=st.session_state['manager_messages'][-5:] 
                 )
                 
-                # Default safety
                 if not response_json:
                     response_json = {"tool": "chat", "reply": "I'm sorry, I encountered an error."}
                 
-                # Handle list response
                 if isinstance(response_json, list):
-                    if len(response_json) > 0:
-                        response_json = response_json[0]
-                    else:
-                        response_json = {"tool": "chat", "reply": "I'm sorry, I encountered an empty response."}
+                    response_json = response_json[0] if response_json else {"tool": "chat", "reply": "Empty response."}
                 
                 tool = response_json.get("tool")
                 params = response_json.get("params", {})
@@ -133,22 +158,20 @@ def render_manager_ui():
 
             st.markdown(reply)
             st.session_state['manager_messages'].append({"role": "assistant", "content": reply})
-            
-            # Voice Reply
             voice.speak(reply)
+            
+            # --- FEEDBACK LOOP ---
+            # Automatically ask for feedback if a tool was used
+            # For simplicity, we assume implicit distinctness. 
+            # In a real app, we might check if tool != 'chat'
 
             # 3. Execution
             if tool and tool != "chat":
                 with st.status(f"Executing: {tool}...", expanded=True) as status:
                     try:
                         if tool == "run_search":
-                            # Record the step
                             recorder.log_step(tool, params, description=f"Search for '{params.get('query')}'")
-                            
-                            # Execute
                             st.write(f"Running search for: {params.get('query')}")
-                            # Since run_outreach is async, we run it here
-                            # Note: run_outreach prints to stdout, we might want to capture that or just rely on DB side effects
                             asyncio.run(run_outreach(
                                 params.get("query"), 
                                 target_niche=params.get("niche"), 
@@ -156,6 +179,7 @@ def render_manager_ui():
                             ))
                             st.success("Search completed! Results saved to Leads DB.")
                             voice.speak("Search completed.")
+                            memory.add_feedback(tool, "Success", 5, "Auto-logged success")
 
                         elif tool == "save_workflow":
                             name = params.get("name", "untitled_workflow")
@@ -171,18 +195,68 @@ def render_manager_ui():
 
                         elif tool == "run_workflow":
                             name = params.get("name")
-                            # Logic to load and run steps
                             st.write(f"Loading workflow: {name}...")
-                            # Verification mock
-                            st.success(f"Workflow {name} executed (Simulation).")
-                            voice.speak(f"Workflow {name} executed.")
+                            steps = extract_steps_from_workflow(name)
+                            if steps:
+                                st.info(f"Executing {len(steps)} steps for workflow: {name}")
+                                # Execute each step
+                                for step in steps:
+                                    s_tool = step.get('tool')
+                                    s_params = step.get('params', {})
+                                    st.write(f"Step: {step.get('description', s_tool)}")
+                                    
+                                    # Very basic recursive implementation for now
+                                    if s_tool == "run_search":
+                                        asyncio.run(run_outreach(
+                                            s_params.get("query"), 
+                                            target_niche=s_params.get("niche"), 
+                                            profile_names=s_params.get("profile", "default")
+                                        ))
+                                    # Add other tools here as needed
+                                    
+                                st.success("Workflow execution complete.")
+                                memory.add_feedback(tool, "Success", 5, f"Ran workflow {name}")
+                            else:
+                                st.error("Workflow not found or empty.")
+
+                        elif tool == "delegate_task":
+                            agent_name = params.get("agent_name")
+                            instructions = params.get("instructions")
+                            
+                            AgentClass = get_agent_class(agent_name)
+                            if AgentClass:
+                                sub_agent = AgentClass()
+                                st.write(f"Delegating to **{agent_name}**...")
+                                
+                                # Assume most agents have a 'think' or similar method.
+                                # Some have 'generate', 'gather_intel'. 
+                                # We need a common interface or adapters.
+                                # For now, we try 'think' or 'run'.
+                                result = None
+                                if hasattr(sub_agent, 'think'):
+                                    result = sub_agent.think(instructions)
+                                elif hasattr(sub_agent, 'run'): # Standardize
+                                    result = sub_agent.run(instructions)
+                                elif hasattr(sub_agent, 'gather_intel'): # Researcher
+                                    result = asyncio.run(sub_agent.gather_intel({"query": instructions}))
+                                
+                                st.success("Task Complete")
+                                st.json(result) # Show result
+                                
+                                # Log result to conversation so Manager knows
+                                st.session_state['manager_messages'].append({
+                                    "role": "system", 
+                                    "content": f"Result from {agent_name}: {result}"
+                                })
+                                memory.add_feedback(tool, "Success", 4, f"Delegated to {agent_name}")
+                            else:
+                                st.error(f"Agent {agent_name} not found.")
 
                         elif tool == "list_workflows":
                             wfs = list_workflows()
                             st.json(wfs)
-                            # Summarize for voice
                             if wfs:
-                                voice.speak(f"I found {len(wfs)} workflows: {', '.join(wfs)}.")
+                                voice.speak(f"I found {len(wfs)} workflows.")
                             else:
                                 voice.speak("I found no saved workflows.")
 
@@ -191,6 +265,16 @@ def render_manager_ui():
                         voice.speak(f"I encountered an error executing {tool}.")
                     
                     status.update(label="Task Complete", state="complete")
+        
+                # Calculate probability of serendipity
+                # If tool was successful, maybe show a "Did you know?"
+                if random.random() < 0.3:
+                    try:
+                        intel = asyncio.run(discovery.get_serendipitous_finding())
+                        if intel:
+                            st.info(f"💡 **Discovery:** {intel['title']} - {intel['content']}")
+                    except Exception:
+                        pass
 
     # If we processed a voice command, force a rerun to clear the queue/update state visual
     if voice_command:

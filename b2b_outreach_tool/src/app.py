@@ -46,6 +46,7 @@ from automation_engine import AutomationEngine
 from mailer import Mailer
 from ui.reports_ui import render_reports_page
 from ui.video_ui import render_video_studio
+from ui.dsr_ui import render_dsr_page
 from ui.dashboard_ui import render_dashboard
 from config import config, reload_config
 from proxy_manager import proxy_manager
@@ -268,11 +269,11 @@ def main():
         if app_mode == "B2B":
             menu_unified = [
                 "Dashboard",
-                "--- SALES CRM ---", "CRM Dashboard", "Pipeline (Deals)", "Tasks", 
+                "--- SALES CRM ---", "CRM Dashboard", "Pipeline (Deals)", "Tasks", "DSR Manager",
                 "--- MARKETING ---", "Campaigns", "Social Scheduler", "Creative Library", "Video Studio", "Strategy Laboratory", "Reports",
                 "--- LEAD GEN ---", "Lead Discovery", "Mass Tools",
                 "--- SEO ---", "SEO Audit", "Keyword Research", "Link Wheel Builder",
-                "--- SYSTEM ---", "Manager Mode", "Automation Hub", "Workflow Builder", "Agent Lab", "Agent Factory", "Analytics", "Proxy Lab", "Settings"
+                "--- SYSTEM ---", "Automation Hub", "Workflow Builder", "Agent Factory", "Analytics", "Proxy Lab", "Settings"
             ]
         else: # B2C Mode
             menu_unified = [
@@ -309,6 +310,10 @@ def main():
                 if st.button("Tasks", use_container_width=True): 
                     st.session_state['current_view'] = "Tasks"
                     st.rerun()
+                if st.button("DSR Manager", use_container_width=True): 
+                    st.session_state['current_view'] = "DSR Manager"
+                    st.rerun()
+
 
             with st.expander("📣 Marketing Hub", expanded=st.session_state['current_view'] in ["Campaigns", "Social Scheduler", "Creative Library", "Strategy Laboratory"]):
                 if st.button("Campaigns", use_container_width=True): 
@@ -354,15 +359,9 @@ def main():
                     st.session_state['current_view'] = "Mass Tools"
                     st.rerun()
 
-            with st.expander("⚙️ Systems", expanded=st.session_state['current_view'] in ["Manager Mode", "Automation Hub", "Agent Lab", "Agent Factory", "Analytics", "Proxy Lab", "Settings"]):
-                if st.button("Manager Mode", use_container_width=True):
-                    st.session_state['current_view'] = "Manager Mode"
-                    st.rerun()
+            with st.expander("⚙️ Systems", expanded=st.session_state['current_view'] in ["Automation Hub", "Agent Factory", "Analytics", "Proxy Lab", "Settings"]):
                 if st.button("Automation Hub", use_container_width=True): 
                     st.session_state['current_view'] = "Automation Hub"
-                    st.rerun()
-                if st.button("Agent Lab", use_container_width=True): 
-                    st.session_state['current_view'] = "Agent Lab"
                     st.rerun()
                 if st.button("Agent Factory", use_container_width=True): 
                     st.session_state['current_view'] = "Agent Factory"
@@ -672,9 +671,13 @@ def main():
     elif choice == "Video Studio":
         render_video_studio()
 
-    elif choice == "Manager Mode":
-        from ui.manager_ui import render_manager_ui
-        render_manager_ui()
+    elif choice == "DSR Manager":
+        render_dsr_page()
+
+    elif choice == "Manager Mode": 
+        # Legacy redirect or keep for B2C if needed, but we merged it
+        st.session_state['current_view'] = "Automation Hub"
+        st.rerun()
 
     elif choice == "Reports":
         render_reports_page()
@@ -685,56 +688,63 @@ def main():
         st.header("🤖 Automation Hub")
         st.caption("Autonomous mission control center. Monitor and manage long-running agent loops.")
         
-        engine = st.session_state['automation_engine']
+        tab_status, tab_manager = st.tabs(["📊 Mission Control", "💬 AI Manager"])
         
-        # Stats Row
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Status", "Running 🟢" if engine.is_running else "Idle ⚪")
-        c2.metric("Missions Run", engine.stats['missions_total'])
-        c3.metric("Leads Found", engine.stats['leads_found'])
-        c4.metric("Emails Sent", engine.stats['emails_sent'])
-        
-        st.divider()
-        
-        col_main, col_logs = st.columns([2, 1])
-        
-        with col_main:
-            st.subheader("Mission Control")
+        with tab_manager:
+             from ui.manager_ui import render_manager_ui
+             render_manager_ui()
+
+        with tab_status:
+            engine = st.session_state['automation_engine']
             
-            # Pending Strategy Loader
-            if 'pending_strategy' in st.session_state:
-                strat = st.session_state['pending_strategy']
-                st.info(f"Loaded Strategy: **{strat.get('strategy_name', 'Unnamed')}**")
+            # Stats Row
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Status", "Running 🟢" if engine.is_running else "Idle ⚪")
+            c2.metric("Missions Run", engine.stats['missions_total'])
+            c3.metric("Leads Found", engine.stats['leads_found'])
+            c4.metric("Emails Sent", engine.stats['emails_sent'])
+            
+            st.divider()
+            
+            col_main, col_logs = st.columns([2, 1])
+            
+            with col_main:
+                st.subheader("Mission Control")
                 
-                if st.button("🚀 Launch Autonomous Mission", type="primary", disabled=engine.is_running):
-                    # Start the engine
-                    manager = ManagerAgent() # Create a fresh instance
-                    engine.start_mission(strat, manager)
-                    del st.session_state['pending_strategy'] # Clear pending
-                    st.rerun()
-            elif not engine.is_running:
-                st.info("No strategy loaded. Go to Strategy Laboratory to generate one.")
-            
-            if engine.is_running:
-                st.markdown(f"**Current Mission:** {engine.current_mission}")
-                if st.button("🛑 STOP AUTOMATION", type="secondary"):
-                    engine.stop()
+                # Pending Strategy Loader
+                if 'pending_strategy' in st.session_state:
+                    strat = st.session_state['pending_strategy']
+                    st.info(f"Loaded Strategy: **{strat.get('strategy_name', 'Unnamed')}**")
+                    
+                    if st.button("🚀 Launch Autonomous Mission", type="primary", disabled=engine.is_running):
+                        # Start the engine
+                        manager = ManagerAgent() # Create a fresh instance
+                        engine.start_mission(strat, manager)
+                        del st.session_state['pending_strategy'] # Clear pending
+                        st.rerun()
+                elif not engine.is_running:
+                    st.info("No strategy loaded. Go to Strategy Laboratory to generate one.")
+                
+                if engine.is_running:
+                    st.markdown(f"**Current Mission:** {engine.current_mission}")
+                    if st.button("🛑 STOP AUTOMATION", type="secondary"):
+                        engine.stop()
+                        st.rerun()
+                        
+                    st.success("Automation is running in the background. You can navigate away, but do not close the tab.")
+
+            with col_logs:
+                st.subheader("Live Logs")
+                # Auto-refresh mechanism (simple rerender button or poll)
+                if st.button("🔄 Refresh Logs"):
                     st.rerun()
                     
-                st.success("Automation is running in the background. You can navigate away, but do not close the tab.")
-
-        with col_logs:
-            st.subheader("Live Logs")
-            # Auto-refresh mechanism (simple rerender button or poll)
-            if st.button("🔄 Refresh Logs"):
-                st.rerun()
-                
-            log_container = st.container(height=400)
-            if engine.logs:
-                log_text = "\n".join(engine.logs[::-1]) # Reverse order
-                log_container.code(log_text, language="text")
-            else:
-                log_container.write("No logs yet.")
+                log_container = st.container(height=400)
+                if engine.logs:
+                    log_text = "\n".join(engine.logs[::-1]) # Reverse order
+                    log_container.code(log_text, language="text")
+                else:
+                    log_container.write("No logs yet.")
 
     elif choice == "Workflow Builder":
         st.header("🛠️ Workflow Builder")
@@ -1165,58 +1175,63 @@ def main():
                 if not signals:
                     st.info("No high intent signals found in this batch.")
             
-            for idx, item in enumerate(signals):
-                analysis = item.get('analysis', {})
-                intent_score = analysis.get('intent_score', 0)
-                classification = analysis.get('classification', 'General')
-                
-                # Color code based on intent
-                # Intent Score Bar
-                score_color = "red" if intent_score >= 8 else "orange" if intent_score >= 5 else "green" # High intent = Red hot? Or Green? Usually sales is Green/Red. Let's use Red for HOT.
-                
-                with st.container(border=True):
-                    c1, c2 = st.columns([0.1, 4])
-                    with c1:
-                        # Icon based on platform
-                        pmap = {"twitter": "🐦", "linkedin": "💼", "reddit": "🤖"}
-                        st.write(pmap.get(item['platform'], "🌐"))
+            # Anti-Hallucination Check
+            if len(signals) == 1 and signals[0].get('content') == "NO_DATA_FOUND":
+                st.warning("⚠️ No signals found. SearXNG might be warming up or no recent matches.")
+                st.info("💡 Try a broader keyword or check if Docker is running.")
+            else:
+                for idx, item in enumerate(signals):
+                    analysis = item.get('analysis', {})
+                    intent_score = analysis.get('intent_score', 0)
+                    classification = analysis.get('classification', 'General')
                     
-                    with c2:
-                        # Header: User + Score Badge
-                        col_h1, col_h2 = st.columns([3, 1])
-                        with col_h1:
-                            st.markdown(f"**{item['user']}** • {item['timestamp']}")
-                        with col_h2:
-                            if intent_score >= 8:
-                                st.markdown(f":fire: **{intent_score}/10**")
-                            else:
-                                st.markdown(f"**{intent_score}/10**")
+                    # Color code based on intent
+                    # Intent Score Bar
+                    score_color = "red" if intent_score >= 8 else "orange" if intent_score >= 5 else "green" # High intent = Red hot? Or Green? Usually sales is Green/Red. Let's use Red for HOT.
+                    
+                    with st.container(border=True):
+                        c1, c2 = st.columns([0.1, 4])
+                        with c1:
+                            # Icon based on platform
+                            pmap = {"twitter": "🐦", "linkedin": "💼", "reddit": "🤖"}
+                            st.write(pmap.get(item['platform'], "🌐"))
                         
-                        st.markdown(f"*{item['content']}*")
-                        
-                        # AI Insights
-                        st.markdown(f"**AI:** :blue[{classification}]")
-                        st.progress(intent_score / 10.0, text=f"Buying Intent: {intent_score}/10")
-                        
-                        st.caption(f"💡 Strategy: {analysis.get('suggested_reply_angle')}")
-                        
-                        # Actions
-                        ac1, ac2 = st.columns(2)
-                        with ac1:
-                            if st.button("Draft Reply", key=f"repl_{idx}"):
-                                agent = SocialListeningAgent()
-                                draft = agent.generate_reply(item['content'], analysis.get('suggested_reply_angle'))
-                                st.session_state[f'draft_{idx}'] = draft
-                        with ac2:
-                            if st.button("Save as Lead", key=f"lead_{idx}"):
-                                from database import add_lead
-                                add_lead(item['url'], f"{item['user']}@social.com", source="Social Pulse", company_name=item['platform'])
-                                st.toast("Lead saved to CRM!")
-                        
-                        if f'draft_{idx}' in st.session_state:
-                            st.text_area("Draft", value=st.session_state[f'draft_{idx}'], key=f"txt_{idx}")
-                            if st.button("Copy to Clipboard (Sim)", key=f"copy_{idx}"):
-                                st.toast("Copied to clipboard!")
+                        with c2:
+                            # Header: User + Score Badge
+                            col_h1, col_h2 = st.columns([3, 1])
+                            with col_h1:
+                                st.markdown(f"**{item['user']}** • {item['timestamp']}")
+                            with col_h2:
+                                if intent_score >= 8:
+                                    st.markdown(f":fire: **{intent_score}/10**")
+                                else:
+                                    st.markdown(f"**{intent_score}/10**")
+                            
+                            st.markdown(f"*{item['content']}*")
+                            
+                            # AI Insights
+                            st.markdown(f"**AI:** :blue[{classification}]")
+                            st.progress(intent_score / 10.0, text=f"Buying Intent: {intent_score}/10")
+                            
+                            st.caption(f"💡 Strategy: {analysis.get('suggested_reply_angle')}")
+                            
+                            # Actions
+                            ac1, ac2 = st.columns(2)
+                            with ac1:
+                                if st.button("Draft Reply", key=f"repl_{idx}"):
+                                    agent = SocialListeningAgent()
+                                    draft = agent.generate_reply(item['content'], analysis.get('suggested_reply_angle'))
+                                    st.session_state[f'draft_{idx}'] = draft
+                            with ac2:
+                                if st.button("Save as Lead", key=f"lead_{idx}"):
+                                    from database import add_lead
+                                    add_lead(item['url'], f"{item['user']}@social.com", source="Social Pulse", company_name=item['platform'])
+                                    st.toast("Lead saved to CRM!")
+                            
+                            if f'draft_{idx}' in st.session_state:
+                                st.text_area("Draft", value=st.session_state[f'draft_{idx}'], key=f"txt_{idx}")
+                                if st.button("Copy to Clipboard (Sim)", key=f"copy_{idx}"):
+                                    st.toast("Copied to clipboard!")
 
     elif choice == "SEO Audit":
         st.header("📈 SEO Site Audit")
@@ -1306,8 +1321,7 @@ def main():
     elif choice == "Mass Tools":
         st.header("🛠️ Mass Power Tools")
         st.info("Scrapebox / SEnuke style bulk utilities.")
-        st.header("🛠️ Mass Power Tools")
-        st.info("Scrapebox / SEnuke style bulk utilities.")
+
         tool_type = st.selectbox("Select Tool", ["Mass Harvester", "Footprint Scraper", "Mass Commenter", "Backlink Hunter", "Bulk Domain Checker"])
         
         if tool_type == "Mass Commenter":
@@ -1445,7 +1459,7 @@ def main():
             if st.button("Hunt for Links"):
                 agent = SEOExpertAgent()
                 with st.spinner("Scouting high-authority targets..."):
-                    results = agent.hunt_backlinks(hb_niche, hb_comp)
+                    results = asyncio.run(agent.hunt_backlinks(hb_niche, hb_comp))
                     st.session_state['last_hunt_results'] = results
                     st.rerun()
 
@@ -1471,6 +1485,8 @@ def main():
                         res = st.session_state[f"sub_res_{i}"]
                         if res.get('status') == 'success':
                             st.success(f"Submitted! Method: {res.get('method_used')}")
+                        elif res.get('status') == 'task_created':
+                            st.info(f"📍 {res.get('method_used')}: Check 'Tasks' page.")
                         else:
                             st.error(f"Failed: {res.get('raw', 'Unknown error')}")
 
@@ -1482,51 +1498,53 @@ def main():
                         # In a real app, we'd do this async or with a progress bar
                         agent.auto_submit_backlink(target['url'], m_url, context=hb_niche)
                     st.success("Batch submission complete!")
-
-        elif tool_type == "Link Wheel Creator":
-            st.subheader("🕸️ SEO Link Wheel Architect")
-            st.caption("Design and execute multi-tier backlink structures.")
-
-            # History / Load Existing
-            st.markdown("#### 📂 Saved Wheels")
-            saved_wheels = get_link_wheels()
+        
+        elif tool_type == "Bulk Domain Checker":
+            st.subheader("🌐 Bulk Domain Availability & Health")
+            st.caption("Check hundreds of domains for uptime, HTTP status, and metadata.")
             
-            if saved_wheels:
-                w_df = pd.DataFrame(saved_wheels)
-                w_df['created_at'] = pd.to_datetime(w_df['created_at'], unit='s').dt.strftime('%Y-%m-%d %H:%M')
-                st.dataframe(w_df[['id', 'money_site_url', 'strategy', 'status', 'created_at']], hide_index=True)
-                
-                # Selecting a wheel to view details
-                sel_w_id = st.number_input("Enter ID to View/Execute", min_value=0, step=1)
-                if sel_w_id > 0:
-                    wheel = next((w for w in saved_wheels if w['id'] == sel_w_id), None)
-                    if wheel:
-                        st.info(f"Loaded: {wheel['money_site_url']} ({wheel['strategy']})")
-                        st.json(wheel['tier_plan_json'])
-                        if st.button("🗑️ Delete Wheel Plan"):
-                            delete_link_wheel(sel_w_id)
-                            st.rerun()
-            else:
-                st.info("No Link Wheels designed yet.")
-
-            st.divider()
-
-            # New Wheel Form
-            st.markdown("#### ✨ Design New Link Wheel")
-            with st.form("link_wheel_form"):
-                lw_url = st.text_input("Money Site URL", "https://your-site.com")
-                lw_niche = st.text_input("Target Niche", "Digital Marketing")
-                lw_strat = st.selectbox("Strategy", ["Standard", "Double", "Funnel", "Pyramid"])
-                
-                if st.form_submit_button("Design Architecture"):
+            d_list = st.text_area("Domains (One per line)", height=200, placeholder="example.com\ngoogle.com\nmy-niche-site.net")
+            
+            if st.button("Analyze Domains"):
+                if d_list:
+                    domains = [d.strip() for d in d_list.split("\n") if d.strip()]
                     agent = SEOExpertAgent()
-                    with st.spinner("Architecting tiered structure..."):
-                        plan = agent.design_link_wheel(lw_url, lw_niche, strategy=lw_strat.lower())
-                        # Save
-                        import json
-                        save_link_wheel(lw_url, lw_strat, json.dumps(plan))
-                        st.success("Link Wheel Plan Designed & Saved!")
-                        st.rerun()
+                    
+                    st.session_state['domain_results'] = []
+                    
+                    with st.status("Analyzing domains...") as status:
+                       results = asyncio.run(agent.bulk_analyze_domains(
+                           domains, 
+                           status_callback=lambda m: status.write(m)
+                       ))
+                       st.session_state['domain_results'] = results
+                       status.update(label="Analysis Complete!", state="complete")
+                    
+                    st.rerun()
+
+            if 'domain_results' in st.session_state and st.session_state['domain_results']:
+                results = st.session_state['domain_results']
+                st.success(f"Analyzed {len(results)} domains.")
+                
+                df_dom = pd.DataFrame(results)
+                
+                # Color code status
+                def highlight_status(val):
+                    color = 'green' if val == 200 else 'red'
+                    return f'color: {color}'
+                
+                st.dataframe(
+                    df_dom, 
+                    use_container_width=True, 
+                    column_config={
+                        "url": st.column_config.LinkColumn("URL"),
+                        "alive": st.column_config.CheckboxColumn("Alive?")
+                    }
+                )
+                
+                # CSV
+                csv = df_dom.to_csv(index=False).encode('utf-8')
+                st.download_button("⬇️ Download Report", csv, "domain_health_report.csv", "text/csv")
 
     elif choice == "Lead Discovery":
         st.subheader("🔍 Find New Leads")

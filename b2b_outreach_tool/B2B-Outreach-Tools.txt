@@ -1,3 +1,5 @@
+I need to be able to have the system to be able to evolve and develop code as needed for itself to shoot and tailor it to the user's needs. The core of fundamentals of the system and the software must remain the same so that it can be upgraded with external upgrades and whatever else as necessary and so that it has still interconnectivity with the main download server server its repository
+
 ***Allow for custom preset strategies in the strategy laboratory
 
 ***Add ability to generate videos possibly create a video generation layer with a few apis choosing from the different ones depending on what task it's best suited for

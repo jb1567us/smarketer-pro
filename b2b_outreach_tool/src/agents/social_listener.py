@@ -57,7 +57,19 @@ class SocialListeningAgent(BaseAgent):
                                 
                     except Exception as e:
                         print(f"Error searching for {kw} on {platform}: {e}")
-                    
+        
+        # Anti-Hallucination: If no signals found, return explicit empty state or special signal
+        if not found_signals:
+            return [{"platform": "system", "user": "System", "content": "NO_DATA_FOUND", "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"), "url": "#", "analysis": {"is_relevant": False}}]
+        
+        # Save work product
+        if found_signals:
+            self.save_work_product(
+                content=found_signals, 
+                task_instruction=f"Listen for keywords: {keywords}", 
+                tags=["social_listening", "signals"]
+            )
+            
         return found_signals
 
     async def analyze_signal(self, content, keyword):

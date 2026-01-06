@@ -1,5 +1,6 @@
 from llm import LLMFactory
 from utils.memory import memory_manager
+from database import save_agent_work_product
 
 class BaseAgent:
     def __init__(self, role, goal, provider=None):
@@ -70,3 +71,21 @@ class BaseAgent:
     def recall(self, key=None):
         """Recalls facts for this agent."""
         return memory_manager.recall(self.role, key)
+
+    def save_work_product(self, content, task_instruction, tags=None):
+        """Saves the agent's work product to the database."""
+        return save_agent_work_product(
+            agent_role=self.role,
+            input_task=task_instruction,
+            output_content=str(content), # Ensure string format
+            tags=tags
+        )
+
+    def save_work(self, content, artifact_type="text", metadata=None):
+        """Saves the agent's work product to the database."""
+        try:
+            from database import save_agent_work
+            return save_agent_work(self.role, content, artifact_type, metadata)
+        except Exception as e:
+            print(f"Error saving agent work: {e}")
+            return None

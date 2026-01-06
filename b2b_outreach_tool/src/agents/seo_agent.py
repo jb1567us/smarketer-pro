@@ -167,28 +167,73 @@ class SEOExpertAgent(BaseAgent):
         """
         return self.provider.generate_json(prompt)
 
-    def hunt_backlinks(self, niche, competitor_urls=None):
+    async def hunt_backlinks(self, niche, competitor_urls=None):
         """
-        Finds high-power backlink targets.
+        Finds high-power backlink targets using real search footprints.
         """
-        comp_str = f" based on competitors: {competitor_urls}" if competitor_urls else ""
-        prompt = f"""
-        Find 10 high-authority backlink opportunities for the niche '{niche}'{comp_str}.
-        Look for:
-        - Guest post targets
-        - Resource pages
-        - Broken link opportunities
-        - Competitor backlink clones
+        from agents.researcher import ResearcherAgent
+        researcher = ResearcherAgent()
+        
+        # 1. Generate Footprints
+        footprints = [
+            f'"{niche}" "write for us"',
+            f'"{niche}" "guest post"',
+            f'"{niche}" "submit an article"',
+            f'"{niche}" "powered by wordpress" leave a reply',
+            f'"{niche}" inurl:resources',
+            f'"{niche}" intitle:"useful links"'
+        ]
+        
+        if competitor_urls:
+            # Simple competitor analysis (simulated specific check for now)
+            # In a real scenario, we'd use a backlink checker API (Ahrefs/Semrush)
+            # For now, we search for sites that might mention the competitor
+            if isinstance(competitor_urls, str):
+                competitor_urls = [competitor_urls]
+            for comp in competitor_urls:
+                if comp.strip():
+                     footprints.append(f'"{niche}" "{comp.strip()}" -site:{comp.strip()}')
 
-        Return JSON ONLY:
-        {{
-            "targets": [
-                {{ "url": "", "type": "Guest Post/Resource/etc", "authority_est": "High/Med", "outreach_strategy": "" }}
-            ],
-            "total_found": 10
-        }}
-        """
-        return self.provider.generate_json(prompt)
+        # 2. Execute Searches
+        all_targets = []
+        seen_urls = set()
+        
+        # Limit total to avoid long wait times
+        max_per_footprint = 5 
+        
+        for fp in footprints:
+            # We use the existing mass_harvest or gather_intel from Researcher
+            # Assuming mass_harvest is best for raw lists
+            results = await researcher.mass_harvest(fp, num_results=max_per_footprint)
+            
+            for res in results:
+                url = res.get('url')
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    
+                    # Heuristic Type Detection
+                    t_type = "General"
+                    lower_url = url.lower()
+                    if "guest" in lower_url or "write-for" in lower_url:
+                        t_type = "Guest Post"
+                    elif "resource" in lower_url or "links" in lower_url:
+                        t_type = "Resource Page"
+                    elif "blog" in lower_url:
+                        t_type = "Blog Comment"
+                        
+                    all_targets.append({
+                        "url": url,
+                        "type": t_type,
+                        "authority_est": "Unknown", # Need an API for DA/DR
+                        "outreach_strategy": f"Reference: {fp}",
+                        "title": res.get('title', 'Unknown Title'),
+                        "description": res.get('description', '')
+                    })
+        
+        return {
+            "targets": all_targets,
+            "total_found": len(all_targets)
+        }
 
     async def auto_submit_backlink(self, target_url, money_site_url, context=""):
         """
@@ -252,11 +297,26 @@ class SEOExpertAgent(BaseAgent):
                 return {"status": "success", "method_used": "Blog Comment", "details": res}
             # If comment failed, fall through to simulation
 
-        # C. FALLBACK / SIMULATION
+        # C. FALLBACK / SIMULATION -> REAL TASK
+        # Instead of pretending we did it, we create a TASK for the user.
+        from database import create_task
+        import time
+        
+        task_desc = f"Manual Outreach to {target_url} for {context}"
+        # Priority: High (since it was auto-scouted)
+        # Type: Email/Form Fill
+        create_task(
+            lead_id=None, # Generic task
+            description=task_desc,
+            due_date=int(time.time()) + 86400, # Due in 24h
+            priority="High",
+            task_type="Manual Outreach"
+        )
+
         return {
-            "status": "simulated_success", 
-            "method_used": "Manual Outreach (Simulated)", 
-            "details": f"Target {target_url} identified as {site_type}. Added to outreach queue."
+            "status": "task_created", 
+            "method_used": "Task Created (Manual)", 
+            "details": f"Target {target_url} identified as {site_type}. Task created for manual review."
         }
 
     async def run_link_wheel_mission(self, money_site_url, niche, strategy="standard", status_callback=None):
@@ -305,4 +365,49 @@ class SEOExpertAgent(BaseAgent):
             })
             
         if status_callback: status_callback("✅ Link Wheel Mission Complete!")
+        return results
+
+    async def bulk_analyze_domains(self, domains, status_callback=None):
+        """
+        Rapidly checks a list of domains for:
+        - Resolvability (DNS/HTTP)
+        - HTTP Status Code
+        - Page Title
+        - Meta Description presence
+        """
+        import aiohttp
+        from bs4 import BeautifulSoup
+        
+        results = []
+        
+        async with aiohttp.ClientSession() as session:
+             for dom in domains:
+                dom = dom.strip()
+                if not dom: continue
+                if not dom.startswith('http'):
+                    dom = f"http://{dom}"
+                
+                if status_callback: status_callback(f"Checking {dom}...")
+                
+                try:
+                    async with session.get(dom, timeout=10, allow_redirects=True, headers={"User-Agent": "Mozilla/5.0"}) as response:
+                        html = await response.text()
+                        
+                        soup = BeautifulSoup(html, 'html.parser')
+                        title = soup.title.string.strip() if soup.title else "No Title"
+                        
+                        results.append({
+                            "url": dom,
+                            "status": response.status,
+                            "title": title[:50] + "..." if len(title) > 50 else title,
+                            "alive": response.status < 400
+                        })
+                except Exception as e:
+                    results.append({
+                        "url": dom,
+                        "status": "Error",
+                        "title": str(e),
+                        "alive": False
+                    })
+        
         return results

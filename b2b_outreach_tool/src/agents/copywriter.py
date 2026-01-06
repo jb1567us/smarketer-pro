@@ -46,7 +46,9 @@ class CopywriterAgent(BaseAgent):
         if instructions:
             full_instructions += f"\n\nADDITIONAL USER INSTRUCTIONS:\n{instructions}"
             
-        return self.provider.generate_json(f"Context for Email:\n{context}\n\n{full_instructions}")
+        result = self.provider.generate_json(f"Context for Email:\n{context}\n\n{full_instructions}")
+        self.save_work(json.dumps(result), artifact_type="text", metadata={"context": "email_draft"})
+        return result
 
     def generate_dsr_copy(self, context):
         """

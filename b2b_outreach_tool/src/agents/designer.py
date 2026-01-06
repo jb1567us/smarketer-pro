@@ -4,6 +4,7 @@ import random
 import requests
 import os
 import hashlib
+import json
 
 class GraphicsDesignerAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -70,9 +71,12 @@ class GraphicsDesignerAgent(BaseAgent):
             print(f"  Warning: Failed to download image locally: {e}")
             local_path = None # Fallback to URL only
 
-        return {
+        result = {
             "revised_prompt": image_prompt,
             "image_url": image_url,
             "local_path": local_path,
             "description": context
         }
+        
+        self.save_work(json.dumps(result), artifact_type="image", metadata={"prompt": clean_prompt})
+        return result

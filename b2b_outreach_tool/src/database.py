@@ -424,9 +424,87 @@ def init_db():
             created_at INTEGER
         );
     ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS agent_work_products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_role TEXT,
+            start_time INTEGER,
+            completion_time INTEGER,
+            input_task TEXT,
+            output_content TEXT,
+            tags TEXT,
+            created_at INTEGER
+        );
+    ''')
     
+    # Migration for agent_work_products columns
+    awp_columns = {
+        'start_time': 'INTEGER',
+        'completion_time': 'INTEGER', 
+        'input_task': 'TEXT',
+        'output_content': 'TEXT',
+        'tags': 'TEXT'
+    }
+    
+    # Check if table exists
+    try:
+        c.execute('SELECT 1 FROM agent_work_products LIMIT 1')
+        table_exists = True
+    except sqlite3.OperationalError:
+        table_exists = False
+        
+    if table_exists:
+        for col, dtype in awp_columns.items():
+            try:
+                c.execute(f'SELECT {col} FROM agent_work_products LIMIT 1')
+            except sqlite3.OperationalError:
+                print(f"Migrating agent_work_products: Adding '{col}' column...")
+                try:
+                    c.execute(f'ALTER TABLE agent_work_products ADD COLUMN {col} {dtype}')
+                except sqlite3.OperationalError as e:
+                    print(f"Migration warning for {col}: {e}")
+
     conn.commit()
     conn.close()
+
+def save_agent_work_product(agent_role, input_task, output_content, tags=None, start_time=None, completion_time=None):
+    """Saves an agent's work product to the database."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    tags_json = json.dumps(tags) if tags else "[]"
+    
+    # Use current time if specific times aren't provided
+    if not completion_time:
+        completion_time = int(time.time())
+    if not start_time:
+        start_time = completion_time 
+        
+    c.execute('''
+        INSERT INTO agent_work_products (agent_role, start_time, completion_time, input_task, output_content, tags, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (agent_role, start_time, completion_time, input_task, output_content, tags_json, int(time.time())))
+    
+    product_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return product_id
+
+def get_agent_work_products(agent_role=None, limit=50):
+    """Retrieves agent work products, optionally filtered by role."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    
+    if agent_role:
+        c.execute('SELECT * FROM agent_work_products WHERE agent_role = ? ORDER BY created_at DESC LIMIT ?', (agent_role, limit))
+    else:
+        c.execute('SELECT * FROM agent_work_products ORDER BY created_at DESC LIMIT ?', (limit,))
+        
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
 
 def save_platform_credential(platform_name, username=None, password=None, api_key=None, meta_json=None):
     """Saves or updates credentials for an SEO platform."""
@@ -781,6 +859,65 @@ def delete_creative_item(item_id):
     c.execute('DELETE FROM creative_content WHERE id = ?', (item_id,))
     conn.commit()
     conn.close()
+
+# === AGENT WORK PRODUCTS ===
+
+def save_agent_work(agent_role, content, artifact_type="text", metadata=None):
+    """Saves any agent's work product."""
+    conn = get_connection()
+    c = conn.cursor()
+    
+    # Ensure table exists (lazy init for existing DBs that didn't run init_db)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS agent_work_products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_role TEXT,
+            artifact_type TEXT, -- text, image, code, json
+            content TEXT,
+            metadata TEXT, -- JSON string
+            created_at INTEGER
+        );
+    ''')
+    
+    import json
+    meta_json = json.dumps(metadata) if metadata else "{}"
+    
+    c.execute('''
+        INSERT INTO agent_work_products (agent_role, artifact_type, content, metadata, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (agent_role, artifact_type, content, meta_json, int(time.time())))
+    
+    work_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return work_id
+
+def get_agent_work(agent_role=None, limit=50):
+    """Retrieves recent agent work products."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    
+    # Ensure table exists
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS agent_work_products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_role TEXT,
+            artifact_type TEXT,
+            content TEXT,
+            metadata TEXT,
+            created_at INTEGER
+        );
+    ''')
+
+    if agent_role:
+        c.execute('SELECT * FROM agent_work_products WHERE agent_role = ? ORDER BY created_at DESC LIMIT ?', (agent_role, limit))
+    else:
+        c.execute('SELECT * FROM agent_work_products ORDER BY created_at DESC LIMIT ?', (limit,))
+        
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
 
 def save_wp_site(name, url, username, app_password, cp_url=None, cp_user=None, cp_pass=None):
     """Saves or updates a WordPress site's credentials."""
