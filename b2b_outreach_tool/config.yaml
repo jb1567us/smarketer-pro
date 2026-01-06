@@ -74,7 +74,7 @@ search:
       - bing
       - lexis web
 project:
-  performance_mode: 'paid' # 'free' or 'paid'
+  performance_mode: paid
   concurrency_settings:
     free:
       search: 2
@@ -83,7 +83,6 @@ project:
       search: 10
       scrape: 10
   exclude_patterns:
-
   - .gov
   - .edu
   - .mil
@@ -95,7 +94,6 @@ project:
   - instagram
   - tiktok
   - pinterest
-
 proxies:
   enabled: true
   source_url: https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt
@@ -161,10 +159,6 @@ llm:
     - provider: gemini
       model_name: gemini-flash-latest
     - provider: openrouter
-      model_name: allenai/olmo-3-32b-think:free
-    - provider: openrouter
-      model_name: allenai/olmo-3.1-32b-think:free
-    - provider: openrouter
       model_name: arcee-ai/trinity-mini:free
     - provider: openrouter
       model_name: cognitivecomputations/dolphin-mistral-24b-venice-edition:free
@@ -222,15 +216,13 @@ llm:
   model_name: gemini-flash-latest
   ollama_base_url: http://localhost:11434
 image_gen:
-  default_provider: openai # or stability
+  default_provider: openai
   openai:
     model: dall-e-3
   stability:
     model: stable-diffusion-xl-1024-v1-0
 campaign:
-  personalization: 'hyper' # 'generic' or 'hyper'
-
-
+  personalization: hyper
 extraction:
   user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
     like Gecko) Chrome/91.0.4472.124 Safari/537.36

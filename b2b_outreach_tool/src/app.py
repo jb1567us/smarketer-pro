@@ -2929,7 +2929,7 @@ def main():
             # Reload memory
             reload_config()
 
-        settings_tab1, settings_tab2, settings_tab3, settings_tab4, settings_tab5, settings_tab6 = st.tabs(["🏢 General", "🔑 API Keys", "🧠 LLM Settings", "📧 Email Settings", "🔍 Search Settings", "🛡️ Captcha Solver"])
+        settings_tab1, settings_tab2, settings_tab3, settings_tab4, settings_tab5, settings_tab6, settings_tab7 = st.tabs(["🏢 General", "🔑 API Keys", "🧠 LLM Settings", "📧 Email Settings", "🔍 Search Settings", "📱 Platforms", "🛡️ Captcha Solver"])
 
         with settings_tab1:
              st.subheader("Global Preferences")
@@ -3010,7 +3010,7 @@ def main():
                             update_env(key, new_val)
                             st.success(f"Saved {key}! Please restart to apply.")
 
-        with settings_tab2:
+        with settings_tab3:
             st.markdown("### AI Brain Configuration")
             
             current_provider = config.get('llm', {}).get('provider', 'gemini')
@@ -3172,7 +3172,7 @@ def main():
                 else:
                     st.error("Please provide a model name.")
 
-        with settings_tab3:
+        with settings_tab4:
             st.markdown("### Email Routing")
             
             current_email_provider = config.get('email', {}).get('provider', 'smtp')
@@ -3191,7 +3191,7 @@ def main():
             with open(config_path, 'r') as f:
                 st.code(f.read(), language='yaml')
 
-        with settings_tab4:
+        with settings_tab5:
             st.markdown("### Search Engine Configuration")
             st.info("Configure your local SearXNG instance.")
             
@@ -3319,7 +3319,7 @@ def main():
 
                     st.markdown('</div>', unsafe_allow_html=True)
 
-        with settings_tab5:
+        with settings_tab6:
             st.markdown("### 🔗 SEO Platform Hub")
             st.caption("Manage credentials for automated backlink submissions.")
             
@@ -3363,7 +3363,7 @@ def main():
                             delete_platform_credential(c['platform_name'])
                             st.rerun()
 
-        with settings_tab6:
+        with settings_tab7:
             st.markdown("## 🛡️ Captcha Solver Settings")
             st.caption("Enable and configure an external or local Captcha solving service.")
             

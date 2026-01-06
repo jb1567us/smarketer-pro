@@ -1,3 +1,17 @@
+
+
+I know that video generation uses Apis but I also know that there are free to use video generation via website via web page not api. Can I use browser automation to do video generation and then import that into my projects in this tool?Check the entire sayings configuration make sure that everything is under the right tab where it belongs
+
+Search engine configuration is showing up in email settings
+
+Email routing is showing up under llam settings
+
+Agent factory seems to be missing all of the preconfigured agents that we had made prior
+
+In the automation hub it says no strategy loaded go to strategy laboratory to generate one. Strategy laboratory the same thing as workflow ? Strategy should be something a little different. A workflow is a list of things that you want done the strategy is the methodology that you're using to orchestrate that.
+
+When there's multiple things that you can either delete or whatever other option is have a select all buttons so they can all be deleted at once and have radio buttons next to each of them so that you can choose to keep them or delete them
+
 I need to be able to have the system to be able to evolve and develop code as needed for itself to shoot and tailor it to the user's needs. The core of fundamentals of the system and the software must remain the same so that it can be upgraded with external upgrades and whatever else as necessary and so that it has still interconnectivity with the main download server server its repository
 
 ***Allow for custom preset strategies in the strategy laboratory
