@@ -51,12 +51,14 @@ def render_video_studio():
                         if not cp_conf or not cp_conf.get('url'):
                             st.error("cPanel not configured!")
                         else:
-                            agent = AccountCreatorAgent(cp_conf)
+                            creator_agent = AccountCreatorAgent(cp_conf)
                             
                             # Proxy logic
                             proxy = proxy_manager.get_proxy()
                             if not proxy: 
-                                asyncio.run(proxy_manager.fetch_proxies())
+                                # Optimization: Use ensure_fresh_proxies instead of forcing a full harvest
+                                # honor the 24h freshness pull the user mentioned
+                                asyncio.run(proxy_manager.ensure_fresh_proxies())
                                 proxy = proxy_manager.get_proxy()
                             
                             st.write(f"Using Proxy: {proxy}")
@@ -66,7 +68,7 @@ def render_video_studio():
                             
                             with st.status(f"Creating {p_name} account...", expanded=True):
                                 async def run_creation():
-                                    return await agent.create_account(
+                                    return await creator_agent.create_account(
                                         p_name,
                                         reg_url,
                                         account_details={},
@@ -81,6 +83,77 @@ def render_video_studio():
                                         st.warning("Check results above.")
                                 except Exception as e:
                                     st.error(f"Failed: {e}")
+                
+                # Manual Macro Recording Button
+                if st.button(f"🔴 Record Macro for {p_name.title()}", key=f"rec_manual_{p_name}"):
+                    from database import save_registration_macro
+                    from utils.browser_manager import BrowserManager
+                    
+                    async def record_macro_direct(platform, url):
+                        bm = BrowserManager(session_id=f"record_{platform}")
+                        await bm.launch(headless=False)
+                        await bm.page.goto(url)
+                        await bm.start_recording()
+                        st.info("🔴 **RECORDING ACTIVE**")
+                        st.write(f"Recording actions for {platform}. Close the window when done.")
+                        
+                        while True:
+                            await asyncio.sleep(0.5)
+                            if bm.page.is_closed(): break
+                            
+                        events = await bm.stop_recording()
+                        if events:
+                            save_registration_macro(platform, events)
+                            st.success(f"Macro saved for {platform}!")
+                        await bm.close()
+                    
+                    asyncio.run(record_macro_direct(p_name, VIDEO_AUTH_CONFIGS.get(p_name, {}).get('registration_url', 'https://google.com')))
+                    st.rerun()
+
+        st.divider()
+        st.subheader("⚠️ Pending Registration Tasks")
+        from database import get_registration_tasks, delete_registration_task, save_registration_macro, mark_registration_task_completed
+        from utils.browser_manager import BrowserManager
+        import json
+
+        v_tasks = get_registration_tasks(status='pending')
+        # Only show tasks related to video providers if we want, or show all. 
+        # User probably wants to see relevant ones here.
+        video_providers = ["kling", "luma", "leonardo", "runway"]
+        v_tasks = [t for t in v_tasks if t['platform'].lower() in video_providers]
+
+        if v_tasks:
+            for task in v_tasks:
+                with st.expander(f"Task: {task['platform']} - {task['url']}", expanded=True):
+                    col_t1, col_t2 = st.columns([3, 1])
+                    with col_t1:
+                        st.write(f"**URL:** {task['url']}")
+                        try:
+                            d = json.loads(task['details'])
+                            if 'error' in d: st.error(f"Error: {d['error']}")
+                        except: pass
+                    with col_t2:
+                        if st.button("🔴 Record", key=f"rec_v_{task['id']}"):
+                            async def rec_flow():
+                                bm = BrowserManager(session_id=f"record_{task['platform']}")
+                                await bm.launch(headless=False)
+                                await bm.page.goto(task['url'])
+                                await bm.start_recording()
+                                st.info("🔴 **RECORDING active**")
+                                while True:
+                                    await asyncio.sleep(0.5)
+                                    if bm.page.is_closed(): break
+                                events = await bm.stop_recording()
+                                if events:
+                                    save_registration_macro(task['platform'], events)
+                                    mark_registration_task_completed(task['id'])
+                            asyncio.run(rec_flow())
+                            st.rerun()
+                        if st.button("🗑️", key=f"del_v_{task['id']}"):
+                            delete_registration_task(task['id'])
+                            st.rerun()
+        else:
+            st.info("No pending video registration tasks.")
 
     with tab_gen:
         col_settings, col_preview = st.columns([1, 2])

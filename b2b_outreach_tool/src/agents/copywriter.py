@@ -66,7 +66,9 @@ class CopywriterAgent(BaseAgent):
             "6. Call to Action: A clear next step.\n\n"
             "Return JSON: {'title': str, 'headline': str, 'sub_headline': str, 'hero_text': str, 'benefits': list, 'social_proof': str, 'cta': str}"
         )
-        return self.provider.generate_json(f"Context for DSR:\n{context}\n\n{instructions}")
+        res = self.provider.generate_json(f"Context for DSR:\n{context}\n\n{instructions}")
+        self.save_work(res, artifact_type="dsr_copy", metadata={"context_snippet": str(context)[:100]})
+        return res
 
     def generate_sequence(self, context, steps=3):
         """
@@ -89,7 +91,9 @@ class CopywriterAgent(BaseAgent):
             "  ...\n"
             "]"
         )
-        return self.provider.generate_json(f"Context for Sequence:\n{context}\n\n{instructions}")
+        res = self.provider.generate_json(f"Context for Sequence:\n{context}\n\n{instructions}")
+        self.save_work(res, artifact_type="email_sequence", metadata={"steps": steps})
+        return res
 
     def optimize_campaign(self, current_copy, performance_stats):
         """
@@ -106,7 +110,7 @@ class CopywriterAgent(BaseAgent):
             suggestion_type = "Generate 3 alternative subject lines that are more curiosity-inducing or personal."
         elif click_rate < 0.05:
             problem = f"Low Click Rate ({click_rate*100:.1f}%). The CTA is weak or the value prop isn't clear."
-            suggestion_type = "Rewrite the CTA to be lower friction (e.g. 'Worth a look?' vs 'Book a call')."
+            suggestion_type = "Rewrite the CTA to be lower friction (e.g. 'Worth a chat?' vs 'Book a call')."
         else:
             return {"status": "good", "message": "Campaign performing well."}
             
@@ -120,4 +124,63 @@ class CopywriterAgent(BaseAgent):
         
         Return JSON: {{ "diagnosis": "...", "optimized_variants": ["variant1", "variant2"] }}
         """
-        return self.provider.generate_json(prompt)
+        res = self.provider.generate_json(prompt)
+        self.save_work(res, artifact_type="campaign_optimization", metadata={"problem": problem})
+        return res
+
+    def generate_seo_article(self, niche, keywords, target_url, anchor_text=None, use_spintax=False):
+        """
+        Generates a long-form SEO article for Web 2.0 or Article Directories.
+        Optional: can return content in Spintax format.
+        """
+        if not anchor_text:
+            anchor_text = keywords[0] if isinstance(keywords, list) else keywords
+
+        spintax_rule = ""
+        if use_spintax:
+            spintax_rule = (
+                "5. USE NESTED SPINTAX. Every sentence must have at least 3 variations using the {choice1|choice2|choice3} format.\n"
+                "6. Ensure the result is valid nested spintax that can be parsed by standard tools.\n"
+            )
+        else:
+            spintax_rule = (
+                "5. NO SPINTAX. Write full, natural paragraphs.\n"
+            )
+
+        instructions = (
+            f"Write a high-quality, informative SEO article about '{niche}'.\n"
+            f"Target Keywords: {keywords}\n"
+            "Rules:\n"
+            "1. Length: 500-800 words.\n"
+            "2. Structure: H1 title, intro, several sub-headings, and a conclusion.\n"
+            "3. Tone: Informative, authoritative, but readable (not robotic).\n"
+            f"4. Link Insertion: Naturally include a link to '{target_url}' using the anchor text '{anchor_text}'.\n"
+            f"{spintax_rule}"
+            "7. Ensure the content provides ACTUAL VALUE to a reader, not just keyword stuffing.\n\n"
+            "Return JSON: {'title': str, 'body_markdown': str, 'summary': str, 'tags': list}"
+        )
+        res = self.provider.generate_json(f"SEO Article Request:\nNiche: {niche}\nKeywords: {keywords}\n\n{instructions}")
+        self.save_work(res, artifact_type="seo_article", metadata={"niche": niche, "target_url": target_url})
+        return res
+
+    def generate_spintax(self, content):
+        """
+        Converts an existing piece of content into nested Spintax format.
+        """
+        prompt = f"""
+        Convert the following content into HIGHLY VARIED nested spintax.
+        
+        RULES:
+        1. Every sentence must have at least 3-5 variations using {{choice1|choice2|choice3}} format.
+        2. Use synonyms and alternative phrasing.
+        3. Do NOT change the meaning or remove any links/placeholders.
+        4. The goal is >80% uniqueness between generated versions.
+        
+        Content:
+        {content}
+        
+        Return the full content in Spintax format.
+        """
+        res = self.provider.generate_text(prompt)
+        self.save_work(res, artifact_type="spintax_content", metadata={"content_preview": content[:50]})
+        return res

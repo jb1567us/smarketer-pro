@@ -1,3 +1,18 @@
+Is there a way for us to create a licensing key so that when this becomes a standalone app and I sell it people need a license key to be able to use it? What would all be involved in something like that
+
+The influencer creators scout needs to be able to harvest followers
+
+
+Not sure if I mentioned this one before but it'd be great for this code the software to be self healing maybe there's a coding bot or a repair bot that can heal the code when there's errors actually I think I might need a coding and repair bot for help when the custom agents are being built
+
+Need to add white gray and Black Hat options for all these functionalities
+
+senuke user doc glean ideas for development, we might not need full scale of everything like email generation, but take a look at this
+
+The video generator needs to be able to have a footprint to search the Internet on a regular basis for any new video ai platforms that offer free credits. When it finds them it adds them to the system and then uses the account generator to figure out how to automatically log in Once that process is figured out it's added to the list of potential video ai providers. If they have API keys once we've registered apply to get the key copy it and save it
+
+Have a fall back where if you're unable to figure out how to log in sign up it can be done manually via a macro or whatever it is where you click you follow my clicks and I log in and then it's recorded from there. If we're going through trying to log into numerous pages all the ones that aren't able to be automatically having an account created create a list a to do list a task list of ones that need to be recorded manually for the account creator
+
 ERROR  Unable to deploy
 The app’s code is not connected to a remote GitHub repository. To deploy on Streamlit Community Cloud, please put your code in a GitHub repository and publish the current branch. Read more in our documentation.
 

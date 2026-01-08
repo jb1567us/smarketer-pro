@@ -5,6 +5,7 @@ class CustomAgent(BaseAgent):
         super().__init__(role=role, goal=goal, provider=provider)
         self.name = name
         self.system_prompt = system_prompt
+        self.proxy_enabled = True # Default to using proxies if available
 
     def think(self, context, instructions=None):
         """

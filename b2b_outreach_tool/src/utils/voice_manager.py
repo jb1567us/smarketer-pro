@@ -21,7 +21,12 @@ class VoiceManager:
         
         # Initialize STT
         self.recognizer = sr.Recognizer()
-        self.microphone = sr.Microphone()
+        self.microphone = None
+        
+        try:
+            self.microphone = sr.Microphone()
+        except Exception as e:
+            print(f"[VoiceManager] Warning: No microphone found or error initializing: {e}")
         
         # Optimize recognizer
         self.recognizer.energy_threshold = 300
@@ -32,38 +37,44 @@ class VoiceManager:
 
     def _tts_worker(self):
         """Dedicated thread for TTS to avoid run loop errors."""
-        # Initialize engine within the thread that uses it
-        engine = pyttsx3.init()
-        self._setup_voice_engine(engine)
-        
-        while True:
-            text = self.tts_queue.get()
-            if text is None: break # Poison pill
-            try:
-                engine.say(text)
-                engine.runAndWait()
-            except Exception as e:
-                print(f"TTS Worker Error: {e}")
-            self.tts_queue.task_done()
+        try:
+            # Initialize engine within the thread that uses it
+            engine = pyttsx3.init()
+            self._setup_voice_engine(engine)
+            
+            while True:
+                text = self.tts_queue.get()
+                if text is None: break # Poison pill
+                try:
+                    engine.say(text)
+                    engine.runAndWait()
+                except Exception as e:
+                    print(f"TTS Worker Error: {e}")
+                self.tts_queue.task_done()
+        except Exception as e:
+            print(f"[VoiceManager] TTS thread crashed: {e}")
 
     def _setup_voice_engine(self, engine):
         """Sets the voice to a British Male voice if available."""
-        voices = engine.getProperty('voices')
-        selected_voice = None
-        for voice in voices:
-            if "GB" in voice.id or "UK" in voice.id or "english-uk" in voice.id.lower():
-                if "male" in voice.name.lower() or "david" in voice.name.lower():
-                    selected_voice = voice.id
-                    break
-        
-        if not selected_voice:
+        try:
+            voices = engine.getProperty('voices')
+            selected_voice = None
             for voice in voices:
-                if "male" in voice.name.lower():
-                    selected_voice = voice.id
-                    break
-        
-        if selected_voice:
-            engine.setProperty('voice', selected_voice)
+                if "GB" in voice.id or "UK" in voice.id or "english-uk" in voice.id.lower():
+                    if "male" in voice.name.lower() or "david" in voice.name.lower():
+                        selected_voice = voice.id
+                        break
+            
+            if not selected_voice:
+                for voice in voices:
+                    if "male" in voice.name.lower():
+                        selected_voice = voice.id
+                        break
+            
+            if selected_voice:
+                engine.setProperty('voice', selected_voice)
+        except Exception:
+            pass # Ignore voice setup errors
 
     def setup_voice(self):
         # Deprecated: setup happens in worker now
@@ -77,6 +88,10 @@ class VoiceManager:
         """Starts the background listening using speech_recognition's built-in background thread."""
         if self.listen_stopper:
             return
+        
+        if not self.microphone:
+            print("[VoiceManager] Cannot start listening: No microphone initialized.")
+            return
             
         try:
             # Adjust for noise once before starting
@@ -84,10 +99,19 @@ class VoiceManager:
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
         except Exception as e:
             print(f"Noise adjustment skipped due to error: {e}")
+            # If we fail here, we might fail hard effectively, but let's try to proceed carefully
+            # or return to avoid the fatal listen_in_background call
+            # Usually if adjust fails, listen_in_background might fail too or block.
+            # Let's return safely.
+            return
 
-        # listen_in_background returns a function to call to stop listening
-        self.listen_stopper = self.recognizer.listen_in_background(self.microphone, self._callback, phrase_time_limit=10)
-        
+        try:
+            # listen_in_background returns a function to call to stop listening
+            self.listen_stopper = self.recognizer.listen_in_background(self.microphone, self._callback, phrase_time_limit=10)
+        except Exception as e:
+            print(f"[VoiceManager] Failed to start background listener: {e}")
+            self.listen_stopper = None
+
     def stop_listening(self):
         """Stops the background listening."""
         self.is_awake = False

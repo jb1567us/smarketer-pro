@@ -2,6 +2,8 @@ from .base import BaseAgent
 import json
 from utils.agent_registry import list_available_agents
 from memory import Memory
+from flow.flow_engine import flow_engine
+import os
 
 class ManagerAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -16,37 +18,52 @@ class ManagerAgent(BaseAgent):
         """
         Decides on the next action based on user input.
         """
-        agent_list = ", ".join(list_available_agents())
+        from utils.agent_registry import AGENT_METADATA
+        from workflow_manager import list_workflows
+        
+        # Build expertise description
+        expertise_lines = []
+        for name, meta in AGENT_METADATA.items():
+            if name == "manager": continue
+            expertise_lines.append(f"- {name.upper()}: {meta['role']}. Expertise: {meta['expertise']}. Capabilities: {', '.join(meta['capabilities'])}")
+        
+        agent_expertise = "\n".join(expertise_lines)
+        
+        # Build workflow list
+        available_workflows = ", ".join(list_workflows()) if list_workflows() else "None"
         
         # Get learned context
         memory_context = self.memory.get_context()
 
         tools_desc = (
-            "1. run_search(query, niche, profile): Search for leads. 'profile' can be 'default' or custom.\n"
-            "2. save_workflow(name): Save the confirmed steps as a workflow.\n"
+            "1. run_search(query, niche, profile): Search for leads.\n"
+            "2. save_workflow(name): Save current steps as a workflow.\n"
             "3. list_workflows(): List available saved workflows.\n"
             "4. run_workflow(name): Load and execute a saved workflow.\n"
-            "5. delegate_task(agent_name, instructions): Delegate a specific task to a specialized agent.\n"
-            f"   Available Agents: {agent_list}\n"
-            "6. chat(message): Just reply to the user if no tool is needed.\n"
+            "5. delegate_task(agent_name, instructions): Delegate to a specialized agent. agent_name must match one of the Available Specialists listed above (e.g. 'RESEARCHER').\n"
+            "6. conductor_mission(goal, sequence): Launch a full-automation mission.\n"
+            "7. learn_insight(insight): Save a learned pattern or user preference to memory for future proactivity.\n"
+            "8. chat(message): Just reply to the user.\n"
+            "9. run_flow_mission(workflow_name, inputs): Execute a graph-based workflow (found in src/workflows).\n"
         )
 
         system_prompt = (
-            "You are the Manager Agent. You control the B2B Outreach System.\n"
-            "Your job is to interpret user requests and call the appropriate tool.\n"
-            "If the user wants to do something complex, break it down or ask for details.\n"
-            "If the user asks to 'save this' or 'make a workflow', use save_workflow.\n"
-            "If the user wants to run a saved process, use run_workflow.\n"
-            "If the task requires a specialist (e.g. 'write email', 'analyze SEO', 'create image'), use delegate_task.\n"
-            "ALWAYS check your Memory Context to learn from past user preferences.\n\n"
+            "You are the Manager Agent (CONDUCTOR). You orchestrate specialists and string workflows. "
+            "CRITICAL: Be proactive and contemplative. Don't just follow orders; think about the goal.\n"
+            "rules:\n"
+            "1. DELEGATE: If a task requires a specialist (e.g., 'generate image' -> IMAGE, 'write email' -> COPYWRITER), you MUST use `delegate_task`. DO NOT just say 'Done'.\n"
+            "2. LEARN: Notice patterns in user requests. If they always ask for SEO after Copy, remember that.\n"
+            "3. SUGGEST: Proactively suggest tools or workflows the user might have missed (e.g. 'Since you did X, should we also do Y to boost Z?').\n"
+            "4. STYLE: Adopt the user's communication style and process preferences from Memory.\n\n"
+            "Available Specialists:\n"
+            f"{agent_expertise}\n"
+            "Note: When delegating, use the EXACT capitalized name (e.g. 'RESEARCHER', 'IMAGE') as the agent_name identifier.\n\n"
+            f"Available Workflows: {available_workflows}\n\n"
+            "Context (Memory & Feedback):\n"
             f"{memory_context}\n\n"
-            f"Available Tools:\n{tools_desc}\n\n"
-            "Return JSON ONLY in this format:\n"
-            "{\n"
-            "  'tool': 'tool_name',\n"
-            "  'params': { ... arguments ... },\n"
-            "  'reply': 'Message to user explaining what you are doing. Mention if you used a preference.'\n"
-            "}"
+            "Tools:\n"
+            f"{tools_desc}\n\n"
+            "Return JSON ONLY. Explain your proactivity in the 'reply'."
         )
         
         history_str = ""
@@ -107,3 +124,24 @@ class ManagerAgent(BaseAgent):
                     collected_leads.append(res)
         
         return {"status": "complete", "leads": collected_leads}
+
+    async def run_flow_mission(self, workflow_name, inputs=None, status_callback=None):
+        """
+        Executes a graph-based workflow from a JSON file.
+        """
+        if status_callback:
+            status_callback(f"🤖 ManagerAgent processing flow: {workflow_name}")
+
+        workflow_path = os.path.join(os.getcwd(), 'src', 'workflows', f"{workflow_name}.json")
+        if not os.path.exists(workflow_path):
+             return {"error": f"Workflow {workflow_name} not found."}
+        
+        try:
+            with open(workflow_path, 'r') as f:
+                graph_data = json.load(f)
+            
+            results = await flow_engine.run_flow(graph_data, initial_inputs=inputs or {}, status_callback=status_callback)
+            self.save_work(results, artifact_type="workflow_execution_log", metadata={"workflow": workflow_name})
+            return {"status": "complete", "results": results}
+        except Exception as e:
+            return {"status": "error", "error": str(e)}

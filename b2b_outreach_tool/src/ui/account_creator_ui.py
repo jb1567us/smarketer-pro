@@ -94,12 +94,79 @@ def render_account_creator_ui():
 
     st.divider()
     
-    # 4. Managed Accounts View
+    st.divider()
+    
+    # 4. Manual Interventions
+    st.subheader("⚠️ Manual Intervention Needed")
+    from database import get_registration_tasks, delete_registration_task, save_registration_macro, mark_registration_task_completed
+    from utils.browser_manager import BrowserManager
+    
+    manual_tasks = get_registration_tasks(status='pending')
+    if manual_tasks:
+        for task in manual_tasks:
+            with st.expander(f"Task: {task['platform']} - {task['url']}", expanded=True):
+                col_t1, col_t2 = st.columns([3, 1])
+                with col_t1:
+                    st.write(f"**Registration URL:** {task['url']}")
+                    # Parse details to show error if present
+                    try:
+                        details_data = json.loads(task['details'])
+                        if 'error' in details_data:
+                            st.error(f"Reason: {details_data['error']}")
+                        st.write(f"**Details:** {task['details']}")
+                    except:
+                        st.write(f"**Details:** {task['details']}")
+                with col_t2:
+                    if st.button("🔴 Record Macro", key=f"rec_{task['id']}"):
+                        # Recording Logic
+                        async def record_macro_flow(platform, url):
+                            bm = BrowserManager(session_id=f"record_{platform}")
+                            page = await bm.launch(headless=False)
+                            await page.goto(url)
+                            await bm.start_recording()
+                            
+                            st.info("🔴 **RECORDING ACTIVE**")
+                            st.write("Perform your actions in the opened browser window.")
+                            st.warning("Once finished, **CLOSE THE BROWSER WINDOW** to save the macro.")
+                            
+                            # Use a placeholder for status
+                            status_area = st.empty()
+                            
+                            while True:
+                                await asyncio.sleep(0.5)
+                                if bm.page.is_closed():
+                                    status_area.success("Browser closed. Processing events...")
+                                    break
+                            
+                            events = await bm.stop_recording()
+                            if events:
+                                save_registration_macro(platform, events)
+                                mark_registration_task_completed(task['id'])
+                                st.success(f"Macro saved for {platform}!")
+                            else:
+                                st.error("No events captured.")
+                            
+                            await bm.close()
+
+                        asyncio.run(record_macro_flow(task['platform'], task['url']))
+                        st.rerun()
+                    
+                    if st.button("🗑️ Delete Task", key=f"del_{task['id']}"):
+                        delete_registration_task(task['id'])
+                        st.rerun()
+    else:
+        st.info("No manual tasks pending.")
+
+    st.divider()
+    
+    # 5. Managed Accounts View
     st.subheader("Managed Accounts")
     from database import get_managed_accounts
     accounts = get_managed_accounts()
     
     if accounts:
+        # Sort by creation date
+        accounts = sorted(accounts, key=lambda x: x['created_at'], reverse=True)
         st.dataframe(
             accounts, 
             column_config={

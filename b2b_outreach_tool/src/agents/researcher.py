@@ -1,6 +1,7 @@
 from .base import BaseAgent
 from scraper import search_searxng
 from extractor import fetch_html, extract_emails_from_site
+from social_scraper import SocialScraper
 import json
 import asyncio
 import aiohttp
@@ -12,6 +13,19 @@ class ResearcherAgent(BaseAgent):
             goal="Find relevant leads, gather deep information, and ensure data completeness by self-correcting.",
             provider=provider
         )
+        self.footprints = self._load_footprints()
+        self.social_scraper = SocialScraper()
+
+    def _load_footprints(self):
+        """Loads Hrefer-style footprints from JSON."""
+        import os
+        path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "footprints.json")
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            self.logger.warning(f"Could not load footprints: {e}")
+            return {}
 
     async def mass_harvest(self, footprint, num_results=100, status_callback=None):
         """
@@ -38,39 +52,89 @@ class ResearcherAgent(BaseAgent):
             item['platform'] = plat
             analyzed.append(item)
             
+        self.save_work(analyzed, artifact_type="harvested_urls", metadata={"footprint": footprint})
         return analyzed
+
+    async def keyword_discovery(self, seeds, levels=1, sources=['google'], append_variants=False):
+        """
+        ScrapeBox-style Keyword Harvester. 
+        Takes seed keywords and drills down into suggestions.
+        """
+        if isinstance(seeds, str): seeds = [seeds]
+        
+        from scraper import get_keyword_suggestions
+        
+        discovered = set(seeds)
+        current_batch = set(seeds)
+        
+        async with aiohttp.ClientSession() as session:
+            for level in range(levels):
+                self.logger.info(f"Suggestion Level {level+1}/{levels}...")
+                next_batch = set()
+                
+                tasks = []
+                for kw in current_batch:
+                    # Append A-Z if requested
+                    variants = [kw]
+                    if append_variants:
+                        variants.extend([f"{kw} {char}" for char in "abcdefghijklmnopqrstuvwxyz0123456789"])
+                    
+                    for v in variants:
+                        for src in sources:
+                            tasks.append(get_keyword_suggestions(v, session, source=src))
+                
+                results = await asyncio.gather(*tasks)
+                for r_list in results:
+                    for item in r_list:
+                        if item not in discovered:
+                            discovered.add(item)
+                            next_batch.add(item)
+                            
+                current_batch = next_batch
+                if not current_batch: break
+        
+        results = sorted(list(discovered))
+        self.save_work(results, artifact_type="keyword_list", metadata={"seeds": seeds})
+        return results
 
     async def detect_platform(self, url):
         """
-        Identifies if a site is WordPress, Drupal, Joomla, etc. without full scrape if possible.
+        Identifies if a site is WordPress, Joomla, Drupal, 4image, etc.
         """
-        # Simple heuristic based on URL structure or fast HEAD request
-        # For full accuracy we need HTML, but let's try URL patterns first
         url_lower = url.lower()
-        if "wp-" in url_lower or "/category/" in url_lower:
-            return "WordPress"
-        if "option=com_" in url_lower:
-            return "Joomla"
-        if "node/" in url_lower:
-            return "Drupal"
-        if "showthread.php" in url_lower or "viewtopic.php" in url_lower:
-            return "Forum (General)"
-            
-        # Fallback: check HTML (async)
-        # We reuse the fetch_html from extractor but keep it light
+        # Fast URL checks
+        if "wp-" in url_lower: return "WordPress"
+        if "option=com_" in url_lower: return "Joomla"
+        if "node/" in url_lower: return "Drupal"
+        if "showthread.php" in url_lower: return "vBulletin"
+        if "viewtopic.php" in url_lower: return "phpBB"
+        if "4image" in url_lower: return "4image"
+        
+        signatures = {
+            "WordPress": ["wp-content", "wp-includes", "wp-json", "wp-embed", "/wp-"],
+            "Joomla": ["/media/system/js/", "index.php?option=com_", "content/view", "joomla-script"],
+            "Drupal": ["Drupal.settings", "/sites/all/", "node/add", "drupal.js"],
+            "vBulletin": ["vbulletin_global.js", "vbulletin_css", "id=\"vbulletin_html\""],
+            "Shopify": ["cdn.shopify.com", "myshopify.com", "shopify-payment-button"],
+            "Magento": ["Mage.Cookies", "magento-icon", "skin/frontend", "js/mage"],
+            "Wix": ["wix.com", "_wix_", "wix-active-view"],
+            "Squarespace": ["squarespace.com", "static1.squarespace.com", "sqs-layout"],
+            "Ghost": ["ghost-content", "ghost-sdk", "ghost.org"],
+            "XenForo": ["xenforo", "XF.config"],
+            "Discuz": ["discuz", "viewthread.php?tid="],
+            "phpBB": ["phpbb", "viewtopic.php?f="]
+        }
+        
         try:
             from extractor import fetch_html
-            import aiohttp
             async with aiohttp.ClientSession() as session:
                  html = await fetch_html(session, url, timeout=5)
                  if html:
-                     if "wp-content" in html or "WordPress" in html: return "WordPress"
-                     if "Drupal" in html: return "Drupal"
-                     if "Joomla" in html: return "Joomla"
-                     if "vBulletin" in html: return "vBulletin"
-                     if "xenForo" in html: return "xenForo"
-                     if "Shopify" in html: return "Shopify"
-        except:
+                     for platform, markers in signatures.items():
+                         if any(marker in html for marker in markers):
+                             return platform
+        except Exception as e:
+            self.logger.debug(f"Platform detection failed: {e}")
             pass
             
         return "Unknown"
@@ -82,11 +146,17 @@ class ResearcherAgent(BaseAgent):
         # If context is a query, search first
         if "query" in context:
             limit = context.get("limit")
-            return await self._perform_search(context["query"], limit=limit)
+            res = await self._perform_search(context["query"], limit=limit)
+            self.save_work(res, artifact_type="search_results", metadata={"query": context["query"]})
+            return res
         
         # If context is a URL, scrape and analyze
         if "url" in context:
-            return await self._deep_scrape(context["url"])
+            # We use enrich_lead_data which calls deep_scrape internally + adds social signals
+            self.logger.info(f"Analyzing URL with Social Scout: {context['url']}")
+            res = await self.enrich_lead_data(context["url"])
+            self.save_work(res, artifact_type="enriched_lead_data", metadata={"url": context["url"]})
+            return res
 
         return {"error": "No query or URL provided in context"}
 
@@ -123,20 +193,20 @@ class ResearcherAgent(BaseAgent):
                 meta = {"title": title, "snippet": res.get("snippet", "")}
 
                 if list_parser.is_listicle(title, url):
-                    print(f"  [Researcher] Detected Aggregator/List: {title} ({url})")
-                    print(f"  [Researcher] Expanding list to find direct business links...")
+                    self.logger.info(f"Detected Aggregator/List: {title} ({url})")
+                    self.logger.debug("Expanding list to find direct business links...")
                     try:
                         html = await fetch_html(session, url)
                         if html:
                             extracted = list_parser.extract_external_links(html, url, [])
-                            print(f"  [Researcher] Extracted {len(extracted)} potential business links from list.")
+                            self.logger.info(f"Extracted {len(extracted)} potential business links from list.")
                             # Mark as high-quality "listing" leads
                             for e_url in extracted:
                                 final_urls.append({"url": e_url, "source_type": "listing", **meta})
                         else:
                             final_urls.append({"url": url, "source_type": "organic", **meta}) # Fallback
                     except Exception as e:
-                        print(f"  [Researcher] Error expanding list {url}: {e}")
+                        self.logger.error(f"Error expanding list {url}: {e}", exc_info=True)
                         final_urls.append({"url": url, "source_type": "organic", **meta})
                 else:
                      final_urls.append({"url": url, "source_type": "organic", **meta})
@@ -168,7 +238,7 @@ class ResearcherAgent(BaseAgent):
                 "Return JSON: {'complete': bool, 'missing_info': str, 'next_step_url': str or None}"
             )
             
-            decision = self.provider.generate_json(f"Gathered Info:\n{info}\n\n{instructions}")
+            decision = self.generate_json(f"Gathered Info:\n{info}\n\n{instructions}")
             
             if decision and not decision.get("complete") and decision.get("next_step_url"):
                 # "Agentic Loop": Go deeper (one level for now to avoid infinite loops)
@@ -210,7 +280,7 @@ class ResearcherAgent(BaseAgent):
             
             # Truncate HTML to save tokens but keep enough for meta/links
             preview = html[:6000] if html else "No HTML found"
-            res = self.provider.generate_json(f"HTML Content:\n{preview}\n\n{extraction_prompt}")
+            res = self.generate_json(f"HTML Content:\n{preview}\n\n{extraction_prompt}")
             
             if not res:
                 res = {}
@@ -221,12 +291,13 @@ class ResearcherAgent(BaseAgent):
             
             for path in sub_pages:
                 sub_url = url.rstrip('/') + path
-                print(f"  [Researcher] scouting sub-page: {sub_url}")
+                self.logger.debug(f"Scouting sub-page: {sub_url}")
                 sub_html = await fetch_html(session, sub_url)
                 if sub_html:
-                    c_res = self.provider.generate_json(
+                    c_res = self.generate_json(
                         f"Sub-page ({path}) HTML:\n{sub_html[:3000]}\n\n"
-                        "Extract any business intent signals (hiring, product launches, expansion, case studies) as a JSON list. Return [] if none."
+                        "Extract any business intent signals (hiring, product launches, expansion, case studies) as a JSON list. Return [] if none.",
+                        expect_list=True
                     )
                     if isinstance(c_res, list):
                         all_signals.extend(c_res)
@@ -248,14 +319,41 @@ class ResearcherAgent(BaseAgent):
 
     async def scout_social_signals(self, social_url):
         """
-        Attempts to find recent activity or bio from a social URL.
-        Note: Real social scraping is throttled; this simulates/uses public previews if available.
+        Uses SocialScraper to get real data (Bridge API -> Dork -> Browser).
         """
-        print(f"  [Researcher] Scouting social activity: {social_url}")
-        # In a real-world scenario, we might use Playwright or a social API here.
-        # For this MVP, we use the LLM to hypothesize 'Standard Profile Highlights' 
-        # based on context if we were able to fetch a preview, or just return placeholder.
-        return "Recent activity detected (Simulated): Active in B2B Tech discussions."
+        self.logger.debug(f"Scouting social activity: {social_url}")
+        
+        # 1. Detect platform from URL
+        platform = self.social_scraper._detect_platform(social_url)
+        if not platform:
+            return None
+
+        # 2. Smart Scrape
+        data = await self.social_scraper.smart_scrape(social_url, platform)
+        
+        if not data or "error" in data:
+            return None
+            
+        # 3. Summarize for Context
+        # If we got a feed (Bridge)
+        if "posts" in data:
+            posts = data["posts"]
+            summary = f"Found {len(posts)} recent posts via {data['source']}.\n"
+            summary += "Latest topics:\n"
+            for p in posts[:3]:
+                summary += f" - {p['date']}: {p['title']} ({p['link']})\n"
+            return summary
+            
+        # If we got a browser dump
+        if "raw_text_preview" in data:
+            # We let the LLM parse this text later or just return a snippet
+            return f"Scraped profile via Browser. Preview: {data['raw_text_preview'][:300]}..."
+            
+        # If we got search results
+        if "results" in data:
+            return f"Found {len(data['results'])} indexed pages/mentions."
+            
+        return "Social data found but format unrecognized."
 
     def think(self, context, instructions=None):
         # The researcher thinks via async gather_intel mostly, 

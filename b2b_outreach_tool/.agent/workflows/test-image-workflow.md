@@ -1,5 +1,6 @@
 ---
 description: test-image-workflow
+type: task
 ---
 
 user inputs image requirements

@@ -33,21 +33,50 @@ def load_workflow(filename):
     match = re.search(r"^---\s+description:\s+(.+?)\s+---", content, re.DOTALL | re.MULTILINE)
     if match:
         description = match.group(1).strip()
+
+    # Extract type from frontmatter
+    wf_type = "workflow" # default
+    match_type = re.search(r"^type:\s+(.+)$", content, re.MULTILINE)
+    if match_type:
+        wf_type = match_type.group(1).strip()
         
     return {
         "filename": filename,
         "description": description,
+        "type": wf_type,
         "content": content
     }
 
-
-def save_workflow(name, content, description="", steps=None):
+def list_workflows(type_filter=None):
+    """
+    Returns a list of available workflow files (basenames).
+    Optionally filters by type (e.g. 'strategy', 'task').
+    """
+    ensure_workflow_dir()
+    files = glob.glob(os.path.join(WORKFLOW_DIR, "*.md"))
+    
+    if type_filter:
+        filtered = []
+        for f in files:
+            # We need to peek at the content to check type without fully loading everything?
+            # Or just load everything since there aren't many.
+            try:
+                data = load_workflow(os.path.basename(f))
+                if data and data.get('type') == type_filter:
+                    filtered.append(os.path.basename(f))
+            except Exception:
+                pass
+        return filtered
+            
+    return [os.path.basename(f) for f in files]
+def save_workflow(name, content, description="", steps=None, wf_type="workflow"):
     """
     Saves a workflow file.
     name: Filename (e.g. 'my_workflow.md') or simple name 'my_workflow'
     content: The markdown content (human readable)
     description: Short description for frontmatter
     steps: Optional list of dicts representing the executable steps
+    wf_type: 'strategy' or 'task' (or 'workflow' default)
     """
     ensure_workflow_dir()
     
@@ -73,7 +102,7 @@ def save_workflow(name, content, description="", steps=None):
     # Escape quotes in JSON for YAML frontmatter if needed, but a block is safer
     # Let's use a delimiter for the machine readable part
     
-    final_content = f"---\ndescription: {description}\n---\n\n{content}\n\n<!-- WORKFLOW_STEPS_START\n{steps_json}\nWORKFLOW_STEPS_END -->"
+    final_content = f"---\ndescription: {description}\ntype: {wf_type}\n---\n\n{content}\n\n<!-- WORKFLOW_STEPS_START\n{steps_json}\nWORKFLOW_STEPS_END -->"
     
     path = os.path.join(WORKFLOW_DIR, name)
     with open(path, "w", encoding="utf-8") as f:

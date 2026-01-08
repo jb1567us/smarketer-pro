@@ -35,16 +35,21 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
         proxy = proxy_manager.get_proxy()
         
         # FIX: Do NOT use a proxy if connecting to a local instance
-        # The proxy is for SearXNG -> Google, not App -> SearXNG
         if "localhost" in base_url or "127.0.0.1" in base_url:
             proxy = None
 
+        import time
+        start_time = time.time()
         try:
             async with session.get(base_url, params=params, headers=headers, proxy=proxy, timeout=15) as response:
-                if response.status != 200:
+                latency = time.time() - start_time
+                if response.status == 200:
+                    if proxy:
+                        proxy_manager.report_result(proxy, success=True, latency=latency)
+                elif response.status != 200:
                     print(f"SearXNG returned {response.status} on page {page} using proxy {proxy}")
-                    if response.status in [403, 429] and proxy:
-                        proxy_manager.remove_proxy(proxy)
+                    if proxy:
+                        proxy_manager.report_result(proxy, success=False)
                     break 
                 
                 html = await response.text()
@@ -95,3 +100,36 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
     return results[:num_results]
             
 
+
+async def get_keyword_suggestions(query, session, source="google"):
+    """
+    Fetches autocomplete suggestions from various sources.
+    Sources: google, amazon, youtube, bing
+    """
+    source = source.lower()
+    
+    urls = {
+        "google": f"http://suggestqueries.google.com/complete/search?client=firefox&q={urllib.parse.quote(query)}",
+        "youtube": f"http://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q={urllib.parse.quote(query)}",
+        "amazon": f"https://completion.amazon.com/search/complete?search-alias=aps&mkt=1&q={urllib.parse.quote(query)}",
+        "bing": f"https://api.bing.com/osjson.aspx?query={urllib.parse.quote(query)}"
+    }
+    
+    url = urls.get(source)
+    if not url:
+        return []
+        
+    try:
+        async with session.get(url, timeout=5) as resp:
+            if resp.status == 200:
+                # Force JSON even if mimetype is wrong (google returns text/javascript)
+                data = await resp.json(content_type=None)
+                # Basic json format for most suggest APIs is [query, [suggestions, ...]]
+                if isinstance(data, list) and len(data) > 1:
+                    return data[1]
+                elif isinstance(data, dict) and "suggestions" in data:
+                    return [s.get("value") for s in data["suggestions"]]
+    except Exception as e:
+        print(f"Error fetching suggestions from {source}: {e}")
+        
+    return []

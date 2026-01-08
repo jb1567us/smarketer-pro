@@ -1,5 +1,7 @@
-from .base import BaseAgent
 import json
+from .base import BaseAgent
+from utils.rss_manager import RSSManager
+from utils.bookmark_manager import BookmarkManager
 
 class SEOExpertAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -8,6 +10,10 @@ class SEOExpertAgent(BaseAgent):
             goal="Analyze websites for SEO optimizations, perform keyword research, and suggest backlink strategies to dominate search rankings.",
             provider=provider
         )
+        self.rss_manager = RSSManager()
+        self.bookmark_manager = BookmarkManager()
+        from utils.gsa_service import GSAService
+        self.gsa_service = GSAService()
 
     def run(self, context):
         """
@@ -38,7 +44,9 @@ class SEOExpertAgent(BaseAgent):
             "content_ideas": []
         }}
         """
-        return self.provider.generate_json(prompt)
+        res = self.generate_json(prompt)
+        self.save_work_product(res, task_instruction=f"SEO Analysis for {str(context)[:50]}...", tags=["seo", "analysis"])
+        return res
 
     async def audit_site(self, url):
         import aiohttp
@@ -48,6 +56,11 @@ class SEOExpertAgent(BaseAgent):
         async with aiohttp.ClientSession() as session:
             # Fetch real content
             html = await fetch_html(session, url)
+
+            # Fallback: Try direct connection if proxy failed
+            if not html:
+                print(f"  [SEOAgent] Proxy fetch failed for {url}. Retrying with direct connection...")
+                html = await fetch_html(session, url, use_proxy=False)
             
             if not html:
                 return {
@@ -107,31 +120,84 @@ class SEOExpertAgent(BaseAgent):
             4. Analyze the text content for keyword usage.
             """
             
-            result = self.run(prompt)
-            
-            # Robustness: Handle if LLM returns a list [ { ... } ]
-            if isinstance(result, list) and len(result) > 0 and isinstance(result[0], dict):
-                result = result[0]
+            result = self.generate_json(prompt)
             
             # Inject Hard Metrics into the result for display
             if isinstance(result, dict):
                 result['metrics'] = metrics
-                
+
+            # Persist
+            self.save_work_product(
+                content=result,
+                task_instruction=f"Site Audit for {url}",
+                tags=["seo", "audit", url]
+            )
+            
             return result
 
     def research_keywords(self, niche):
-        return self.run(f"Identify high-value, low-competition keywords for the niche: {niche}")
+        """
+        Performs dedicated keyword research without extraneous site audits.
+        Saves the result to the database.
+        """
+        prompt = f"""
+        Perform deep keyword research for the niche: "{niche}".
+        
+        Return a JSON object with the following structure ONLY:
+        {{
+            "keyword_strategy": {{
+                "niche": "{niche}",
+                "difficulty_analysis": "Summary of how hard it is to rank",
+                "suggested_keywords": [
+                    {{ "keyword": "example keyword", "search_volume": "Monthly est.", "cpc": "$X.XX", "intent": "Informational/Commercial/Transactional", "difficulty": "Low/Med/High" }}
+                ],
+                "long_tail_gems": [
+                    {{ "keyword": "long tail example", "reason": "Why this is a good opportunity" }}
+                ],
+                "content_clusters": [
+                    {{ "topic": "Cluster Topic", "keywords": ["kw1", "kw2"] }}
+                ]
+            }}
+        }}
+        """
+        
+        # Generator
+        result = self.generate_json(prompt)
+        
+        # Persist
+        self.save_work_product(
+            content=result,
+            task_instruction=f"Keyword Research for {niche}",
+            tags=["seo", "keywords", niche]
+        )
+        
+        return result
 
     def monitor_backlinks(self, domain):
         return self.run(f"Identify potential backlink opportunities and analyze the backlink profile for: {domain}")
 
     def design_link_wheel(self, money_site_url, niche, strategy="standard"):
         """
-        Designs a multi-tier link wheel structure for authority funneling.
-        strategy: 'standard', 'double', 'funnel'
+        Designs a multi-tier link wheel or pyramid structure for authority funneling.
+        strategy: 'standard', 'double', 'funnel', 'pyramid'
         """
+        strategy_template = ""
+        if strategy == "pyramid":
+            strategy_template = """
+            3. Pyramid Structure:
+               - Tier 1: High Authority Web 2.0 / Guest Posts -> Money Site
+               - Tier 2: Blogs / Profiles / Wikis -> Tier 1
+               - Tier 3: Mass Social / GSA / XRumer -> Tier 2
+            """
+        else:
+            strategy_template = """
+            3. Tier 2 properties (linked to Tier 1)
+            4. Cross-linking structure to maximize PageRank funneling without leaving footprints.
+            5. 'Link Wheel' or 'Double Link Wheel' patterns.
+            """
+
         prompt = f"""
-        Design a highly effective SEO Link Wheel strategy for:
+        Design a highly effective SEO architecture strategy for:
         Money Site: {money_site_url}
         Niche: {niche}
         Strategy Type: {strategy}
@@ -139,13 +205,11 @@ class SEOExpertAgent(BaseAgent):
         Your design must include:
         1. Money Site (The target)
         2. Tier 1 Web 2.0 properties (linked to money site)
-        3. Tier 2 properties (linked to Tier 1)
-        4. Cross-linking structure to maximize PageRank funneling without leaving footprints.
-        5. 'Link Wheel' or 'Double Link Wheel' patterns.
+        {strategy_template}
 
         Return JSON ONLY:
         {{
-            "strategy_name": "{strategy.capitalize()} Link Wheel",
+            "strategy_name": "{strategy.capitalize()} Architecture",
             "money_site": "{money_site_url}",
             "tiers": [
                 {{
@@ -159,13 +223,22 @@ class SEOExpertAgent(BaseAgent):
                     "properties": [
                         {{ "type": "Social Profiles / Wiki", "purpose": "Tier 1 power-up", "links_to": "Tier 1 Properties" }}
                     ]
+                }},
+                {{
+                    "level": 3,
+                    "properties": [
+                        {{ "type": "Mass Backlinks (GSA/XRumer)", "purpose": "Mass indexing boost", "links_to": "Tier 2 Properties" }}
+                    ]
                 }}
             ],
             "diagram_instructions": "Mermaid-style graph directions",
             "footprint_avoidance": "List of tactics to avoid detection"
         }}
         """
-        return self.provider.generate_json(prompt)
+
+        res = self.generate_json(prompt)
+        self.save_work(res, artifact_type="link_wheel_plan", metadata={"money_site": money_site_url, "strategy": strategy})
+        return res
 
     async def hunt_backlinks(self, niche, competitor_urls=None):
         """
@@ -230,10 +303,12 @@ class SEOExpertAgent(BaseAgent):
                         "description": res.get('description', '')
                     })
         
-        return {
+        res = {
             "targets": all_targets,
             "total_found": len(all_targets)
         }
+        self.save_work(res, artifact_type="backlink_targets", metadata={"niche": niche})
+        return res
 
     async def auto_submit_backlink(self, target_url, money_site_url, context=""):
         """
@@ -255,16 +330,25 @@ class SEOExpertAgent(BaseAgent):
         
         Return JSON: {{ "platform": "...", "type": "..." }}
         """
-        meta = self.provider.generate_json(detect_prompt)
+        meta = self.generate_json(detect_prompt)
         platform = meta.get('platform', 'general_web').lower()
         site_type = meta.get('type', 'blog_post').lower()
 
         # A. KNOWN PLATFORM (Web 2.0 Article Submission)
         # SEnuke style: Post an article if we have credentials
         if platform in ['wordpress', 'blogger', 'tumblr', 'medium', 'linkedin']:
-            # Generate Article Content
-            article_title = f"Insights on {context}"
-            article_body = self.provider.generate_text(f"Write a 300-word blog post about {context}. Include a natural link to {money_site_url} with anchor text related to {context}.")
+            # Generate AI SEO Article (Replacement for Spinning)
+            from agents.copywriter import CopywriterAgent
+            copywriter = CopywriterAgent(provider=self.provider)
+            
+            article = copywriter.generate_seo_article(
+                niche=context,
+                keywords=[context],
+                target_url=money_site_url
+            )
+            
+            article_title = article.get('title', f"Insights on {context}")
+            article_body = article.get('body_markdown', "")
             
             res = await seo_bridge.execute_submission(
                 platform_name=platform,
@@ -273,7 +357,7 @@ class SEOExpertAgent(BaseAgent):
                 links_to=money_site_url
             )
             if res.get('status') == 'success':
-                 return {"status": "success", "method_used": f"Web 2.0 Post ({platform})", "details": res}
+                 return {"status": "success", "method_used": f"Web 2.0 AI Article ({platform})", "details": res}
 
         # B. GENERIC BLOG (Comment Submission)
         # ScrapeBox style: Blast a comment
@@ -360,19 +444,24 @@ class SEOExpertAgent(BaseAgent):
 
     async def run_link_wheel_mission(self, money_site_url, niche, strategy="standard", status_callback=None):
         """
-        Autonomous execution of a full Link Wheel mission.
+        Autonomous execution of a full SEO mission with AI content, RSS, Bookmarking, and GSA Boosting.
         """
-        if status_callback: status_callback(f"🚀 Initializing {strategy} Link Wheel for {money_site_url}")
+        import random # Added for random.choice
+        if status_callback: status_callback(f"🚀 Initializing {strategy} Mission for {money_site_url}")
         
         # 1. Design the structure
-        if status_callback: status_callback("🎨 Designing Tier Architecture...")
+        if status_callback: status_callback("🎨 Designing Architecture...")
         plan = self.design_link_wheel(money_site_url, niche, strategy)
         
         results = {
             "plan": plan,
-            "executions": []
+            "executions": [],
+            "indexing_boost": {}
         }
         
+        successful_urls = []
+        tier_1_urls = []
+
         # 2. Process Tiers
         for tier in plan.get('tiers', []):
             level = tier.get('level')
@@ -380,30 +469,63 @@ class SEOExpertAgent(BaseAgent):
             
             # Find targets for this tier
             if status_callback: status_callback(f"🔍 Hunting targets for Tier {level}...")
-            targets = self.hunt_backlinks(niche)
+            targets = await self.hunt_backlinks(niche)
             
             tier_executions = []
             for target in targets.get('targets', []):
                 target_url = target['url']
-                if status_callback: status_callback(f"  > Submitting to {target_url}...")
                 
-                # Determine what to link to (Money site for Tier 1, Tier 1 for Tier 2)
-                links_to = money_site_url if level == 1 else "Tier 1 Properties"
+                # Determine what to link to (Money site for Tier 1, Tier 1 for Tier 2, etc.)
+                if level == 1:
+                    links_to = money_site_url
+                elif level == 2 and tier_1_urls:
+                    links_to = random.choice(tier_1_urls)
+                else:
+                    links_to = money_site_url # Fallback
+                
+                if status_callback: status_callback(f"  > Submitting to {target_url} (Links to: {links_to})...")
                 
                 # Execute submission
                 sub_res = await self.auto_submit_backlink(target_url, links_to, context=niche)
-                tier_executions.append({
+                
+                exec_data = {
                     "target": target_url,
                     "status": sub_res.get('status'),
                     "method": sub_res.get('method_used')
-                })
+                }
+                tier_executions.append(exec_data)
+                
+                if sub_res.get('status') == 'success':
+                    successful_urls.append(target_url)
+                    if level == 1: tier_1_urls.append(target_url)
+                    
+                    # 3. GSA Boosting (SEnuke/GSA style)
+                    if level >= 1:
+                        if status_callback: status_callback(f"    📡 Pushing to GSA for boost...")
+                        await self.gsa_service.push_link_for_indexing(target_url, money_site=money_site_url)
             
             results['executions'].append({
                 "tier": level,
                 "submissions": tier_executions
             })
             
-        if status_callback: status_callback("✅ Link Wheel Mission Complete!")
+        # 4. Final Indexing Boost
+        if successful_urls:
+            if status_callback: status_callback(f"📡 Final boost for {len(successful_urls)} live links...")
+            
+            # A. Social Bookmarking
+            if status_callback: status_callback("🔖 Creating Social Bookmarks...")
+            bookmark_res = await self.bookmark_manager.run_bookmark_mission(successful_urls, niche)
+            results['indexing_boost']['bookmarks'] = bookmark_res
+            
+            # B. RSS Distribution
+            if status_callback: status_callback("XML Generating & Pinging RSS Feeds...")
+            rss_res = await self.rss_manager.run_rss_mission(successful_urls, niche)
+            results['indexing_boost']['rss'] = rss_res
+
+        if status_callback: status_callback("✅ Mission Complete!")
+
+        self.save_work(results, artifact_type="link_wheel_execution_log", metadata={"money_site": money_site_url, "strategy": strategy})
         return results
 
     async def bulk_analyze_domains(self, domains, status_callback=None):
@@ -449,4 +571,5 @@ class SEOExpertAgent(BaseAgent):
                         "alive": False
                     })
         
+        self.save_work(results, artifact_type="bulk_domain_audit", metadata={"count": len(results)})
         return results

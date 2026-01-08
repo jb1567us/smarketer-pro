@@ -11,6 +11,19 @@ from datetime import datetime
 from dotenv import load_dotenv
 import psutil
 import json
+from utils.logger_service import start_global_logging
+
+# Initialize Global Logging (Singleton)
+# Using cache_resource ensures this runs only once per server lifetime (mostly)
+@st.cache_resource
+def init_logging():
+    start_global_logging()
+    return True
+
+init_logging()
+
+if platform.system() == 'Windows':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 if platform.system() == 'Windows':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -114,7 +127,6 @@ def render_agent_chat(agent_key, agent_instance, context_key):
                         # Handle different result formats (JSON vs String)
                         prev_res = st.session_state[agent_key]
                         if not isinstance(prev_res, str):
-                            import json
                             prev_res = json.dumps(prev_res)
                             
                         response = agent_instance.discuss(
@@ -136,7 +148,6 @@ def render_agent_chat(agent_key, agent_instance, context_key):
                         
                         prev_res = st.session_state[agent_key]
                         if not isinstance(prev_res, str):
-                            import json
                             prev_res = json.dumps(prev_res)
 
                         new_res = agent_instance.tune(
@@ -698,7 +709,7 @@ def main():
         st.header("🤖 Automation Hub")
         st.caption("Autonomous mission control center. Monitor and manage long-running agent loops.")
         
-        tab_status, tab_manager = st.tabs(["📊 Mission Control", "💬 AI Manager"])
+        tab_manager, tab_status = st.tabs(["💬 AI Manager", "📊 Mission Control"])
         
         with tab_manager:
              from ui.manager_ui import render_manager_ui
@@ -721,19 +732,49 @@ def main():
             with col_main:
                 st.subheader("Mission Control")
                 
-                # Pending Strategy Loader
-                if 'pending_strategy' in st.session_state:
-                    strat = st.session_state['pending_strategy']
-                    st.info(f"Loaded Strategy: **{strat.get('strategy_name', 'Unnamed')}**")
+                # --- NEW: TABBED VIEW FOR STRATEGY VS TASK ---
+                mc_tabs = st.tabs(["🚀 Strategic Missions", "⚡ Task Automation"])
+                
+                with mc_tabs[0]:
+                    st.caption("Execute long-running, multi-agent strategies.")
+                    # Pending Strategy Loader
+                    if 'pending_strategy' in st.session_state:
+                        strat = st.session_state['pending_strategy']
+                        st.info(f"Loaded Strategy: **{strat.get('strategy_name', 'Unnamed')}**")
+                        
+                        if st.button("🚀 Launch Autonomous Mission", type="primary", disabled=engine.is_running):
+                            # Start the engine
+                            manager = ManagerAgent() # Create a fresh instance
+                            engine.start_mission(strat, manager)
+                            del st.session_state['pending_strategy'] # Clear pending
+                            st.rerun()
+                    elif not engine.is_running:
+                        st.info("No strategy loaded. Go to Strategy Laboratory to generate one.")
+
+                with mc_tabs[1]:
+                    st.caption("Run specific, deterministic standard operating procedures (SOPs).")
                     
-                    if st.button("🚀 Launch Autonomous Mission", type="primary", disabled=engine.is_running):
-                        # Start the engine
-                        manager = ManagerAgent() # Create a fresh instance
-                        engine.start_mission(strat, manager)
-                        del st.session_state['pending_strategy'] # Clear pending
-                        st.rerun()
-                elif not engine.is_running:
-                    st.info("No strategy loaded. Go to Strategy Laboratory to generate one.")
+                    tasks = list_workflows(type_filter="task")
+                    if not tasks:
+                        st.info("No 'Task' workflows found. Create one in Workflow Builder with 'type: task'.")
+                    else:
+                        selected_task = st.selectbox("Select Task / SOP", tasks)
+                        if st.button("▶️ Run Task", disabled=engine.is_running):
+                            # Adapt the task execution effectively
+                            # Ideally we create a temporary strategy wrapper
+                            from workflow_manager import load_workflow
+                            task_data = load_workflow(selected_task)
+                            
+                            temp_strat = {
+                                "strategy_name": f"Task: {selected_task}",
+                                "mode": "conductor",
+                                "sequence": [{"type": "workflow", "name": selected_task}],
+                                "goal": f"Execute task {selected_task}"
+                            }
+                            
+                            manager = ManagerAgent()
+                            engine.start_mission(temp_strat, manager)
+                            st.rerun()
                 
                 if engine.is_running:
                     st.markdown(f"**Current Mission:** {engine.current_mission}")
@@ -909,7 +950,6 @@ def main():
         # Save to Library
         if 'viral_results' in st.session_state:
              if st.button("💾 Save Strategy"):
-                 import json
                  save_creative_content(
                      "Social Media", "json", 
                      f"Viral Strategy: {v_product}", 
@@ -1028,7 +1068,6 @@ def main():
                         c1, c2, c3 = st.columns([3, 1, 0.5])
                         with c1:
                             st.markdown(f"**{p['content'][:100]}...**" if len(p['content']) > 100 else f"**{p['content']}**")
-                            import json
                             platforms = json.loads(p['platforms'])
                             st.caption(f"📱 Platforms: {', '.join(platforms)} | 📅 {pd.to_datetime(p['scheduled_at'], unit='s').strftime('%Y-%m-%d %H:%M')}")
                         with c2:
@@ -1314,12 +1353,23 @@ def main():
                             status_callback=lambda m: status.write(m)
                         ))
                         st.session_state['last_lw_results'] = results
-                        status.update(label="Link Wheel Execution Complete!", state="complete")
+                        status.update(label="Link Wheel Execution & Indexation Boost Complete!", state="complete")
             
             if 'last_lw_results' in st.session_state:
                 st.success("Mission Complete! Check the execution logs above.")
                 with st.expander("View Execution Details"):
-                    st.json(st.session_state['last_lw_results'])
+                    results = st.session_state['last_lw_results']
+                    st.json(results)
+                    
+                    if 'indexing_boost' in results:
+                        st.subheader("📡 Indexing Status")
+                        ib = results['indexing_boost']
+                        c_rss, c_bm = st.columns(2)
+                        with c_rss:
+                            st.write(f"✅ RSS Feeds: {len(ib.get('rss', {}).get('distribution_results', []))} Pings sent.")
+                        with c_bm:
+                            st.write(f"✅ Bookmarks: {len(ib.get('bookmarks', {}))} URLs processed.")
+
                     if st.button("💾 Save Results to Library"):
                         save_creative_content(
                             "SEO Expert", "json", 
@@ -1332,7 +1382,7 @@ def main():
         st.header("🛠️ Mass Power Tools")
         st.info("Scrapebox / SEnuke style bulk utilities.")
 
-        tool_type = st.selectbox("Select Tool", ["Mass Harvester", "Footprint Scraper", "Mass Commenter", "Backlink Hunter", "Bulk Domain Checker"])
+        tool_type = st.selectbox("Select Tool", ["Mass Harvester", "Footprint Scraper", "Mass Commenter", "Backlink Hunter", "Bulk Domain Checker", "Indexing Booster"])
         
         if tool_type == "Mass Commenter":
             st.subheader("💬 Automated Blog Commenter")
@@ -1555,6 +1605,42 @@ def main():
                 # CSV
                 csv = df_dom.to_csv(index=False).encode('utf-8')
                 st.download_button("⬇️ Download Report", csv, "domain_health_report.csv", "text/csv")
+
+        elif tool_type == "Indexing Booster":
+            st.subheader("🚀 High-Power Indexing Booster")
+            st.caption("Push your URLs to RSS aggregators and social hubs for faster discovery.")
+            
+            ib_niche = st.text_input("Niche / Category", "Technology")
+            urls_to_boost = st.text_area("URLs to Boost (One per line)", height=200, placeholder="https://myweb20.com/post-1\nhttps://myweb20.com/post-2")
+            
+            if st.button("Start Boosting"):
+                if urls_to_boost:
+                    url_list = [u.strip() for u in urls_to_boost.split("\n") if u.strip()]
+                    agent = SEOExpertAgent()
+                    
+                    with st.status("Executing Indexing Boost (RSS + Bookmarks)...") as status:
+                        # 1. RSS
+                        status.write("📡 Pinging RSS Aggregators...")
+                        rss_res = asyncio.run(agent.rss_manager.run_rss_mission(url_list, ib_niche))
+                        
+                        # 2. Bookmarks
+                        status.write("🔖 Distributing Social Bookmarks...")
+                        bm_res = asyncio.run(agent.bookmark_manager.run_bookmark_mission(url_list, ib_niche))
+                        
+                        st.session_state['ib_results'] = {"rss": rss_res, "bookmarks": bm_res}
+                        status.update(label="Indexation Boost Complete!", state="complete")
+                    st.rerun()
+
+            if 'ib_results' in st.session_state:
+                res = st.session_state['ib_results']
+                st.success("Indexing Boost Complete!")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**RSS Distribution:**")
+                    st.json(res['rss'].get('distribution_results', []))
+                with col2:
+                    st.write("**Social Bookmarks:**")
+                    st.json(res['bookmarks'])
 
     elif choice == "Lead Discovery":
         st.subheader("🔍 Find New Leads")
@@ -2069,7 +2155,6 @@ def main():
                             st.divider()
                             st.subheader("🖼️ DSR Live Preview")
                             with st.container(border=True):
-                                import json
                                 try:
                                     content = json.loads(dsr_data['content_json'])
                                     st.title(content.get('headline', 'Our Personalized Solution'))
@@ -2085,15 +2170,15 @@ def main():
                                     st.button("Close Preview", on_click=lambda: st.session_state.pop('show_dsr_preview', None))
                                 except Exception as e:
                                     st.error(f"Could not render preview: {e}")
-                    else:
-                        if st.button("✨ Generate Personalized DSR Content"):
-                            with st.spinner("AI is drafting copy and designing visuals..."):
-                                dsr_mgr = DSRManager()
-                                # Need to run async in streamlit
-                                res = asyncio.run(dsr_mgr.generate_dsr_for_lead(campaign_id, target_lead))
-                                if res:
-                                    st.success("Draft Generated!")
-                                    st.rerun()
+                        else:
+                            if st.button("✨ Generate Personalized DSR Content"):
+                                with st.spinner("AI is drafting copy and designing visuals..."):
+                                    dsr_mgr = DSRManager()
+                                    # Need to run async in streamlit
+                                    res = asyncio.run(dsr_mgr.generate_dsr_for_lead(campaign_id, target_lead))
+                                    if res:
+                                        st.success("Draft Generated!")
+                                        st.rerun()
 
             st.divider()
             st.divider()
@@ -2866,7 +2951,6 @@ def main():
                         st.markdown(f"[Download Image](file://{item['body']})")
                     else:
                         try:
-                            import json
                             content = json.loads(item['body'])
                             st.json(content)
                             
@@ -3350,7 +3434,6 @@ def main():
                 if st.form_submit_button(f"Save {selected_plat} Credentials"):
                     try:
                         # Validate JSON
-                        import json
                         if meta_str: json.loads(meta_str)
                         save_platform_credential(selected_plat.lower(), user, pwd, api, meta_str)
                         st.success(f"Credentials for {selected_plat} saved!")
@@ -3558,6 +3641,10 @@ def main():
                 # Context Input
                 context_input = st.text_area("Context / Input", height=150, key="ca_context", placeholder="Enter the text or data the agent should process...")
                 
+                # Proxy Toggle
+                use_proxies = st.checkbox("Use Elite Proxy Pool", value=True, help="Enable if this agent performs web tasks or needs higher anonymity.")
+                custom_agent.proxy_enabled = use_proxies
+
                 if st.button("Run Agent", type="primary"):
                     if context_input:
                         with st.spinner(f"{selected_agent_name} is thinking..."):

@@ -7,6 +7,7 @@ from .ollama import OllamaProvider
 from .openrouter import OpenRouterProvider
 from .openai_compatible import OpenAICompatibleProvider
 from .cohere import CohereProvider
+from .lollms import LollmsProvider
 from .router import SmartRouter
 
 class LLMFactory:
@@ -149,6 +150,11 @@ class LLMFactory:
             return OpenAICompatibleProvider(
                 api_key, f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions", model
             )
+
+        elif provider_name == 'lollms':
+            host = config.get('llm', {}).get('lollms_host')
+            port = config.get('llm', {}).get('lollms_port')
+            return LollmsProvider(host, port, model_name)
             
         elif provider_name == 'google_cloud_vertex_ai':
              api_key = os.getenv("GEMINI_API_KEY")

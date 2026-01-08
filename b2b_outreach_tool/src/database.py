@@ -321,6 +321,7 @@ def init_db():
             name TEXT,
             description TEXT,
             instruction_template TEXT,
+            type TEXT DEFAULT 'strategy', -- strategy, task
             created_at INTEGER
         );
     ''')
@@ -459,16 +460,17 @@ def init_db():
         'completion_time': 'INTEGER', 
         'input_task': 'TEXT',
         'output_content': 'TEXT',
-        'tags': 'TEXT'
+        'tags': 'TEXT',
+        'metadata': 'TEXT',
+        'artifact_type': 'TEXT'
     }
-    
     # Check if table exists
     try:
         c.execute('SELECT 1 FROM agent_work_products LIMIT 1')
         table_exists = True
     except sqlite3.OperationalError:
         table_exists = False
-        
+
     if table_exists:
         for col, dtype in awp_columns.items():
             try:
@@ -480,15 +482,62 @@ def init_db():
                 except sqlite3.OperationalError as e:
                     print(f"Migration warning for {col}: {e}")
 
+    # Migration for strategy_presets type
+    try:
+        c.execute("SELECT type FROM strategy_presets LIMIT 1")
+    except sqlite3.OperationalError:
+        print("Migrating strategy_presets: Adding 'type' column...")
+        c.execute("ALTER TABLE strategy_presets ADD COLUMN type TEXT DEFAULT 'strategy'")
+
+    # --- Registration Tasks & Macros ---
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS registration_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            platform TEXT,
+            url TEXT,
+            details TEXT, -- JSON string
+            status TEXT DEFAULT 'pending', -- pending, completed
+            created_at INTEGER
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS registration_macros (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            platform TEXT UNIQUE,
+            steps TEXT, -- JSON string
+            created_at INTEGER,
+            updated_at INTEGER
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS proxies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            address TEXT UNIQUE,
+            protocol TEXT, -- http, socks4, socks5
+            anonymity TEXT, -- elite, anonymous, transparent
+            country TEXT,
+            latency REAL,
+            success_count INTEGER DEFAULT 0,
+            fail_count INTEGER DEFAULT 0,
+            last_used_at INTEGER,
+            last_checked_at INTEGER,
+            is_active INTEGER DEFAULT 1,
+            created_at INTEGER
+        );
+    ''')
+
     conn.commit()
     conn.close()
 
-def save_agent_work_product(agent_role, input_task, output_content, tags=None, start_time=None, completion_time=None):
+def save_agent_work_product(agent_role, input_task, output_content, tags=None, start_time=None, completion_time=None, metadata=None, artifact_type="text"):
     """Saves an agent's work product to the database."""
     conn = get_connection()
     c = conn.cursor()
     import json
     tags_json = json.dumps(tags) if tags else "[]"
+    meta_json = json.dumps(metadata) if metadata else "{}"
     
     # Use current time if specific times aren't provided
     if not completion_time:
@@ -497,9 +546,9 @@ def save_agent_work_product(agent_role, input_task, output_content, tags=None, s
         start_time = completion_time 
         
     c.execute('''
-        INSERT INTO agent_work_products (agent_role, start_time, completion_time, input_task, output_content, tags, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (agent_role, start_time, completion_time, input_task, output_content, tags_json, int(time.time())))
+        INSERT INTO agent_work_products (agent_role, start_time, completion_time, input_task, output_content, tags, metadata, artifact_type, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (agent_role, start_time, completion_time, input_task, output_content, tags_json, meta_json, artifact_type, int(time.time())))
     
     product_id = c.lastrowid
     conn.commit()
@@ -878,61 +927,18 @@ def delete_creative_item(item_id):
 # === AGENT WORK PRODUCTS ===
 
 def save_agent_work(agent_role, content, artifact_type="text", metadata=None):
-    """Saves any agent's work product."""
-    conn = get_connection()
-    c = conn.cursor()
-    
-    # Ensure table exists (lazy init for existing DBs that didn't run init_db)
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS agent_work_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_role TEXT,
-            artifact_type TEXT, -- text, image, code, json
-            content TEXT,
-            metadata TEXT, -- JSON string
-            created_at INTEGER
-        );
-    ''')
-    
-    import json
-    meta_json = json.dumps(metadata) if metadata else "{}"
-    
-    c.execute('''
-        INSERT INTO agent_work_products (agent_role, artifact_type, content, metadata, created_at)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (agent_role, artifact_type, content, meta_json, int(time.time())))
-    
-    work_id = c.lastrowid
-    conn.commit()
-    conn.close()
-    return work_id
+    """Saves any agent's work product. Wrapper for save_agent_work_product."""
+    return save_agent_work_product(
+        agent_role=agent_role,
+        input_task=f"Work Product ({artifact_type})",
+        output_content=content,
+        metadata=metadata,
+        artifact_type=artifact_type
+    )
 
 def get_agent_work(agent_role=None, limit=50):
     """Retrieves recent agent work products."""
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    
-    # Ensure table exists
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS agent_work_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            agent_role TEXT,
-            artifact_type TEXT,
-            content TEXT,
-            metadata TEXT,
-            created_at INTEGER
-        );
-    ''')
-
-    if agent_role:
-        c.execute('SELECT * FROM agent_work_products WHERE agent_role = ? ORDER BY created_at DESC LIMIT ?', (agent_role, limit))
-    else:
-        c.execute('SELECT * FROM agent_work_products ORDER BY created_at DESC LIMIT ?', (limit,))
-        
-    results = [dict(r) for r in c.fetchall()]
-    conn.close()
-    return results
+    return get_agent_work_products(agent_role, limit)
 
 def save_wp_site(name, url, username, app_password, cp_url=None, cp_user=None, cp_pass=None):
     """Saves or updates a WordPress site's credentials."""
@@ -1057,14 +1063,14 @@ def create_campaign(name, niche, product_name, product_context):
 
 # === STRATEGY PRESETS FUNCTIONS ===
 
-def save_strategy_preset(name, description, instruction_template):
+def save_strategy_preset(name, description, instruction_template, type="strategy"):
     """Saves a new strategy preset."""
     conn = get_connection()
     c = conn.cursor()
     c.execute('''
-        INSERT INTO strategy_presets (name, description, instruction_template, created_at)
-        VALUES (?, ?, ?, ?)
-    ''', (name, description, instruction_template, int(time.time())))
+        INSERT INTO strategy_presets (name, description, instruction_template, type, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (name, description, instruction_template, type, int(time.time())))
     preset_id = c.lastrowid
     conn.commit()
     conn.close()
@@ -1514,5 +1520,165 @@ def update_managed_account_status(account_id, status):
     conn = get_connection()
     c = conn.cursor()
     c.execute('UPDATE managed_accounts SET verification_status = ? WHERE id = ?', (status, account_id))
+    conn.commit()
+    conn.close()
+
+# === REGISTRATION TASKS & MACROS ===
+
+def add_registration_task(platform, url, details=None):
+    """Adds a registration task that requires manual intervention."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    details_json = json.dumps(details or {})
+    c.execute('''
+        INSERT INTO registration_tasks (platform, url, details, created_at)
+        VALUES (?, ?, ?, ?)
+    ''', (platform, url, details_json, int(time.time())))
+    task_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return task_id
+
+def get_registration_tasks(status='pending'):
+    """Retrieves registration tasks."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM registration_tasks WHERE status = ? ORDER BY created_at DESC', (status,))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def delete_registration_task(task_id):
+    """Deletes a registration task."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM registration_tasks WHERE id = ?', (task_id,))
+    conn.commit()
+    conn.close()
+
+def save_registration_macro(platform, steps):
+    """Saves or updates a registration macro for a platform."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    steps_json = json.dumps(steps)
+    now = int(time.time())
+    c.execute('''
+        INSERT INTO registration_macros (platform, steps, created_at, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(platform) DO UPDATE SET
+            steps=excluded.steps,
+            updated_at=excluded.updated_at
+    ''', (platform, steps_json, now, now))
+    conn.commit()
+    conn.close()
+
+def get_registration_macro(platform):
+    """Retrieves a macro for a platform."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM registration_macros WHERE platform = ?', (platform,))
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else None
+
+# === PROXY MANAGEMENT FUNCTIONS ===
+
+def save_proxies(proxy_list):
+    """
+    Saves or updates a list of proxies.
+    proxy_list: list of dicts with keys: address, protocol, anonymity, country, latency
+    """
+    conn = get_connection()
+    c = conn.cursor()
+    now = int(time.time())
+    for p in proxy_list:
+        c.execute('''
+            INSERT INTO proxies (address, protocol, anonymity, country, latency, last_checked_at, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(address) DO UPDATE SET
+                protocol=COALESCE(excluded.protocol, protocol),
+                anonymity=COALESCE(excluded.anonymity, anonymity),
+                country=COALESCE(excluded.country, country),
+                latency=excluded.latency,
+                last_checked_at=excluded.last_checked_at,
+                is_active=1
+        ''', (
+            p['address'], 
+            p.get('protocol', 'http'), 
+            p.get('anonymity', 'transparent'),
+            p.get('country', 'Unknown'),
+            p.get('latency', 0),
+            now,
+            now
+        ))
+    conn.commit()
+    conn.close()
+
+def get_best_proxies(limit=50, min_anonymity=None):
+    """Retrieves proxies ordered by success rate and latency."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    
+    query = 'SELECT * FROM proxies WHERE is_active = 1'
+    params = []
+    if min_anonymity:
+        query += ' AND anonymity = ?'
+        params.append(min_anonymity)
+    
+    # Order by success ratio (avoid div zero) and then low latency
+    query += ' ORDER BY (CAST(success_count AS REAL) / (success_count + fail_count + 1)) DESC, latency ASC LIMIT ?'
+    params.append(limit)
+    
+    c.execute(query, params)
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def update_proxy_health(address, success=True, latency=None):
+    """Updates proxy stats after a check or use."""
+    conn = get_connection()
+    c = conn.cursor()
+    now = int(time.time())
+    
+    if success:
+        c.execute('''
+            UPDATE proxies 
+            SET success_count = success_count + 1, 
+                last_used_at = ?, 
+                last_checked_at = ?,
+                latency = COALESCE(?, latency),
+                is_active = 1
+            WHERE address = ?
+        ''', (now, now, latency, address))
+    else:
+        c.execute('''
+            UPDATE proxies 
+            SET fail_count = fail_count + 1, 
+                last_checked_at = ?,
+                is_active = CASE WHEN fail_count > 10 THEN 0 ELSE 1 END
+            WHERE address = ?
+        ''', (now, address))
+        
+    conn.commit()
+    conn.close()
+
+def clear_proxies():
+    """Wipes the proxy table."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM proxies')
+    conn.commit()
+    conn.close()
+
+def mark_registration_task_completed(task_id):
+    """Marks a registration task as completed."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("UPDATE registration_tasks SET status = 'completed' WHERE id = ?", (task_id,))
     conn.commit()
     conn.close()

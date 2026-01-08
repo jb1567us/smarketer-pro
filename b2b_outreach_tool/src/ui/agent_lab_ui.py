@@ -4,7 +4,8 @@ from agents import (
     ResearcherAgent, QualifierAgent, CopywriterAgent, ManagerAgent,
     GraphicsDesignerAgent, SocialMediaAgent, AdCopyAgent, BrainstormerAgent,
     PersonaAgent, WordPressAgent, ProductManagerAgent, LinkedInAgent,
-    ReviewerAgent, SyntaxAgent, UXAgent, SEOExpertAgent, VideoAgent
+    ReviewerAgent, SyntaxAgent, UXAgent, SEOExpertAgent, VideoAgent,
+    ContactFormAgent
 )
 
 # Registry of Standard Agents
@@ -21,11 +22,12 @@ AGENTS = {
     "WordPress Expert": WordPressAgent,
     "Product Manager": ProductManagerAgent,
     "LinkedIn Specialist": LinkedInAgent,
-    "Content Reviewer": ReviewerAgent,
+    "Reviewer": ReviewerAgent,
     "Syntax Validator": SyntaxAgent,
     "UX Designer": UXAgent,
     "SEO Expert": SEOExpertAgent,
-    "Video Director": VideoAgent
+    "Video Director": VideoAgent,
+    "Contact Form Specialist": ContactFormAgent
 }
 
 def render_agent_lab():

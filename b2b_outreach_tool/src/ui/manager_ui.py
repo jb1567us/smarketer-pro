@@ -1,15 +1,17 @@
-
 import streamlit as st
 import asyncio
+import random
+import time
+import json
+from datetime import datetime
 from agents.manager import ManagerAgent
 from utils.recorder import WorkflowRecorder
 from utils.voice_manager import VoiceManager
 from workflow import run_outreach
 from workflow_manager import save_workflow, list_workflows, load_workflow, extract_steps_from_workflow
-from utils.agent_registry import get_agent_class
+from utils.agent_registry import get_agent_class, list_available_agents
 from memory import Memory
 from discovery_engine import DiscoveryEngine
-import random
 
 def render_manager_ui():
     st.header("🤖 Manager Agent")
@@ -228,10 +230,6 @@ def render_manager_ui():
                                 sub_agent = AgentClass()
                                 st.write(f"Delegating to **{agent_name}**...")
                                 
-                                # Assume most agents have a 'think' or similar method.
-                                # Some have 'generate', 'gather_intel'. 
-                                # We need a common interface or adapters.
-                                # For now, we try 'think' or 'run'.
                                 result = None
                                 if hasattr(sub_agent, 'think'):
                                     result = sub_agent.think(instructions)
@@ -240,18 +238,58 @@ def render_manager_ui():
                                 elif hasattr(sub_agent, 'gather_intel'): # Researcher
                                     result = asyncio.run(sub_agent.gather_intel({"query": instructions}))
                                 
-                                st.success("Task Complete")
-                                st.json(result) # Show result
+                                # Process Result for Chat
+                                content_to_display = ""
+                                if isinstance(result, dict) and result.get("image_url"):
+                                    # Handle Image Result
+                                    img_path = result.get("image_url")
+                                    # Streamlit local file text format for markdown images
+                                    content_to_display = f"**Task Complete.**\n\n![Generated Image]({img_path})\n\n_Path: {img_path}_"
+                                else:
+                                    # Handle Text/JSON Result
+                                    content_to_display = f"**Result from {agent_name}:**\n```json\n{json.dumps(result, indent=2)}\n```"
                                 
                                 # Log result to conversation so Manager knows
                                 st.session_state['manager_messages'].append({
-                                    "role": "system", 
-                                    "content": f"Result from {agent_name}: {result}"
+                                    "role": "assistant", 
+                                    "content": content_to_display
                                 })
                                 memory.add_feedback(tool, "Success", 4, f"Delegated to {agent_name}")
                             else:
                                 st.error(f"Agent {agent_name} not found.")
 
+                        elif tool == "conductor_mission":
+                            goal = params.get("goal")
+                            icp = params.get("icp", "")
+                            sequence = params.get("sequence", [])
+                            
+                            st.info(f"🚀 Launching Conductor Mission: {goal}")
+                            if sequence:
+                                st.write(f"Flow: {' → '.join([s.get('name') or s.get('agent') for s in sequence])}")
+                            
+                            voice.speak(f"Launching conductor mission for {goal}")
+                            
+                            # Prepare strategy object for AutomationEngine
+                            strategy = {
+                                "strategy_name": f"Conductor: {goal[:30]}...",
+                                "goal": goal,
+                                "icp_refined": icp,
+                                "mode": "conductor",
+                                "sequence": sequence,
+                                "queries": [goal], # Backup
+                                "limit": 5
+                            }
+                            
+                            engine = st.session_state['automation_engine']
+                            engine.start_mission(strategy, agent)
+                            st.success("Mission started! Check 'Mission Control' tab for live progress.")
+                            memory.add_feedback(tool, "Success", 5, f"Launched conductor for: {goal}")
+
+                        elif tool == "learn_insight":
+                            insight = params.get("insight")
+                            memory.add_insight(insight)
+                            st.success(f"🧠 Insight Learned: {insight}")
+                            
                         elif tool == "list_workflows":
                             wfs = list_workflows()
                             st.json(wfs)
@@ -265,6 +303,9 @@ def render_manager_ui():
                         voice.speak(f"I encountered an error executing {tool}.")
                     
                     status.update(label="Task Complete", state="complete")
+                    
+                # Force refresh to show results
+                st.rerun()
         
                 # Calculate probability of serendipity
                 # If tool was successful, maybe show a "Did you know?"

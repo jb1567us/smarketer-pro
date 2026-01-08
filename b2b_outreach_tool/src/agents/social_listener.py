@@ -100,7 +100,7 @@ class SocialListeningAgent(BaseAgent):
             "suggested_reply_angle": "Draft a helpful, non-salesy insight that gently positions us as the expert/solution."
         }}
         """
-        return self.provider.generate_json(prompt)
+        return self.generate_json(prompt)
 
     def generate_reply(self, post_content, angle):
         """
@@ -114,4 +114,6 @@ class SocialListeningAgent(BaseAgent):
         
         Keep it under 280 characters.
         """
-        return self.provider.generate_text(prompt)
+        res = self.provider.generate_text(prompt)
+        self.save_work(res, artifact_type="social_reply_draft", metadata={"angle": angle})
+        return res

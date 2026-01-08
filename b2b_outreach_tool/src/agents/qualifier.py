@@ -25,7 +25,7 @@ class QualifierAgent(BaseAgent):
         if instructions:
             full_instructions += f"\n\nADDITIONAL INSTRUCTIONS:\n{instructions}"
 
-        return await self.provider.generate_json_async(f"Lead Evaluation Context:\n{context}\n\n{full_instructions}")
+        return await self.generate_json_async(f"Lead Evaluation Context:\n{context}\n\n{full_instructions}")
 
     def think(self, context, instructions=None):
         """
@@ -46,7 +46,7 @@ class QualifierAgent(BaseAgent):
             full_instructions += f"\n\nADDITIONAL INSTRUCTIONS:\n{instructions}"
 
         # Assuming context is a string or dict we can stringify
-        return self.provider.generate_json(f"Lead Evaluation Context:\n{context}\n\n{full_instructions}")
+        return self.generate_json(f"Lead Evaluation Context:\n{context}\n\n{full_instructions}")
 
     def ask_researcher(self, missing_info):
         """

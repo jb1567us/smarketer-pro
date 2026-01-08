@@ -70,7 +70,8 @@ class BrowserManager:
         if captcha_settings and captcha_settings.get('enabled'):
             self.page.captcha_solver = CaptchaSolver(
                 captcha_settings['provider'], 
-                captcha_settings['api_key']
+                captcha_settings['api_key'],
+                custom_url=captcha_settings.get('custom_url')
             )
         else:
             self.page.captcha_solver = None
@@ -78,8 +79,11 @@ class BrowserManager:
     async def save_state(self):
         """Persists the current browser context (cookies, storage) to disk."""
         if self.context:
-            await self.context.storage_state(path=self.storage_path)
-            print(f"✅ Session saved to {self.storage_path}")
+            try:
+                await self.context.storage_state(path=self.storage_path)
+                print(f"Session saved to {self.storage_path}")
+            except Exception as e:
+                print(f"Warning: Could not save session state (context likely closed): {e}")
 
     async def close(self):
         """Closes the browser and playwright."""
@@ -90,6 +94,39 @@ class BrowserManager:
             await self.browser.close()
         if self.playwright:
             await self.playwright.stop()
+
+    async def start_recording(self):
+        """Injects the recorder script and sets up event capture."""
+        if not self.page:
+            return
+        
+        self.recorded_events = []
+        
+        async def record_event(event_json):
+            event = json.loads(event_json)
+            print(f"Recorded event: {event}")
+            self.recorded_events.append(event)
+
+        await self.context.expose_binding("recordEvent", lambda source, msg: asyncio.create_task(record_event(msg)))
+        
+        # Load and inject recorder.js
+        recorder_path = os.path.join(os.path.dirname(__file__), "recorder.js")
+        with open(recorder_path, "r") as f:
+            recorder_js = f.read()
+        
+        await self.page.add_init_script(recorder_js)
+        # Also run it immediately in case page is already loaded
+        try:
+            await self.page.evaluate(recorder_js)
+        except:
+            pass
+        
+        print("REC: Recording started.")
+
+    async def stop_recording(self):
+        """Stops recording and returns the events."""
+        print("REC: Recording stopped.")
+        return getattr(self, "recorded_events", [])
 
     async def solve_captcha_if_present(self):
         """Re-uses the captcha solving logic from previous implementations."""
