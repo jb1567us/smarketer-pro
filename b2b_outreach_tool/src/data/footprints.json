@@ -1,0 +1,69 @@
+{
+    "guest_posts": [
+        "\"write for us\"",
+        "\"guest post\"",
+        "\"submit an article\"",
+        "\"submit a guest post\"",
+        "\"guest post by\"",
+        "\"contribute to우리 blog\"",
+        "\"become a contributor\"",
+        "\"guest column\"",
+        "\"guest blogger\""
+    ],
+    "blogs": [
+        "\"powered by wordpress\" \"leave a reply\"",
+        "\"powered by blogger\" \"post a comment\"",
+        "\"leave a comment\"",
+        "\"notify me of follow-up comments\"",
+        "\"comments are closed\"",
+        "\"type your comment here\""
+    ],
+    "resource_pages": [
+        "inurl:resources",
+        "intitle:\"useful links\"",
+        "\"recommended links\"",
+        "\"helpful resources\"",
+        "\"other resources\"",
+        "\"link partners\""
+    ],
+    "forums": [
+        "\"powered by vbulletin\"",
+        "\"powered by phpbb\"",
+        "\"powered by smf\"",
+        "\"powered by mybb\"",
+        "\"powered by xenforo\"",
+        "inurl:viewtopic.php",
+        "inurl:showthread.php"
+    ],
+    "directories": [
+        "\"submit site\"",
+        "\"add url\"",
+        "\"suggest a site\"",
+        "\"directory of\"",
+        "\"add a business\"",
+        "\"list your site\""
+    ],
+    "edu_gov": [
+        "site:.edu \"guest post\"",
+        "site:.edu \"write for us\"",
+        "site:.gov \"comment\"",
+        "site:.ac.uk \"blog\""
+    ],
+    "social_intelligence": [
+        "site:linkedin.com/in \"hiring\"",
+        "site:linkedin.com/in \"founder\"",
+        "site:linkedin.com/in \"seeking new opportunities\"",
+        "site:twitter.com \"my email is\"",
+        "site:instagram.com \"link in bio\"",
+        "site:facebook.com \"contact us\"",
+        "intitle:\"meet the team\" \"social media\""
+    ],
+    "b2b_contacts": [
+        "inurl:contact \"sales inquiry\"",
+        "inurl:contact \"business development\"",
+        "intitle:\"contact us\" \"company registration\"",
+        "\"b2b\" \"wholesale\" \"distributor\" inurl:about",
+        "\"request a quote\" OR \"request a demo\"",
+        "\"media kit\" filetype:pdf"
+    ]
+}

@@ -1,0 +1,1 @@
+(function(){function q(s,c){return (c||document).querySelector(s)}var b=q('[data-ttp-navtoggle]');var m=q('[data-ttp-mobilemenu]');if(!b||!m)return;b.addEventListener('click',function(){var o=m.classList.toggle('is-open');b.setAttribute('aria-expanded',o?'true':'false')});})();

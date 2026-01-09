@@ -77,3 +77,4 @@ python src/workflow.py "your search query" --niche "target industry"
 
 ---
 *Built with ❤️ for advanced agentic outreach.*
+*Built with ❤️ for advanced agentic outreach.*

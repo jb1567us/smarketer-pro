@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TrackingEvent",
+  "type": "object",
+  "required": [
+    "event",
+    "properties"
+  ],
+  "properties": {
+    "event": {
+      "type": "string"
+    },
+    "properties": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "pageview",
+        "click",
+        "form_submit",
+        "api"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "web",
+        "email",
+        "ads"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

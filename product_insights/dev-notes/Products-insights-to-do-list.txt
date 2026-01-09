@@ -1,0 +1,9 @@
+Marketing needs channel stream partners who could be contacted to be affiliates for this business. Channel stream partners are people that service your customers but they are not competitors. This makes them good for a potential affiliate partners.
+
+We need a B2C mode and a B2B mode
+
+We'll need a whole other section which scrapes Google for businesses in B2B mode creates large lists of hyper targeted emails. We send them articles about how this SAAS app solves their pain points. The articles have links to the Saas app. we need an automated workflow for this. Utilize free email servers within their limits this way email comes from a legitimate source and will not get rejected. When sending emails via B to B it is not spam but just the business email solicitation which is perfectly legal.
+
+The email scraping and data scraping for perspective clients needs to have settings for state city federal international searching different countries
+
+Oracle free tier for utilizing SEARXNG
