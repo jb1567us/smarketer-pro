@@ -20,7 +20,8 @@ def init_logging():
     start_global_logging()
     return True
 
-init_logging()
+
+# init_logging call moved to main()
 
 if platform.system() == 'Windows':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -77,13 +78,16 @@ from agents import (
 from agents.custom_agent import CustomAgent
 
 # Force reload config on every run to pick up external changes
-reload_config()
 
-st.set_page_config(page_title="B2B Outreach Agent", layout="wide", page_icon="🚀")
+# reload_config call moved to main()
+
+
+# st.set_page_config call moved to main()
 
 # Import UI Styles
 from ui.styles import load_css
-load_css()
+
+# load_css call moved to main()
 
 
 def render_agent_chat(agent_key, agent_instance, context_key):
@@ -242,6 +246,10 @@ def get_system_usage():
     return cpu, ram
 
 def main():
+    st.set_page_config(page_title="B2B Outreach Agent", layout="wide", page_icon="🚀")
+    init_logging()
+    reload_config()
+    load_css()
     init_db()
     st.title("🚀 Smarketer Pro: CRM & Growth OS")
     
@@ -249,10 +257,6 @@ def main():
     app_mode = get_setting("app_mode", "B2B")
     if "app_mode" not in st.session_state:
         st.session_state["app_mode"] = app_mode
-        try:
-            print(f"DEBUG: SocialListeningAgent Class: {SocialListeningAgent}")
-        except Exception as e:
-            print(f"DEBUG: SocialListeningAgent Import Error: {e}")
 
     # Initialize Automation Engine
     if 'automation_engine' not in st.session_state:
@@ -3189,4 +3193,27 @@ def main():
                     render_agent_chat("last_custom_agent_response", custom_agent, "ca_context")
 
 if __name__ == '__main__':
-    main()
+    print("DEBUG: Entering __name__ == '__main__'")
+    try:
+        print("DEBUG: Calling main()...")
+        main()
+        print("DEBUG: main() finished normal execution.")
+    except Exception as e:
+        import traceback
+        error_msg = f"CRITICAL: App crashed: {e}\n{traceback.format_exc()}"
+        print(error_msg, file=sys.stderr)
+        try:
+            with open("logs/crash.log", "a") as f:
+                f.write(f"\n[{datetime.now()}] {error_msg}\n")
+        except:
+            pass
+    except BaseException as e:
+        import traceback
+        # Catch SystemExit and others
+        error_msg = f"CRITICAL: App crashed with BaseException: {e}\n{traceback.format_exc()}"
+        print(error_msg, file=sys.stderr)
+        try:
+            with open("logs/crash.log", "a") as f:
+                f.write(f"\n[{datetime.now()}] {error_msg}\n")
+        except:
+            pass

@@ -117,3 +117,31 @@ class SocialListeningAgent(BaseAgent):
         res = self.provider.generate_text(prompt)
         self.save_work(res, artifact_type="social_reply_draft", metadata={"angle": angle})
         return res
+
+    def analyze_platform_trends(self, topic, platform="twitter"):
+        """
+        Analyzes current trends around a topic to generate viral hooks, inspired by 'Twitter Topic Analyzer'.
+        """
+        prompt = (
+            f"Act as a Viral Trend Analyst for {platform}.\n"
+            f"I need to create content about '{topic}'.\n"
+            "Analyze the psychology of what makes posts about this topic go viral right now.\n"
+            "Identify:\n"
+            "1. Controversial angles (Polarization).\n"
+            "2. Counter-intuitive insights (Novelty).\n"
+            "3. High-emotion triggers (Fear/Greed/Curiosity).\n\n"
+            "Return JSON with keys: 'viral_hooks' (list of 5 hooks), 'trending_hashtags', 'content_structure_suggestion'."
+        )
+        return self.provider.generate_json(prompt)
+
+    def generate_trend_report(self, internal_data_summary):
+        """
+        Synthesizes a report on social trends based on gathered data.
+        """
+        prompt = (
+            "Generate a 'Trend Intelligence Report' based on the following social signals we've gathered.\n"
+            "Highlight the biggest opportunity for our brand to insert itself into the conversation.\n\n"
+            f"Data Summary: {internal_data_summary}\n\n"
+            "Return JSON with keys: 'primary_trend', 'opportunity_score', 'recommended_action'."
+        )
+        return self.provider.generate_json(prompt)

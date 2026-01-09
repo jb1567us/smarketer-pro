@@ -9,11 +9,16 @@ import aiohttp
 class ResearcherAgent(BaseAgent):
     def __init__(self, provider=None):
         super().__init__(
-            role="Lead Researcher & Data Gatherer",
+            role="Lead Researcher",
             goal="Find relevant leads, gather deep information, and ensure data completeness by self-correcting.",
+            backstory=(
+                "You are Researcher, a top-tier investigator agent harvested from LOLLMS 'internet/researcher'. "
+                "Your core mission is to dive deep into topics, verify facts, and structure data methodically. "
+                "You do not just 'google'; you plan your research, cross-reference sources, and synthesize findings "
+                "into coherent, cited reports. You are persistent, objective, and thorough."
+            ),
             provider=provider
         )
-        self.footprints = self._load_footprints()
         self.social_scraper = SocialScraper()
 
     def _load_footprints(self):
@@ -374,10 +379,10 @@ class ResearcherAgent(BaseAgent):
         
         if is_query:
             self.logger.info(f"ResearcherAgent received query via think(): {context}")
-            print(f"[Researcher] 🔎 Searching for: '{context}'...")
+            self.logger.info(f"Searching for: '{context}'...")
             # Run async gather_intel synchronously
             res = asyncio.run(self.gather_intel({"query": context}))
-            print(f"[Researcher] ✅ Found {len(res.get('results', []))} results.")
+            self.logger.info(f"Found {len(res.get('results', []))} results.")
             return res
         
         # Fallback: Analyze provided data

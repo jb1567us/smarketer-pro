@@ -56,3 +56,9 @@ refactor_tools/
 test_legacy/
 test_snapshots/
 TOOLBOX.md
+
+# Extraneous Folders (Local only)
+lollms/
+sessions/
+jobs/
+logs/

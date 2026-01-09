@@ -74,11 +74,31 @@ def start_global_logging():
                 sys.stderr = DualLogger(log_file, sys.stderr)
 
             # 3. Spawn The Window
-            # Only on Windows for now
+            # Only on Windows for now, and only if enabled in config
             if sys.platform == 'win32':
-                print("[System] Spawning Background Terminal Window...")
-                cmd = f'start powershell -NoExit -Command "$host.UI.RawUI.WindowTitle = \'Smarketer Pro Background Activity\'; Get-Content -Path \'{log_file}\' -Wait"'
-                subprocess.Popen(cmd, shell=True)
+                try:
+                    # Deferred import to ensure config is loaded
+                    from config import config
+                    should_spawn = config.get('logging', {}).get('spawn_background_window', False)
+                except ImportError:
+                    should_spawn = False
+                
+                if should_spawn:
+                    # Check if window already exists to prevent duplicates
+                    check_cmd = 'powershell -Command "Get-Process | Where-Object {$_.MainWindowTitle -eq \'Smarketer Pro Background Activity\'} | Select-Object -ExpandProperty Id"'
+                    try:
+                        existing_pid = subprocess.check_output(check_cmd, shell=True).decode().strip()
+                    except:
+                        existing_pid = ""
+
+                    if not existing_pid:
+                        print("[System] Spawning Background Terminal Window...")
+                        cmd = f'start powershell -NoExit -Command "$host.UI.RawUI.WindowTitle = \'Smarketer Pro Background Activity\'; Get-Content -Path \'{log_file}\' -Wait"'
+                        subprocess.Popen(cmd, shell=True)
+                    else:
+                        print(f"[System] Log window already active (PID: {existing_pid}). Skipping spawn.")
+                else:
+                    print("[System] Background log window disabled by config.")
 
             print("[System] Global logging initialized.")
             _LOGGING_INITIALIZED = True

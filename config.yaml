@@ -212,6 +212,8 @@ llm:
     strategy: priority
   model_name: gemini-flash-latest
   ollama_base_url: http://localhost:11434
+logging:
+  spawn_background_window: false
 image_gen:
   default_provider: openai
   openai:

@@ -10,6 +10,12 @@ class ManagerAgent(BaseAgent):
         super().__init__(
             role="Manager & Orchestrator",
             goal="Oversee the outreach process, execute tasks via tools, and manage workflows.",
+            backstory=(
+                "You are the Manager & Orchestrator (Python Coder Variant), inspired by LOLLMS 'coding_python'. "
+                "Unlike a passive chat bot, you actively plan, delegate, and when necessary, write self-contained "
+                "Python scripts to solve complex logic. Your primary mode of operation is: Plan -> Delegate -> Code -> Execute. "
+                "You are precise, ensuring all tools and scripts are error-free and robust."
+            ),
             provider=provider
         )
         self.memory = Memory()
@@ -45,7 +51,7 @@ class ManagerAgent(BaseAgent):
                 raise ValueError("Deep seek returned non-dict")
             return res
         except Exception as e:
-            print(f"[Manager] Intent classification failed: {e}")
+            self.logger.warning(f"[Manager] Intent classification failed: {e}")
             return {"intent": "CHAT", "entity": "None", "instructions": user_input}
 
     def think(self, user_input, intent_history=None, available_tools=None):
@@ -56,11 +62,11 @@ class ManagerAgent(BaseAgent):
         from workflow_manager import list_workflows
         
         # 1. Classify Intent
-        print(f"\n[Manager] 🤔 Analyzing user input: '{user_input}'...")
+        self.logger.info(f"Analyzing user input: '{user_input}'...")
         classification = self._classify_intent(user_input)
         intent = classification.get("intent", "CHAT")
         entity = classification.get("entity", "")
-        print(f"[Manager] 🧠 Classified Intent: {intent} (Entity: {entity})")
+        self.logger.info(f"Classified Intent: {intent} (Entity: {entity})")
         
         # 2. Build Context
         expertise_lines = []
@@ -143,7 +149,7 @@ class ManagerAgent(BaseAgent):
             f"User Input: {user_input}\n"
         )
         
-        print(f"[Manager] 💭 Generating execution plan (LLM Call)...")
+        self.logger.debug(f"Generating execution plan (LLM Call)...")
         try:
             response = self.provider.generate_json(full_prompt)
             if isinstance(response, list):
@@ -154,7 +160,7 @@ class ManagerAgent(BaseAgent):
             tool_name = response.get('tool') if response else None
             
             if not tool_name:
-                print(f"[Manager] ⚠️ LLM returned no tool (likely safety refusal). Falling back to Intent: {intent}")
+                self.logger.warning(f"LLM returned no tool (likely safety refusal). Falling back to Intent: {intent}")
                 if intent == "RETRIEVE_INFO":
                     response = {
                         "tool": "delegate_task",
@@ -186,10 +192,10 @@ class ManagerAgent(BaseAgent):
                         "reply": f"Generating content via {agent} (Fallback)..."
                     }
 
-            print(f"[Manager] 💡 Plan generated: {response.get('tool')} -> {str(response.get('params'))[:50]}...")
+            self.logger.info(f"Plan generated: {response.get('tool')} -> {str(response.get('params'))[:50]}...")
             return response
         except Exception as e:
-            print(f"[Manager] ❌ Error generating plan: {e}")
+            self.logger.error(f"Error generating plan: {e}")
             return {"tool": "chat", "reply": "I encountered an error while thinking.", "error": str(e)}
 
     async def run_mission(self, goal, context=None, plan_override=None, status_callback=None):

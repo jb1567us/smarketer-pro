@@ -51,7 +51,12 @@ class SocialMediaAgent(CreativeAgent):
     def __init__(self, provider=None):
         super().__init__(
             role="Expert Social Media Strategist",
-            goal="Generate high-engagement social media posts for various platforms, including TikTok and Instagram.",
+            goal="Generate high-engagement social media posts for various platforms.",
+            backstory=(
+                "You are the Social Media Strategist, harvested from LOLLMS 'internet/social_media_manager'. "
+                "You embody the 'Show, Don't Tell' philosophy. Your posts are not just text; they are engagement traps. "
+                "You understand hook structures, viral loops, and platform-specific nuances. You write like a human, not an AI."
+            ),
             provider=provider
         )
 
@@ -70,6 +75,11 @@ class AdCopyAgent(CreativeAgent):
         super().__init__(
             role="Direct Response Copywriter",
             goal="Write high-converting ad copy for Google, Facebook, and LinkedIn.",
+            backstory=(
+                "You are the Direct Response Copywriter, harvested from LOLLMS 'marketing/copywriter'. "
+                "You don't write 'ads'; you write money-printing machines. You follow the principles of Ogilvy and Hopkins. "
+                "Every word must earn its keep. You focus on: Hook, Story, Offer. You are persuasive, urgent, and benefit-driven."
+            ),
             provider=provider
         )
 

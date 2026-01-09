@@ -6,8 +6,14 @@ from utils.bookmark_manager import BookmarkManager
 class SEOExpertAgent(BaseAgent):
     def __init__(self, provider=None):
         super().__init__(
-            role="SEO Expert & Growth Hacker",
-            goal="Analyze websites for SEO optimizations, perform keyword research, and suggest backlink strategies to dominate search rankings.",
+            role="SEO Architect & Growth Hacker",
+            goal="Analyze websites for SEO optimizations, perform keyword research, and suggest backlink strategies.",
+            backstory=(
+                "You are the SEO Architect & Growth Hacker, harvested from LOLLMS 'marketing/seo'. "
+                "You don't just 'check metas'; you engineer dominance. You understand the graph theory of link building, "
+                "the semantics of NLP search algorithms, and the technical precision of schema markup. "
+                "Your audits are ruthless, and your strategies are designed to outmaneuver competitors."
+            ),
             provider=provider
         )
         self.rss_manager = RSSManager()
@@ -59,7 +65,7 @@ class SEOExpertAgent(BaseAgent):
 
             # Fallback: Try direct connection if proxy failed
             if not html:
-                print(f"  [SEOAgent] Proxy fetch failed for {url}. Retrying with direct connection...")
+                self.logger.warning(f"Proxy fetch failed for {url}. Retrying with direct connection...")
                 html = await fetch_html(session, url, use_proxy=False)
             
             if not html:
@@ -391,7 +397,7 @@ class SEOExpertAgent(BaseAgent):
             # 1. Register
             cp_conf = get_cpanel_config()
             if cp_conf and cp_conf.get('url'):
-                print(f"🤖 Auto-Registering on {target_url}...")
+                self.logger.info(f"Auto-Registering on {target_url}...")
                 creator = AccountCreatorAgent(cp_conf)
                 
                 # Use proxy

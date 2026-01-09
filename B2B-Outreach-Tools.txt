@@ -1,3 +1,5 @@
+The social listing agent should have access to Google trends
+
 Is there a way for us to create a licensing key so that when this becomes a standalone app and I sell it people need a license key to be able to use it? What would all be involved in something like that
 
 The influencer creators scout needs to be able to harvest followers

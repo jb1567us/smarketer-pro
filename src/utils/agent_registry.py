@@ -19,9 +19,9 @@ AGENT_METADATA = {
     },
     "reviewer": {
         "role": "Quality Control / Editor",
-        "expertise": "Proofreading, brand alignment, tone consistency.",
-        "capabilities": ["review_content"],
-        "best_used_for": "Final audit of copy before sending. Ensuring no hallucinations."
+        "expertise": "Proofreading, brand alignment, tone consistency, and conversion optimization.",
+        "capabilities": ["review_content", "enhance_email_conversion", "audit_tone"],
+        "best_used_for": "Final audit of copy and maximizing email reply rates."
     },
     "designer": {
         "role": "Visual Brand Designer",
@@ -97,9 +97,9 @@ AGENT_METADATA = {
     },
     "social_listener": {
         "role": "Social Media Guardian",
-        "expertise": "Monitoring social platforms for brand mentions, competitor weakness, and high-intent buying signals.",
-        "capabilities": ["listen_for_keywords", "analyze_signal", "generate_reply"],
-        "best_used_for": "Real-time monitoring of social conversations and lead detection."
+        "expertise": "Monitoring social platforms for brand mentions, competitor weakness, and high-intent buying signals. Trend analysis.",
+        "capabilities": ["listen_for_keywords", "analyze_signal", "generate_reply", "analyze_platform_trends", "generate_trend_report"],
+        "best_used_for": "Real-time monitoring, lead detection, and viral hook generation."
     },
     "linkedin": {
         "role": "LinkedIn Outreach Specialist",
@@ -124,6 +124,42 @@ AGENT_METADATA = {
         "expertise": "Ensure content is technically correct, free of placeholders, and properly formatted.",
         "capabilities": ["think"],
         "best_used_for": "Final code/text validation and error checking."
+    },
+    "data_cleaner": {
+        "role": "DataOps Pythonista",
+        "expertise": "Cleaning and standardizing messy B2B lead lists (CSV/Excel).",
+        "capabilities": ["think"],
+        "best_used_for": "Preprocessing leads before import."
+    },
+    "sales_analyzer": {
+        "role": "Meeting Minute Writer",
+        "expertise": "Analyzing sales calls and generating actionable minutes.",
+        "capabilities": ["think"],
+        "best_used_for": "Post-call analysis and action item extraction."
+    },
+    "knowledge_architect": {
+        "role": "Knowledge Architect",
+        "expertise": "Structuring unstructured data for RAG/Database ingestion.",
+        "capabilities": ["think"],
+        "best_used_for": "Building the Knowledge Graph."
+    },
+    "prompt_expert": {
+        "role": "Prompt Engineer",
+        "expertise": "Optimizing and refining prompts for other agents.",
+        "capabilities": ["think"],
+        "best_used_for": "Meta-optimization of system prompts."
+    },
+    "summarizer": {
+        "role": "Content Synthesizer",
+        "expertise": "Condensing large documents and articles into concise summaries.",
+        "capabilities": ["summarize_text", "extract_key_points"],
+        "best_used_for": "Digestible summaries of large datasets or documents."
+    },
+    "meet_scribe": {
+        "role": "Meeting Intelligence Officer",
+        "expertise": "Analyzing meeting transcripts, extracting action items, drafting minutes and follow-ups.",
+        "capabilities": ["analyze_meeting_transcript", "generate_follow_up_email"],
+        "best_used_for": "Post-meeting automation and ensuring accountability."
     }
 }
 
@@ -164,7 +200,9 @@ def get_agent_class(agent_name):
         GraphicsDesignerAgent, WordPressAgent, SocialMediaAgent, AdCopyAgent,
         BrainstormerAgent, PersonaAgent, ManagerAgent, ProductManagerAgent,
         SyntaxAgent, UXAgent, SEOExpertAgent, InfluencerAgent, SocialListeningAgent, 
-        LinkedInAgent, ContactFormAgent, VideoAgent, ImageGenAgent
+        LinkedInAgent, ContactFormAgent, VideoAgent, ImageGenAgent,
+        DataCleanerAgent, SalesAnalyzerAgent, KnowledgeArchitectAgent, PromptExpertAgent,
+        SummarizerAgent, MeetScribeAgent
     )
     from agents.custom_agent import CustomAgent
     
@@ -191,7 +229,13 @@ def get_agent_class(agent_name):
         "image": ImageGenAgent,
         "manager": ManagerAgent,
         "ux": UXAgent,
-        "syntax": SyntaxAgent
+        "syntax": SyntaxAgent,
+        "data_cleaner": DataCleanerAgent,
+        "sales_analyzer": SalesAnalyzerAgent,
+        "knowledge_architect": KnowledgeArchitectAgent,
+        "prompt_expert": PromptExpertAgent,
+        "summarizer": SummarizerAgent,
+        "meet_scribe": MeetScribeAgent
     }
     
     # 1. Check standard agents

@@ -16,3 +16,4 @@ setuptools-rust
 psutil
 pytest
 fpdf2
+lollms_client
