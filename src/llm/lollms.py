@@ -1,13 +1,20 @@
 from .base import LLMProvider
 import json
 import os
-from lollms_client import LollmsClient
+try:
+    from lollms_client import LollmsClient
+except ImportError:
+    LollmsClient = None
 
 class LollmsProvider(LLMProvider):
     def __init__(self, host=None, port=None, model=None):
         self.host = host or os.getenv("LOLLMS_HOST", "http://localhost")
         self.port = port or os.getenv("LOLLMS_PORT", "9642")
-        self.client = LollmsClient(f"{self.host}:{self.port}")
+        if LollmsClient:
+            self.client = LollmsClient(f"{self.host}:{self.port}")
+        else:
+            self.client = None
+            print("[LollmsProvider] Warning: lollms_client not installed. Provider disabled.")
         self.model = model
 
     def generate_text(self, prompt, **kwargs):
