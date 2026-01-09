@@ -16,9 +16,10 @@ except ImportError:
 import json
 from utils.logger_service import start_global_logging
 
-# VERIFICATION LOG
-print("--> STARTING APP VERSION: 2026.1.9 - CLEAN DEPLOY <--")
-print(f"--> PSUTIL STATUS: {'Installed' if psutil else 'Missing, using fallback'} <--")
+print("\n\n" + "="*50)
+print("NUCLEAR UNSTICK DEPLOYED v2026.1.9.2")
+print("IF YOU SEE THIS LATER THAN NOW, REBUILD IS WORKING")
+print("="*50 + "\n\n")
 
 # Initialize Global Logging (Singleton)
 # Using cache_resource ensures this runs only once per server lifetime (mostly)
