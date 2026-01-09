@@ -13,3 +13,4 @@ setuptools-rust
 psutil
 pytest
 fpdf2
+# force rebuild 2
