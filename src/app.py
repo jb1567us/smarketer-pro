@@ -9,7 +9,10 @@ import subprocess
 import platform
 from datetime import datetime
 from dotenv import load_dotenv
-import psutil
+try:
+    import psutil
+except ImportError:
+    psutil = None
 import json
 from utils.logger_service import start_global_logging
 
