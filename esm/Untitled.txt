@@ -1,0 +1,15 @@
+
+neutral tones collection is too broad in artwork selection, needs to be more refinesd in its choices, maybe use sklearn to better determine which images have predominantly neutral tones
+
+update spec sheets to location worldwide instead of just USA 
+
+
+
+On some of the art card pages the preview in your room button takes you to the trade portal not to the visualizer.
+
+
+This all needs to be mobile responsive
+
+Offer  share button on visualizer 
+
+mobile spec sheet not working and mobile touch adjusts to image not working

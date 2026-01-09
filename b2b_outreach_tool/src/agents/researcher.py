@@ -145,9 +145,14 @@ class ResearcherAgent(BaseAgent):
         """
         # If context is a query, search first
         if "query" in context:
+            query = context["query"]
+            if not query or not isinstance(query, str) or not query.strip():
+                self.logger.warning(f"Invalid query provided to gather_intel: {query}")
+                return {"error": "Invalid query provided", "results": []}
+                
             limit = context.get("limit")
-            res = await self._perform_search(context["query"], limit=limit)
-            self.save_work(res, artifact_type="search_results", metadata={"query": context["query"]})
+            res = await self._perform_search(query, limit=limit)
+            self.save_work(res, artifact_type="search_results", metadata={"query": query})
             return res
         
         # If context is a URL, scrape and analyze
@@ -356,8 +361,26 @@ class ResearcherAgent(BaseAgent):
         return "Social data found but format unrecognized."
 
     def think(self, context, instructions=None):
-        # The researcher thinks via async gather_intel mostly, 
-        # but if we need a synchronous 'opinion' on data, we use this.
+        """
+        Processes a request. If it looks like a search query, perform the search.
+        Otherwise, analyze the provided data.
+        """
+        # Heuristic: If context is a short string and not JSON/Data, treat as search query
+        is_query = False
+        if isinstance(context, str) and len(context) < 300:
+            is_query = True
+            if "{" in context and "}" in context: # vague check for JSON
+                is_query = False
+        
+        if is_query:
+            self.logger.info(f"ResearcherAgent received query via think(): {context}")
+            print(f"[Researcher] 🔎 Searching for: '{context}'...")
+            # Run async gather_intel synchronously
+            res = asyncio.run(self.gather_intel({"query": context}))
+            print(f"[Researcher] ✅ Found {len(res.get('results', []))} results.")
+            return res
+        
+        # Fallback: Analyze provided data
         prompt = f"Analyze this research data:\n{context}"
         if instructions:
             prompt += f"\n\nAdditional Instructions:\n{instructions}"

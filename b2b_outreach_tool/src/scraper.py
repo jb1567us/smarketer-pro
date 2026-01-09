@@ -10,7 +10,8 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
     base_url = config["search"]["searxng_url"]
     params = {
         "q": query,
-        "format": "html"
+        "format": "html",
+        "safesearch": config["search"].get("safe_search", 1) # Default to 1 (Moderate) if missing
     }
     
     if categories:

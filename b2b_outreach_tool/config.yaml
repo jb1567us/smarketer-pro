@@ -4,6 +4,7 @@ search:
   default_depth: 1
   max_results: 50
   concurrency: 5
+  safe_search: 0
   keywords: []
   profiles:
     default:
@@ -113,19 +114,21 @@ llm:
   router:
     candidates:
     - provider: groq
-      model_name: allam-2-7b
+      model_name: llama-3.1-8b-instant
     - provider: groq
-      model_name: canopylabs/orpheus-arabic-saudi
+      model_name: llama-3.3-70b-versatile
+    - provider: groq
+      model_name: mixtral-8x7b-32768
+    - provider: groq
+      model_name: gemma-7b-it
+    - provider: groq
+      model_name: gemma2-9b-it
     - provider: groq
       model_name: canopylabs/orpheus-v1-english
     - provider: groq
       model_name: groq/compound
     - provider: groq
       model_name: groq/compound-mini
-    - provider: groq
-      model_name: llama-3.1-8b-instant
-    - provider: groq
-      model_name: llama-3.3-70b-versatile
     - provider: groq
       model_name: meta-llama/llama-4-maverick-17b-128e-instruct
     - provider: groq
@@ -137,17 +140,11 @@ llm:
     - provider: groq
       model_name: meta-llama/llama-prompt-guard-2-86m
     - provider: groq
-      model_name: moonshotai/kimi-k2-instruct
-    - provider: groq
-      model_name: moonshotai/kimi-k2-instruct-0905
-    - provider: groq
       model_name: openai/gpt-oss-120b
     - provider: groq
       model_name: openai/gpt-oss-20b
     - provider: groq
       model_name: openai/gpt-oss-safeguard-20b
-    - provider: groq
-      model_name: qwen/qwen3-32b
     - provider: groq
       model_name: whisper-large-v3
     - provider: groq

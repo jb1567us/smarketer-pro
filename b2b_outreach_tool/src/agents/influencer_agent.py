@@ -59,7 +59,21 @@ class InfluencerAgent(ResearcherAgent):
                 
                 print(f"  [InfluencerAgent] Entering Search Tier {tier_idx + 1} with {len(tier_terms)} terms...")
                 
+                # Dynamic relaxation: If we are deep in tiers (Tier 3) or have very few results, relax junk terms
+                current_junk = junk_terms
+                if tier_idx > 1 or (tier_idx > 0 and len(analyzed_influencers) == 0):
+                    # Remove some strict negative keywords to strict discovery
+                    current_junk = '-inurl:tags -inurl:explore -inurl:help -inurl:blog -inurl:newsroom'
+                    print("  [InfluencerAgent] Relaxing negative constraints to improve yield.")
+                
                 for term in tier_terms:
+                    # Apply current junk terms
+                    # We assume 'term' has the original junk_terms placeholder or we reconstruct it
+                    # But simpler: The term string ALREADY has the junk_terms in it. 
+                    # We need to replace the original junk string with the new one if changed.
+                    if current_junk != junk_terms:
+                        term = term.replace(junk_terms, current_junk)
+
                     if len(analyzed_influencers) >= limit:
                         break
                         

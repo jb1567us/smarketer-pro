@@ -39,6 +39,10 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
 
     log(f"Target: {keywords} | Niche: {target_niche}")
     
+    if not keywords:
+        log("❌ Error: No keywords provided. Aborting workflow.")
+        return
+    
     init_db()
     
     # Initialize Proxies

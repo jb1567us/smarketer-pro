@@ -528,6 +528,97 @@ def init_db():
         );
     ''')
 
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            created_at INTEGER
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER,
+            role TEXT,
+            content TEXT,
+            tool_call TEXT, -- Name of the tool used, if any
+            tool_params TEXT, -- JSON params, if any
+            timestamp INTEGER,
+            FOREIGN KEY(session_id) REFERENCES chat_sessions(id)
+        );
+    ''')
+    
+    # Migration for chat_messages tool columns
+    try:
+        c.execute("SELECT tool_call FROM chat_messages LIMIT 1")
+    except sqlite3.OperationalError:
+        print("Migrating chat_messages: Adding tool columns...")
+        c.execute("ALTER TABLE chat_messages ADD COLUMN tool_call TEXT")
+        c.execute("ALTER TABLE chat_messages ADD COLUMN tool_params TEXT")
+
+    conn.commit()
+    conn.close()
+
+def create_chat_session(title="New Chat"):
+    """Creates a new chat session and returns its ID."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('INSERT INTO chat_sessions (title, created_at) VALUES (?, ?)', (title, int(time.time())))
+    session_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return session_id
+
+def save_chat_message(session_id, role, content, tool_call=None, tool_params=None):
+    """Saves a message to a chat session, optionally with tool metadata."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    params_json = json.dumps(tool_params) if tool_params else None
+    
+    c.execute('''
+        INSERT INTO chat_messages (session_id, role, content, tool_call, tool_params, timestamp) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (session_id, role, content, tool_call, params_json, int(time.time())))
+    conn.commit()
+    conn.close()
+
+def get_chat_history(session_id):
+    """Retrieves all messages for a specific session."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT role, content, tool_call, tool_params FROM chat_messages WHERE session_id = ? ORDER BY id ASC', (session_id,))
+    results = []
+    for r in c.fetchall():
+        d = dict(r)
+        # Parse params back to dict if present
+        if d.get('tool_params'):
+            import json
+            try:
+                d['tool_params'] = json.loads(d['tool_params'])
+            except:
+                d['tool_params'] = {}
+        results.append(d)
+    conn.close()
+    return results
+
+def get_chat_sessions(limit=10):
+    """Returns the most recent chat sessions."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM chat_sessions ORDER BY created_at DESC LIMIT ?', (limit,))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def update_session_title(session_id, title):
+    """Updates the title of a chat session."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('UPDATE chat_sessions SET title = ? WHERE id = ?', (title, session_id))
     conn.commit()
     conn.close()
 
@@ -539,6 +630,12 @@ def save_agent_work_product(agent_role, input_task, output_content, tags=None, s
     tags_json = json.dumps(tags) if tags else "[]"
     meta_json = json.dumps(metadata) if metadata else "{}"
     
+    # Auto-serialize content if it's a list or dict
+    if isinstance(output_content, (list, dict)):
+        output_content = json.dumps(output_content, indent=2)
+    else:
+        output_content = str(output_content)
+
     # Use current time if specific times aren't provided
     if not completion_time:
         completion_time = int(time.time())

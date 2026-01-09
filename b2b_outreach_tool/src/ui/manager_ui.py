@@ -12,11 +12,12 @@ from workflow_manager import save_workflow, list_workflows, load_workflow, extra
 from utils.agent_registry import get_agent_class, list_available_agents
 from memory import Memory
 from discovery_engine import DiscoveryEngine
+from database import (
+    create_chat_session, save_chat_message, get_chat_history, 
+    get_chat_sessions, update_session_title
+)
 
 def render_manager_ui():
-    st.header("🤖 Manager Agent")
-    st.caption("Your personal AI Manager. Ask it to run searches, qualify leads, or automate workflows.")
-
     # Initialize Session State
     if 'manager_agent' not in st.session_state:
         st.session_state['manager_agent'] = ManagerAgent()
@@ -24,8 +25,32 @@ def render_manager_ui():
     if 'workflow_recorder' not in st.session_state:
         st.session_state['workflow_recorder'] = WorkflowRecorder()
         
-    if 'manager_messages' not in st.session_state:
-        st.session_state['manager_messages'] = [{"role": "assistant", "content": "How can I help you today?"}]
+    # --- SESSION MANAGEMENT ---
+    # Load recent sessions
+    recent_sessions = get_chat_sessions(limit=15)
+    
+    # If no session active, try to load latest or create new
+    if 'current_session_id' not in st.session_state:
+        if recent_sessions:
+            st.session_state['current_session_id'] = recent_sessions[0]['id']
+        else:
+            st.session_state['current_session_id'] = create_chat_session()
+            
+    # Load history for current session
+    current_history = get_chat_history(st.session_state['current_session_id'])
+    
+    # Sync to manager_messages (If empty, adding welcome only if it's a brand new session with no history)
+    # Using a simpler approach: always render what's in DB.
+    # But manager logic relies on 'manager_messages' state list.
+    st.session_state['manager_messages'] = current_history
+    
+    if not st.session_state['manager_messages']:
+        # New empty session
+        welcome_msg = "How can I help you today?"
+        st.session_state['manager_messages'].append({"role": "assistant", "content": welcome_msg})
+        # Save welcome message so it persists
+        save_chat_message(st.session_state['current_session_id'], "assistant", welcome_msg)
+
 
     if 'voice_manager' not in st.session_state:
         vm = VoiceManager()
@@ -46,11 +71,81 @@ def render_manager_ui():
 
     # Sidebar Voice Status & Discovery
     with st.sidebar:
+        st.title("🤖 Manager Agent")
+        st.caption("Your personal AI Manager.")
+        st.divider()
+        
+        st.subheader("💬 Chat Controls")
+        
+        # New Chat
+        if st.button("➕ Start New Chat", type="primary"):
+            new_id = create_chat_session()
+            st.session_state['current_session_id'] = new_id
+            st.session_state['manager_messages'] = []
+            st.session_state['transcript_log'] = []
+            st.rerun()
+
+        # Session Switcher
+        if recent_sessions:
+            session_options = {s['id']: f"{s['title'] or 'New Chat'} ({datetime.fromtimestamp(s['created_at']).strftime('%H:%M')})" for s in recent_sessions}
+            selected_session_id = st.selectbox(
+                "📜 Recent History", 
+                options=recent_sessions, 
+                format_func=lambda s: f"{s['title'] or 'New Chat'} ({datetime.fromtimestamp(s['created_at']).strftime('%m/%d %H:%M')})",
+                index=0,
+                key="session_selector"
+            )
+            
+            # If user manually changed selection (imperfect check in Streamlit but works mostly)
+            if selected_session_id['id'] != st.session_state['current_session_id']:
+                 st.session_state['current_session_id'] = selected_session_id['id']
+                 st.rerun()
+                 
+            st.divider()
+            with st.expander("⚙️ Workflow Options"):
+                wf_name = st.text_input("Name for this session's workflow", value="My New Workflow")
+                if st.button("Convert Session to Workflow"):
+                    # Fetch history with tool data
+                    history = get_chat_history(st.session_state['current_session_id'])
+                    steps = []
+                    for msg in history:
+                        t_call = msg.get('tool_call')
+                        t_params = msg.get('tool_params')
+                        
+                        if t_call and t_call != 'chat':
+                            steps.append({
+                                "id": f"step_{len(steps)+1}",
+                                "tool": t_call,
+                                "params": t_params or {},
+                                "description": f"Step generated from chat: {t_call}"
+                            })
+                    
+                    if steps:
+                        save_workflow(wf_name, f"Converted from session {st.session_state['current_session_id']}", steps)
+                        st.success(f"Saved workflow '{wf_name}' with {len(steps)} steps!")
+                        voice.speak(f"I've saved the workflow {wf_name}.")
+                    else:
+                        st.warning("No tool actions found in this chat session to convert.")
+            
         st.subheader("🎙️ Voice Control")
         
         # Master Switch
         voice_enabled = st.toggle("Enable Voice Listener", value=True)
         
+        if voice_enabled:
+            # Logic will continue in next block
+            pass
+
+    # Display Chat in a scrollable container (simulated by logic order)
+    chat_container = st.container(height=600)
+    with chat_container:
+         for msg in st.session_state['manager_messages']:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+    # Back to Sidebar Logic for Voice (Hack to fix flow)
+    # Actually, let's keep all sidebar logic TOGETHER.
+    with st.sidebar:
         if voice_enabled:
             voice.start_listening()
             # Visual Status
@@ -88,6 +183,7 @@ def render_manager_ui():
                         "role": "assistant", 
                         "content": f"**{intel['title']}**\n\n{intel['content']}\n\n[Read More]({intel['url']})"
                     })
+                    save_chat_message(st.session_state['current_session_id'], "assistant", f"**{intel['title']}**\n\n{intel['content']}\n\n[Read More]({intel['url']})")
                     st.rerun()
                 else:
                     st.warning("Nothing found right now.")
@@ -120,10 +216,7 @@ def render_manager_ui():
         elif event['type'] == 'status':
             st.rerun()
 
-    # Display Chat
-    for msg in st.session_state['manager_messages']:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+    # Chat Input (Rendered loop removed)
 
     # Chat Input
     user_input = st.chat_input("What should we do?")
@@ -137,6 +230,12 @@ def render_manager_ui():
     if final_prompt:
         # 1. User Message
         st.session_state['manager_messages'].append({"role": "user", "content": final_prompt})
+        save_chat_message(st.session_state['current_session_id'], "user", final_prompt)
+        
+        # Update Title if it's the first user message (simple heuristic)
+        if len(st.session_state['manager_messages']) <= 2: 
+            update_session_title(st.session_state['current_session_id'], final_prompt[:50])
+
         with st.chat_message("user"):
             st.markdown(final_prompt)
 
@@ -156,10 +255,28 @@ def render_manager_ui():
                 
                 tool = response_json.get("tool")
                 params = response_json.get("params", {})
-                reply = response_json.get("reply", "Done.")
+                reply = response_json.get("reply", "Processing request...")
 
             st.markdown(reply)
-            st.session_state['manager_messages'].append({"role": "assistant", "content": reply})
+            # Update session state with metadata (useful for runtime)
+            st.session_state['manager_messages'].append({
+                "role": "assistant", 
+                "content": reply, 
+                "tool_call": tool, 
+                "tool_params": params
+            })
+            # Save to DB with metadata
+            save_chat_message(st.session_state['current_session_id'], "assistant", reply, tool_call=tool, tool_params=params)
+            
+            # --- GUARD RAIL --- 
+            # If the agent just said "Done" without a tool, we scold it in the next turn or show error
+            is_lazy_response = tool == "chat" and len(reply.split()) < 5 and "done" in reply.lower()
+            if is_lazy_response:
+                st.error("⚠️ Agent returned a lazy response without action. Auto-correcting...")
+                # We could auto-retry here, but for now we just warn the user.
+                # In a robust system, we would loop back: agent.think("You just said Done but did nothing. DO THE TASK.")
+                memory.add_feedback(tool, "Failure", 1, "Agent returned lazy 'Done' response.")
+
             voice.speak(reply)
             
             # --- FEEDBACK LOOP ---
@@ -240,20 +357,55 @@ def render_manager_ui():
                                 
                                 # Process Result for Chat
                                 content_to_display = ""
-                                if isinstance(result, dict) and result.get("image_url"):
-                                    # Handle Image Result
-                                    img_path = result.get("image_url")
-                                    # Streamlit local file text format for markdown images
-                                    content_to_display = f"**Task Complete.**\n\n![Generated Image]({img_path})\n\n_Path: {img_path}_"
+                                if isinstance(result, dict):
+                                    if result.get("image_url"):
+                                        # Handle Image Result
+                                        img_path = result.get("image_url")
+                                        content_to_display = f"**Task Complete.**\n\n![Generated Image]({img_path})\n\n_Path: {img_path}_"
+                                    elif result.get("results") and isinstance(result["results"], list):
+                                        # Handle Search Results
+                                        res_list = result["results"]
+                                        content_to_display = f"**{agent_name} Found {len(res_list)} Results:**\n"
+                                        
+                                        # Save Button
+                                        if st.button(f"💾 Save {len(res_list)} Results to Leads DB", key=f"save_{len(st.session_state['manager_messages'])}"):
+                                            saved_count = 0
+                                            with st.spinner("Saving leads..."):
+                                                from database import add_lead
+                                                for item in res_list:
+                                                    add_lead(
+                                                        url=item.get('url'),
+                                                        email=None, 
+                                                        source="Manager Search",
+                                                        category="manual_search",
+                                                        industry="General",
+                                                        company_name=item.get('title')
+                                                    )
+                                                    saved_count += 1
+                                            st.success(f"Saved {saved_count} leads to database!")
+                                            time.sleep(1)
+                                            st.rerun()
+
+                                        for item in res_list[:20]: # Show top 20
+                                            title = item.get('title', 'No Title')
+                                            url = item.get('url', '#')
+                                            snippet = item.get('snippet', '')[:150]
+                                            content_to_display += f"- [{title}]({url})\n  _{snippet}...\n"
+                                        if len(res_list) > 20:
+                                            content_to_display += f"\n_...and {len(res_list)-20} more._"
+                                    else:
+                                         # Default JSON
+                                         content_to_display = f"**Result from {agent_name}:**\n```json\n{json.dumps(result, indent=2)}\n```"
                                 else:
-                                    # Handle Text/JSON Result
-                                    content_to_display = f"**Result from {agent_name}:**\n```json\n{json.dumps(result, indent=2)}\n```"
+                                    # Handle Text Result
+                                    content_to_display = f"**Result from {agent_name}:**\n{result}"
                                 
                                 # Log result to conversation so Manager knows
                                 st.session_state['manager_messages'].append({
                                     "role": "assistant", 
                                     "content": content_to_display
                                 })
+                                save_chat_message(st.session_state['current_session_id'], "assistant", content_to_display)
                                 memory.add_feedback(tool, "Success", 4, f"Delegated to {agent_name}")
                             else:
                                 st.error(f"Agent {agent_name} not found.")

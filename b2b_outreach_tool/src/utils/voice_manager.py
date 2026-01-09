@@ -37,6 +37,8 @@ class VoiceManager:
 
     def _tts_worker(self):
         """Dedicated thread for TTS to avoid run loop errors."""
+        import pythoncom
+        pythoncom.CoInitialize() # Required for Windows COM in threads
         try:
             # Initialize engine within the thread that uses it
             engine = pyttsx3.init()
@@ -53,6 +55,8 @@ class VoiceManager:
                 self.tts_queue.task_done()
         except Exception as e:
             print(f"[VoiceManager] TTS thread crashed: {e}")
+        finally:
+            pythoncom.CoUninitialize()
 
     def _setup_voice_engine(self, engine):
         """Sets the voice to a British Male voice if available."""
@@ -97,12 +101,12 @@ class VoiceManager:
             # Adjust for noise once before starting
             with self.microphone as source:
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+        except AttributeError:
+             # Common PyAudio error if device is unavailable: 'NoneType' object has no attribute 'close'
+             print("[VoiceManager] Error: Microphone seems inaccessible (PyAudio check failed). Voice disabled.")
+             return
         except Exception as e:
-            print(f"Noise adjustment skipped due to error: {e}")
-            # If we fail here, we might fail hard effectively, but let's try to proceed carefully
-            # or return to avoid the fatal listen_in_background call
-            # Usually if adjust fails, listen_in_background might fail too or block.
-            # Let's return safely.
+            print(f"[VoiceManager] Noise adjustment skipped/failed: {e}")
             return
 
         try:
