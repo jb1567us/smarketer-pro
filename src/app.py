@@ -29,9 +29,6 @@ def init_logging():
 if platform.system() == 'Windows':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-if platform.system() == 'Windows':
-    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-
 load_dotenv()
 
 # Ensure src is in path
@@ -66,7 +63,6 @@ from automation_engine import AutomationEngine
 from mailer import Mailer
 from ui.reports_ui import render_reports_page
 from ui.video_ui import render_video_studio
-from ui.dsr_ui import render_dsr_page
 from ui.dsr_ui import render_dsr_page
 from ui.dashboard_ui import render_dashboard
 from ui.account_creator_ui import render_account_creator_ui
@@ -303,7 +299,7 @@ def main():
                 "--- AUDIENCE & GROWTH ---", "Influencer Scout", "Social Pulse", "Viral Engine",
                 "--- CONTENT ---", "Video Studio", "Social Scheduler", "Creative Library", "Reports",
                 "--- PARTNERS ---", "Affiliate Command",
-                "--- SYSTEM ---", "Manager Mode", "Agent Lab", "Agent Factory", "Analytics", "Settings"
+                "--- SYSTEM ---", "Automation Hub", "Agent Lab", "Agent Factory", "Analytics", "Settings"
             ]
         
         # 1. Update current_view if the selectbox was changed by the user
@@ -433,9 +429,9 @@ def main():
                     st.session_state['current_view'] = "Creative Library"
                     st.rerun()
             
-            with st.expander("⚙️ Systems", expanded=st.session_state['current_view'] in ["Manager Mode", "Agent Lab", "Settings"]):
-                if st.button("Manager Mode", use_container_width=True):
-                    st.session_state['current_view'] = "Manager Mode"
+            with st.expander("⚙️ Systems", expanded=st.session_state['current_view'] in ["Automation Hub", "Agent Lab", "Settings"]):
+                if st.button("Automation Hub", use_container_width=True):
+                    st.session_state['current_view'] = "Automation Hub"
                     st.rerun()
                 if st.button("Agent Lab", use_container_width=True):
                     st.session_state['current_view'] = "Agent Lab"
@@ -459,8 +455,6 @@ def main():
                 if results:
                     st.success(f"Processed {len(results)} events.")
                 else:
-                    st.info("No due events found.")
-        
                     st.info("No due events found.")
         
         st.divider()
@@ -546,31 +540,55 @@ def main():
     elif choice == "CRM Dashboard":
         # (Implementing a combined view of leads and activities)
         st.header("💼 CRM Command Center")
+        
+        tab_overview, tab_leads = st.tabs(["📊 Overview", "📇 All Leads"])
+        
         leads = load_data("leads")
         deals = get_deals()
         tasks = get_tasks(status='pending')
         
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Leads", len(leads))
-        m2.metric("Active Deals", len(deals))
-        m3.metric("Open Tasks", len(tasks))
-        m4.metric("Pipeline Value", f"${sum(d['value'] for d in deals):,.2f}")
-        
-        col_l, col_r = st.columns([2, 1])
-        with col_l:
-            st.subheader("Recent Leads")
-            if not leads.empty:
-                st.dataframe(leads.tail(10), hide_index=True)
-            else:
-                st.info("No leads yet.")
-        with col_r:
-            st.subheader("Upcoming Tasks")
-            if tasks:
-                for t in tasks[:5]:
-                    p_color = {"Low": "gray", "Medium": "blue", "High": "orange", "Urgent": "red"}.get(t.get('priority', 'Medium'), "blue")
-                    st.markdown(f"• :{p_color}[{t.get('priority', 'Medium')}] {t['description']} (Due: {pd.to_datetime(t['due_date'], unit='s').strftime('%m/%d')})")
-            else:
-                st.write("All clear!")
+        with tab_overview:
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Total Leads", len(leads))
+            m2.metric("Active Deals", len(deals))
+            m3.metric("Open Tasks", len(tasks))
+            m4.metric("Pipeline Value", f"${sum(d['value'] for d in deals):,.2f}")
+            
+            col_l, col_r = st.columns([2, 1])
+            with col_l:
+                st.subheader("Recent Leads")
+                if not leads.empty:
+                    st.dataframe(leads.tail(10), hide_index=True)
+                else:
+                    st.info("No leads yet.")
+            with col_r:
+                st.subheader("Upcoming Tasks")
+                if tasks:
+                    for t in tasks[:5]:
+                        p_color = {"Low": "gray", "Medium": "blue", "High": "orange", "Urgent": "red"}.get(t.get('priority', 'Medium'), "blue")
+                        st.markdown(f"• :{p_color}[{t.get('priority', 'Medium')}] {t['description']} (Due: {pd.to_datetime(t['due_date'], unit='s').strftime('%m/%d')})")
+                else:
+                    st.write("All clear!")
+
+        with tab_leads:
+             st.subheader("Lead Database")
+             if not leads.empty:
+                # Define columns including the new 'tech_stack'
+                # Check existance
+                cols = ['id', 'company_name', 'email', 'status', 'confidence', 'tech_stack', 'source', 'created_at']
+                valid_cols = [c for c in cols if c in leads.columns]
+                
+                st.dataframe(
+                    leads[valid_cols],
+                    use_container_width=True,
+                    column_config={
+                        "linkedin_url": st.column_config.LinkColumn("LinkedIn"),
+                        "email": st.column_config.LinkColumn("Email"),
+                        "tech_stack": st.column_config.ListColumn("Tech Stack")
+                    }
+                )
+             else:
+                st.info("No leads found in database.")
 
     elif choice == "Pipeline (Deals)":
         st.header("📂 Sales Pipeline")
@@ -700,10 +718,7 @@ def main():
     elif choice == "DSR Manager":
         render_dsr_page()
 
-    elif choice == "Manager Mode": 
-        # Legacy redirect or keep for B2C if needed, but we merged it
-        st.session_state['current_view'] = "Automation Hub"
-        st.rerun()
+
 
     elif choice == "Reports":
         render_reports_page()
@@ -2433,32 +2448,7 @@ def main():
     elif choice == "Agent Lab":
         render_agent_lab()
 
-    elif choice == "CRM Dashboard":
-        st.title("CRM Dashboard")
-        st.caption("Manage your leads and campaign targets.")
-        
-        # Metrics
-        # ... (existing metrics code if any)
 
-        # Lead Table
-        all_leads = load_data("leads")
-        if not all_leads.empty:
-            # Define columns including the new 'tech_stack'
-            cols = ['id', 'company_name', 'email', 'status', 'confidence', 'tech_stack', 'source', 'created_at']
-            # Filter strictly to existing columns to avoid errors if schema drift happens
-            valid_cols = [c for c in cols if c in all_leads.columns]
-            
-            st.dataframe(
-                all_leads[valid_cols],
-                use_container_width=True,
-                column_config={
-                    "linkedin_url": st.column_config.LinkColumn("LinkedIn"),
-                    "email": st.column_config.LinkColumn("Email"),
-                    "tech_stack": st.column_config.ListColumn("Tech Stack")
-                }
-            )
-        else:
-            st.info("No leads found.")
 
     elif choice == "Creative Library":
         st.header("📚 Creative Library")
@@ -3202,6 +3192,10 @@ if __name__ == '__main__':
         main()
         print("DEBUG: main() finished normal execution.")
     except Exception as e:
+        # Allow Streamlit Control Flow Exceptions to pass through
+        if type(e).__name__ in ["RerunException", "StopException"]:
+            raise e
+            
         import traceback
         error_msg = f"CRITICAL: App crashed: {e}\n{traceback.format_exc()}"
         print(error_msg, file=sys.stderr)
@@ -3211,6 +3205,10 @@ if __name__ == '__main__':
         except:
             pass
     except BaseException as e:
+        # Allow Streamlit Control Flow Exceptions to pass through (RerunException is usually BaseException)
+        if type(e).__name__ in ["RerunException", "StopException"]:
+            raise e
+
         import traceback
         # Catch SystemExit and others
         error_msg = f"CRITICAL: App crashed with BaseException: {e}\n{traceback.format_exc()}"

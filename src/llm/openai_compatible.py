@@ -19,6 +19,7 @@ class OpenAICompatibleProvider(LLMProvider):
         payload = {
             "model": self.model,
             "messages": messages,
+            "stream": False
         }
         if response_format:
             payload["response_format"] = response_format
@@ -47,7 +48,11 @@ class OpenAICompatibleProvider(LLMProvider):
                         raise requests.exceptions.HTTPError(error_msg, response=response)
 
                 response.raise_for_status()
-                return response.json()
+                try:
+                    return response.json()
+                except json.JSONDecodeError:
+                    print(f"  [GenericLLM] Failed to decode JSON from {self.api_url}. Raw: {response.text[:200]}...")
+                    return None
                 
             except requests.exceptions.HTTPError as e:
                 # Propagate 4xx and 429 immediately (do not retry internally)
@@ -61,7 +66,7 @@ class OpenAICompatibleProvider(LLMProvider):
                 time.sleep(2)
         return None
 
-    async def _call_api_async(self, messages, response_format=None):
+    async def _call_api_async(self, messages, response_format=None, **kwargs):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
@@ -69,6 +74,7 @@ class OpenAICompatibleProvider(LLMProvider):
         payload = {
             "model": self.model,
             "messages": messages,
+            "stream": False
         }
         if response_format:
             payload["response_format"] = response_format

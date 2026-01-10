@@ -18,6 +18,7 @@ class ProxyManager:
         self.config = config.get("proxies", {})
         self.enabled = self.config.get("enabled", False)
         self.verification_url = "http://httpbin.org/ip"
+        self._initialized = False
         # Enhanced source list
         self.public_sources = [
             "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt",
@@ -34,14 +35,20 @@ class ProxyManager:
         
         self.max_proxies = self.config.get("max_proxies", 50)
         
-        # Load proxies from database on startup
-        self._load_from_db()
+        # Defer DB load to first access
+        # self._load_from_db()
+
+    def _ensure_initialized(self):
+        if not self._initialized:
+            self._load_from_db()
+            self._initialized = True
 
     async def test_against_target(self, proxy, target_url, keyword=None):
         """
         Tests if a proxy can successfully reach a target URL and find a keyword.
         Useful for 'Google-Passed' or platform-specific checks.
         """
+        self._ensure_initialized()
         proxy_url = proxy if proxy.startswith("http") else f"http://{proxy}"
         try:
             async with aiohttp.ClientSession() as session:
@@ -66,6 +73,7 @@ class ProxyManager:
 
     async def fetch_proxies(self, log_callback=None):
         """Fetches/Harvests proxies using multiple public sources."""
+        self._ensure_initialized()
         if not self.enabled:
             return
 
@@ -171,6 +179,7 @@ class ProxyManager:
 
     def get_proxy(self):
         """Returns a high-quality proxy from the available list."""
+        self._ensure_initialized()
         if not self.enabled or not self.proxies:
             return None
         
@@ -182,6 +191,7 @@ class ProxyManager:
 
     def report_result(self, proxy, success: bool, latency: float = None):
         """Reports the result of using a proxy back to the manager and DB."""
+        self._ensure_initialized()
         address = proxy.replace("http://", "").replace("https://", "")
         try:
             from database import update_proxy_health
@@ -272,6 +282,7 @@ class ProxyManager:
         self.report_result(proxy, success=False)
 
     async def enable_proxies(self):
+        self._ensure_initialized()
         self.enabled = True
         print(f"[{self.__class__.__name__}] Enabling proxies...")
         
@@ -298,6 +309,7 @@ class ProxyManager:
         Ensures we have enough fresh proxies in the pool.
         Reloads from DB first. Only harvests if DB results are insufficient or too old.
         """
+        self._ensure_initialized()
         if not self.enabled:
              return
 

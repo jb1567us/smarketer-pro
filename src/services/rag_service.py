@@ -6,13 +6,21 @@ class RAGService:
     def __init__(self, db_path=None, log_level=LogLevel.INFO):
         self.db_path = db_path or os.path.join('data', 'rag_store.db')
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-        self.store = SafeStore(db_path=self.db_path, log_level=log_level)
+        self.store = None
+        self.log_level = log_level
+
+    def _get_store(self):
+        """Lazy loads the SafeStore to prevent import-time hangs."""
+        if self.store is None:
+            self.store = SafeStore(db_path=self.db_path, log_level=self.log_level)
+        return self.store
 
     def add_document(self, file_path, metadata=None):
         """Adds a document to the RAG store."""
         try:
-            with self.store:
-                self.store.add_document(
+            store = self._get_store()
+            with store:
+                store.add_document(
                     file_path=file_path,
                     vectorizer_name="st:all-MiniLM-L6-v2",
                     metadata=metadata
@@ -25,8 +33,9 @@ class RAGService:
     def query(self, query_text, top_k=5):
         """Queries the RAG store for relevant chunks."""
         try:
-            with self.store:
-                results = self.store.query(
+            store = self._get_store()
+            with store:
+                results = store.query(
                     query_text=query_text,
                     vectorizer_name="st:all-MiniLM-L6-v2",
                     top_k=top_k
