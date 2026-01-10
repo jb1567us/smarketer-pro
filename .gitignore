@@ -77,8 +77,6 @@ searxng/
 texas_teacup_morkies/
 webhost-automation/
 data/
-src/
-tests/
 
 # Extraneous Root Files (Local only)
 *.zip
@@ -91,9 +89,6 @@ tests/
 *.pdf
 *.xml
 *.bat
-config.yaml
-requirements.txt
-README.md
 extract_pdf.py
 legacy_keeper_debug.py
 start_app.bat
