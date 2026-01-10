@@ -11,9 +11,10 @@ import base64
 from utils.logger_service import get_logger
 
 class BaseAgent:
-    def __init__(self, role, goal, provider=None):
+    def __init__(self, role, goal, backstory=None, provider=None):
         self.role = role
         self.goal = goal
+        self.backstory = backstory
         if provider:
             self.provider = provider
         else:
@@ -178,13 +179,72 @@ class BaseAgent:
             tags=tags
         )
 
+    def export_data(self):
+        """
+        Exports the agent's state to a dictionary.
+        Can be overridden by subclasses to include specific fields.
+        """
+        data = {
+            "role": self.role,
+            "goal": self.goal,
+            "backstory": self.backstory,
+            "persona_name": self.persona.get('name') if self.persona else None,
+            "agent_type": self.__class__.__name__
+        }
+        return data
+
+    def import_data(self, data):
+        """
+        Imports the agent's state from a dictionary.
+        """
+        self.role = data.get("role", self.role)
+        self.goal = data.get("goal", self.goal)
+        self.backstory = data.get("backstory", self.backstory)
+        
+        persona_name = data.get("persona_name")
+        if persona_name:
+            self.set_persona(persona_name)
+    
+    def validate_response(self, response):
+        """
+        Validates the agent's response. 
+        Subclasses can override to implement specific validation logic.
+        """
+        if not response:
+            return False, "Empty response"
+        return True, "Valid"
+
+    def reset(self):
+        """
+        Resets the agent's memory/state.
+        """
+        # Clear memory or other transient state here if needed
+        pass
+
     def save_work(self, content, artifact_type="text", metadata=None):
-        """Saves the agent's work product to the database."""
+        """
+        Saves the agent's work product to the database.
+        This is the canonical method for saving persistent agent output.
+        """
         try:
-            from database import save_agent_work
-            return save_agent_work(self.role, content, artifact_type, metadata)
+            from database import save_agent_work_product
+            # Ensure metadata is a dict
+            if metadata is None:
+                metadata = {}
+            
+            # Auto-include export data in metadata for potential reproducibility
+            if "agent_state" not in metadata:
+                metadata["agent_state"] = self.export_data()
+
+            return save_agent_work_product(
+                agent_role=self.role,
+                input_task=metadata.get("input_task", "Unknown Task"), # Best effort
+                output_content=content,
+                metadata=metadata,
+                artifact_type=artifact_type
+            )
         except Exception as e:
-            print(f"Error saving agent work: {e}")
+            self.logger.error(f"Error saving agent work: {e}", exc_info=True)
             return None
 
     def get_proxy(self):

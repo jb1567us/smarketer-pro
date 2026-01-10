@@ -8,7 +8,7 @@ from config import config
 from scraper import search_searxng
 from utils.browser_manager import BrowserManager
 
-VALID_PLATFORMS = ["twitter", "linkedin", "tiktok", "instagram", "reddit", "youtube"]
+VALID_PLATFORMS = ["twitter", "linkedin", "tiktok", "instagram", "reddit", "youtube", "threads"]
 
 class SocialScraper:
     """
@@ -93,6 +93,7 @@ class SocialScraper:
         if "instagram.com" in u: return "instagram"
         if "reddit.com" in u: return "reddit"
         if "youtube.com" in u: return "youtube"
+        if "threads.net" in u: return "threads"
         return None
 
     def _construct_url(self, platform, handle):
@@ -100,6 +101,7 @@ class SocialScraper:
         if platform == "twitter": return f"https://twitter.com/{handle}"
         if platform == "tiktok": return f"https://tiktok.com/@{handle}"
         if platform == "instagram": return f"https://instagram.com/{handle}"
+        if platform == "threads": return f"https://www.threads.net/@{handle}"
         if platform == "linkedin": return f"https://linkedin.com/in/{handle}" # Guess
         return None
 
@@ -115,6 +117,7 @@ class SocialScraper:
                 "linkedin": "site:linkedin.com/in",
                 "twitter": "site:twitter.com",
                 "tiktok": "site:tiktok.com/@",
+                "threads": "site:threads.net/@",
                 "reddit": "site:reddit.com"
             }
             
@@ -146,9 +149,17 @@ class SocialScraper:
 
     async def _try_browser_scrape(self, url):
         """
-        Uses Playwright to render and dump the page.
+        Uses Playwright. 
+        - Default: Render and dump HTML.
+        - Threads: Extract hidden JSON state.
+        - X (Twitter): Intercept GraphQL responses.
         """
         print(f"  [SocialScraper] Attempting Headless Browser (Playwright)...")
+        import json
+        
+        platform = self._detect_platform(url)
+        captured_data = {}
+
         try:
             page = await self._get_browser()
             
@@ -156,32 +167,78 @@ class SocialScraper:
             await page.set_extra_http_headers({
                 "Accept-Language": "en-US,en;q=0.9"
             })
-            
+
+            # --- Platform Specific Setup BEFORE navigation ---
+            if platform == "twitter":
+                # Setup listener for X.com/Twitter GraphQL
+                async def handle_response(response):
+                    try:
+                        if "UserBy" in response.url and response.status == 200:
+                            # It's a profile data response
+                            data = await response.json()
+                            captured_data["twitter_graph_ql"] = data
+                    except:
+                        pass
+                page.on("response", handle_response)
+
+            # Navigate
             await page.goto(url, timeout=30000, wait_until="domcontentloaded")
             await asyncio.sleep(2) # Initial render
             
-            # Scroll for lazy load
+            # Scroll for lazy load (generic)
             for _ in range(3):
                 await page.mouse.wheel(0, 500)
                 await asyncio.sleep(1)
             
-            # Snapshot
+            # Snapshot basic data
             title = await page.title()
             content = await page.content()
             
-            # Intelligent Extraction (Simplified)
-            # We assume the user (Agent) will parse the raw text/HTML or we use specific selectors
+            # --- Platform Specific Extraction AFTER navigation ---
             
+            # THREADS.NET Extraction
+            if platform == "threads":
+                # Look for the hidden JSON in script tags
+                # <script type="application/json" data-sjs>
+                try:
+                    # We use a simple regex or soup to find the script content
+                    # Using BeautifulSoup since we already have content, but executing generic JS in playwright is cleaner
+                    # Let's try to find it in the content soup to avoid re-evaluating in page if possible, 
+                    # but evaluating in page is more robust if DOM changed.
+                    # Let's use BeautifulSoup on the 'content' we just grabbed.
+                    soup = BeautifulSoup(content, 'html.parser')
+                    scripts = soup.find_all('script', attrs={"type": "application/json", "data-sjs": True})
+                    
+                    for s in scripts:
+                        if "follower_count" in s.text:
+                            # Found a potential profile blob
+                            try:
+                                json_data = json.loads(s.text)
+                                captured_data["threads_json"] = json_data
+                                break
+                            except:
+                                continue
+                except Exception as e:
+                    print(f"  [SocialScraper] Threads extraction warning: {e}")
+
+            # Intelligent Extraction (Simplified)
             soup = BeautifulSoup(content, 'html.parser')
             text_dump = soup.get_text(separator='\n', strip=True)[:5000] # Cap size
             
-            return {
+            result = {
                 "source": "browser_snapshot",
                 "title": title,
                 "url": url,
                 "raw_text_preview": text_dump,
-                "html_snippet": content[:2000] # For advanced parsing if needed
+                "html_snippet": content[:2000],
+                "platform": platform
             }
+            
+            # Merge captured specific data
+            if captured_data:
+                result["captured_hidden_data"] = captured_data
+                
+            return result
             
         except Exception as e:
             print(f"  [SocialScraper] Browser failed: {e}")

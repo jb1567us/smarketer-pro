@@ -20,3 +20,20 @@ class CustomAgent(BaseAgent):
             full_prompt += f"Instructions:\n{instructions}"
             
         return self.provider.generate_text(full_prompt)
+
+    def export_data(self):
+        """
+        Exports the custom agent's state, including specific fields.
+        """
+        data = super().export_data()
+        data['name'] = self.name
+        data['system_prompt'] = self.system_prompt
+        return data
+
+    def import_data(self, data):
+        """
+        Imports the custom agent's state.
+        """
+        super().import_data(data)
+        self.name = data.get('name', self.name)
+        self.system_prompt = data.get('system_prompt', self.system_prompt)

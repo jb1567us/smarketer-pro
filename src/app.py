@@ -892,11 +892,33 @@ def main():
             with col3:
                 inf_limit = st.slider("Results to Scout", 5, 50, 10)
             
+            # Follower Filters
+            col4, col5 = st.columns(2)
+            with col4:
+                inf_min_f = st.text_input("Min Followers (e.g. 10k)", placeholder="0")
+            with col5:
+                inf_max_f = st.text_input("Max Followers", placeholder="No limit")
+            
             if st.button("🚀 Scout Influencers", type="primary"):
                 agent = InfluencerAgent()
+                
+                # Parse follower counts
+                try:
+                    min_followers = agent._parse_follower_count(inf_min_f)
+                    max_followers = agent._parse_follower_count(inf_max_f)
+                except:
+                     min_followers = 0
+                     max_followers = 0
+
                 with st.spinner(f"Scouting {inf_platform} for {inf_niche} creators..."):
                     try:
-                        results = asyncio.run(agent.scout_influencers(inf_niche, inf_platform, inf_limit))
+                        results = asyncio.run(agent.scout_influencers(
+                            inf_niche, 
+                            inf_platform, 
+                            inf_limit, 
+                            min_followers=min_followers, 
+                            max_followers=max_followers
+                        ))
                         
                         if not results:
                             st.error("No influencers found. Try a broader niche or different platform.")
