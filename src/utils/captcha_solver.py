@@ -3,7 +3,7 @@ import aiohttp
 import base64
 import os
 import time
-from .local_whisper import LocalWhisperSolver
+# from .local_whisper import LocalWhisperSolver
 
 class CaptchaSolver:
     def __init__(self, provider, api_key, custom_url=None):
@@ -157,8 +157,12 @@ class CaptchaSolver:
         if not audio_url:
             return {"error": "Local Whisper requires audio_url. Please ensure the automation extracts the audio challenge link."}
         
-        solver = LocalWhisperSolver()
-        return await solver.solve_audio(audio_url)
+        try:
+            from .local_whisper import LocalWhisperSolver
+            solver = LocalWhisperSolver()
+            return await solver.solve_audio(audio_url)
+        except ImportError as e:
+            return {"error": f"Local Whisper dependencies missing: {e}"}
 
     async def get_balance(self):
         """Retrieves the current balance from the provider."""
