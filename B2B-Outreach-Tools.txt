@@ -1,0 +1,77 @@
+The social listing agent should have access to Google trends
+
+Is there a way for us to create a licensing key so that when this becomes a standalone app and I sell it people need a license key to be able to use it? What would all be involved in something like that
+
+The influencer creators scout needs to be able to harvest followers
+
+
+Not sure if I mentioned this one before but it'd be great for this code the software to be self healing maybe there's a coding bot or a repair bot that can heal the code when there's errors actually I think I might need a coding and repair bot for help when the custom agents are being built
+
+Need to add white gray and Black Hat options for all these functionalities
+
+senuke user doc glean ideas for development, we might not need full scale of everything like email generation, but take a look at this
+
+The video generator needs to be able to have a footprint to search the Internet on a regular basis for any new video ai platforms that offer free credits. When it finds them it adds them to the system and then uses the account generator to figure out how to automatically log in Once that process is figured out it's added to the list of potential video ai providers. If they have API keys once we've registered apply to get the key copy it and save it
+
+Have a fall back where if you're unable to figure out how to log in sign up it can be done manually via a macro or whatever it is where you click you follow my clicks and I log in and then it's recorded from there. If we're going through trying to log into numerous pages all the ones that aren't able to be automatically having an account created create a list a to do list a task list of ones that need to be recorded manually for the account creator
+
+ERROR  Unable to deploy
+The app’s code is not connected to a remote GitHub repository. To deploy on Streamlit Community Cloud, please put your code in a GitHub repository and publish the current branch. Read more in our documentation.
+
+C panel manager needs to be developed further maybe into its own agent if it isn't already once you give the login information to access C panel it shall be able to fully control and utilize ALL that's there  including wordpress and softaculous as well as getting in ftp login information as well as the email creation and other functions already done. This will allow for full cpanel automation
+
+We need a self healing feature like for instance if you go to log in on a certain site and you go there but the page has changed and you can no longer click what you used to click I want the AI to be able to diagnose and use its intelligence to figure out what is the proper method for logging in and then do so that way. That's just one example but if a piece of code starts to break within the system I want it to be able to self repair it
+
+Develop an account creator that'll use an email to log into and verify new accounts. Have automation connected with C panel and the email that's available from that. Create accounts with emails. Tomorrow those accounts via the email either through the smtp or through cpanel. Use AI logic to interpret the registration page. maybe Use proxies so it looks like each email is coming from a different sender location?
+
+I know that video generation uses Apis but I also know that there are free to use video generation via website via web page not api. Can I use browser automation to do video generation and then import that into my projects in this tool?Check the entire sayings configuration make sure that everything is under the right tab where it belongs
+
+Search engine configuration is showing up in email settings
+
+Email routing is showing up under llam settings
+
+Agent factory seems to be missing all of the preconfigured agents that we had made prior
+
+In the automation hub it says no strategy loaded go to strategy laboratory to generate one. Strategy laboratory the same thing as workflow ? Strategy should be something a little different. A workflow is a list of things that you want done the strategy is the methodology that you're using to orchestrate that.
+
+When there's multiple things that you can either delete or whatever other option is have a select all buttons so they can all be deleted at once and have radio buttons next to each of them so that you can choose to keep them or delete them
+
+I need to be able to have the system to be able to evolve and develop code as needed for itself to shoot and tailor it to the user's needs. The core of fundamentals of the system and the software must remain the same so that it can be upgraded with external upgrades and whatever else as necessary and so that it has still interconnectivity with the main download server server its repository
+
+***Allow for custom preset strategies in the strategy laboratory
+
+***Add ability to generate videos possibly create a video generation layer with a few apis choosing from the different ones depending on what task it's best suited for
+
+***Turn image generation into a layer with the use of a few different apis and more advanced options for the image manipulation.
+
+***will need affiiate tracking software
+
+
+***ability to create pdf customizable reports for user or clients
+
+***cpanel/wordpress installation and management
+
+
+***rate limit issues make to add ollama cloud to smart router
+
+***email tracking System that utilizes the ability to pull in from multiple email provider apis so as to maximize free email provider usage.
+
+***Ability to use the Agent lab as a creativity site. Ability to save content 
+
+***Wordpress expert agent That can install a brand new installation of Wordpress can manage posts and pages and everything related to wordPress.
+
+***Need to miter and check and see if the logic has improved for what websites and what data picks and what it filters out
+
+***We need sort of two speeds free apis versus paid and how that affects performance and what's capable with the system(concurrency for example). Free is kind of slow and throttled but with the paid API things can move along much quicker and we can adjust our settings based upon that. 
+
+***B2C version needed
+
+***Incorporate tick tock and Instagram for posting as well and research.
+
+***Add an affiliate marketing management section
+
+
+
+***Let's have two different levels with personalization generic for quicker campaigns and hyper personalization for more detailed but probably a little slower longer time taking campaigns
+
+***We need a robust proxy harvester similar to the one in scrape box

@@ -1,0 +1,24 @@
+ESM Portfolio Theme Screenshot
+=============================
+
+This theme features a clean, modern design for Elliot Spencer Morgan's art portfolio with a responsive grid system.
+
+Categories Found: Collage, Installation, Painting, Printmaking, Sculpture
+
+Key Features:
+- Responsive grid: 3 cards per row on desktop, 2 on tablet, 1 on mobile
+- Dynamic navigation menu with automatic category inclusion
+- No homepage hero section
+- Clean page layouts without duplicate headers
+- Clickable images linking to Saatchi Art
+- Mobile-responsive design
+
+Grid System:
+- Desktop (1024px+): 3 columns
+- Tablet (768px-1024px): 2 columns  
+- Mobile (<768px): 1 column
+
+To add a proper screenshot:
+1. Take a screenshot of your live site
+2. Save it as screenshot.png (1200x900 pixels)
+3. Upload it to the theme folder

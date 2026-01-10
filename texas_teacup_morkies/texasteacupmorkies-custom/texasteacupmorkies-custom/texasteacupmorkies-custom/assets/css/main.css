@@ -1,0 +1,8 @@
+
+/* fallback minimal if prior file not present */
+body{margin:0;font-family:system-ui;background:#0b0d10;color:#f2f5f7}
+.ttp-container{max-width:1120px;margin:0 auto;padding:0 18px}
+.ttp-section{padding:42px 0}
+.ttp-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:18px}
+.ttp-h1{font-size:42px;margin:0 0 12px}
+.ttp-muted{opacity:.75}

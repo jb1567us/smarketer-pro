@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Maps: B2B Outreach Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h2 { margin-top: 40px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+        .mermaid {
+            margin: 30px 0;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .note {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+        @media print {
+            body { padding: 0; margin: 1cm; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🗺️ Code Maps: B2B Outreach Tool</h1>
+    <p>This document provides a visual and conceptual map of the <strong>B2B Outreach Tool</strong> codebase. Use this to understand how different components interact.</p>
+
+    <h2>🏗️ High-Level Architecture</h2>
+    <p>The application is built on <strong>Streamlit</strong> for the frontend, with a background <strong>Automation Engine</strong> that drives autonomous agents.</p>
+
+    <div class="mermaid">
+    flowchart TD
+        User(["👤 User"]) <--> UI["🖥️ Streamlit UI (src/app.py)"]
+        
+        subgraph "Frontend Layer"
+            UI --> Pages["Navigation & Pages"]
+            Pages --> Dashboard
+            Pages --> CampaignMgr["Campaign Manager"]
+            Pages --> AgentLab["Agent Lab"]
+        end
+        
+        subgraph "Core System"
+            UI --"Trigger"--> AutoEngine["⚙️ Automation Engine"]
+            AutoEngine <--> Manager["🤖 Manager Agent"]
+            Manager --"Orchestrates"--> Swarm["🐝 Agent Swarm"]
+            
+            UI --"Read/Write"--> DB[("(🗄️ SQLite Database)")]
+            AutoEngine --"Persist work"--> DB
+        end
+        
+        subgraph "External World"
+            Swarm --"Requests"--> ProxyMgr["🛡️ Proxy Manager"]
+            ProxyMgr <--> Internet(("☁️ Internet"))
+            Swarm --"API Calls"--> LLM["🧠 LLM Provider (OpenAI/Anthropic)"]
+        end
+    </div>
+
+    <h3>Key Components</h3>
+    <ul>
+        <li><strong><code>src/app.py</code></strong>: The "Main Loop". It initializes the database, config, and renders the Streamlit UI.</li>
+        <li><strong><code>src/automation_engine.py</code></strong>: The heartbeat of autonomous missions.</li>
+        <li><strong><code>src/database.py</code></strong>: The central source of truth.</li>
+    </ul>
+
+    <hr>
+
+    <h2>🤖 The Agent Swarm (Brain)</h2>
+    <p>The <strong>ManagerAgent</strong> acts as the conductor, delegating tasks to specialized agents.</p>
+
+    <div class="mermaid">
+    sequenceDiagram
+        participant User
+        participant Mgr as 🤖 ManagerAgent
+        participant Res as 🔎 Researcher
+        participant Copy as ✍️ Copywriter
+        participant Out as 📧 Emailer
+        participant DB as 🗄️ Database
+
+        User->>Mgr: "Find leads for SaaS companies in Austin"
+        Note over Mgr: Breaks down task into steps
+        
+        Mgr->>Res: "Search for 'SaaS companies Austin'"
+        activate Res
+        Res->>DB: Check for existing leads
+        Res-->>Mgr: Returns list of potential leads
+        deactivate Res
+        
+        Mgr->>Copy: "Draft intro email for these leads"
+        activate Copy
+        Copy-->>Mgr: Returns drafted emails
+        deactivate Copy
+        
+        Mgr->>Out: "Queue emails for sending"
+        out->>DB: Save to 'Pending' queue
+        
+        Mgr->>User: "Mission Complete. 50 leads queued."
+    </div>
+
+    <h3>Specialist Agents</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Agent</th>
+                <th>Role</th>
+                <th>Key File</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Manager</strong></td>
+                <td>Orchestrator & Planner</td>
+                <td><code>src/agents/manager.py</code></td>
+            </tr>
+            <tr>
+                <td><strong>Researcher</strong></td>
+                <td>Web Scraping & Lead Finding</td>
+                <td><code>src/agents/researcher.py</code></td>
+            </tr>
+            <tr>
+                <td><strong>Copywriter</strong></td>
+                <td>Content Generation</td>
+                <td><code>src/agents/copywriter.py</code></td>
+            </tr>
+            <tr>
+                <td><strong>SEO Expert</strong></td>
+                <td>Audits & Keyword Research</td>
+                <td><code>src/agents/seo_agent.py</code></td>
+            </tr>
+             <tr>
+                <td><strong>AccountCreator</strong></td>
+                <td>Automates Sign-ups</td>
+                <td><code>src/agents/account_creator.py</code></td>
+            </tr>
+             <tr>
+                <td><strong>Proxy Agent</strong></td>
+                <td>Manages IP Rotation</td>
+                <td><code>src/agents/proxy_agent.py</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>🛡️ Connectivity & Stealth (The Proxy Layer)</h2>
+
+    <div class="mermaid">
+    flowchart TD
+        Agent["Any Agent"] -->|Request| BaseAgent["BaseAgent.get_proxy()"]
+        BaseAgent --> ProxyMgr[ProxyManager]
+        
+        subgraph "Proxy Logic"
+            ProxyMgr -->|Check| Freshness{Is Fresh?}
+            Freshness --No--> Rotate[Rotate IP]
+            Freshness --Yes--> ReturnIP[Return IP]
+            Rotate --> ReturnIP
+        end
+        
+        ReturnIP -->|Connects via| Internet["Target Website"]
+        Internet -->|Response| Agent
+        
+        Agent -->|Report Success/Fail| ProxyMgr
+        ProxyMgr -->|Update Stats| DB[("(Proxy DB)")]
+    </div>
+
+    <h3>"Vibe" Check on Key Files</h3>
+    <ul>
+        <li><strong><code>src/proxy_manager.py</code></strong>: The "Bouncer". Keeps a list of good and bad IPs.</li>
+        <li><strong><code>src/agents/base.py</code></strong>: The "Common Ancestor".</li>
+        <li><strong><code>src/workflow.py</code></strong>: The "Recipe Book".</li>
+    </ul>
+
+    <h2>💾 Data Flow & Persistence</h2>
+    <ol>
+        <li><strong>Input</strong>: User uploads CSV or Agent scrapes Web.</li>
+        <li><strong>Processing</strong>: <code>pandas</code> helps clean data; Agents enrich it.</li>
+        <li><strong>Storage</strong>: <code>leads.db</code> (SQLite) stores everything.</li>
+        <li><strong>Output</strong>: CSV Exports or Dashboard Visualization.</li>
+    </ol>
+
+    <div class="note">
+        <strong>Debugging Tip:</strong> If data seems missing, check <code>leads.db</code> directly or look at <code>src/database.py</code> to see if the <code>commit()</code> function is being called!
+    </div>
+
+    <script>
+        // Auto-print option could be added here if desired
+        // window.print();
+    </script>
+</body>
+</html>
