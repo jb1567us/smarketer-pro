@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.env
+.venv
+env/
+venv/
+box/
+
+# Database
+*.db
+*.sqlite
+
+# Component logs
+*.log
+debug_log.txt
+verification_output*.txt
+
+# Output/Data files
+*.csv
+*.mp3
+*.png
+
+# Debug HTML dumps (Root only)
+/debug*.html
+/dump_*.html
+
+# Temporary/Debug scripts (Root only)
+/debug_*.py
+/verify_*.py
+/check_*.py
+/test_*.py
+/repro_*.py
+/cleanup_*.py
+/init_models.py
+/final_verify.py
+/generate_*_report.py
+/fix_indent.py
+/summarize_*.py
+
+# System
+.DS_Store
+Thumbs.db
+
+# User Data
+src/user_memory.json
+
+# Temporary/Debug scripts and logs
+reproduce_*.py
+reproduction_log*.txt
+refactor_tools/
+test_legacy/
+test_snapshots/
+TOOLBOX.md
+
+# Extraneous Folders (Local only)
+lollms/
+sessions/
+jobs/
+logs/
