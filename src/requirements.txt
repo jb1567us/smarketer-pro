@@ -13,3 +13,5 @@ setuptools-rust
 psutil
 pytest
 fpdf2
+SpeechRecognition
+pyttsx3
