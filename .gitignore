@@ -1,0 +1,105 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.env
+.venv
+env/
+venv/
+box/
+
+# Database
+*.db
+*.sqlite
+
+# Component logs
+*.log
+debug_log.txt
+verification_output*.txt
+
+# Output/Data files
+*.csv
+*.mp3
+*.png
+
+# Debug HTML dumps (Root only)
+/debug*.html
+/dump_*.html
+
+# Temporary/Debug scripts (Root only)
+/debug_*.py
+/verify_*.py
+/check_*.py
+/test_*.py
+/repro_*.py
+/cleanup_*.py
+/init_models.py
+/final_verify.py
+/generate_*_report.py
+/fix_indent.py
+/summarize_*.py
+
+# System
+.DS_Store
+Thumbs.db
+
+# User Data
+src/user_memory.json
+
+# Temporary/Debug scripts and logs
+reproduce_*.py
+reproduction_log*.txt
+refactor_tools/
+test_legacy/
+test_snapshots/
+TOOLBOX.md
+
+# Extraneous Folders (Local only)
+lollms/
+sessions/
+jobs/
+logs/
+.agent/
+.devcontainer/
+Astrological neurological forecast/
+agentic_system/
+ai-content-writer/
+ai-control-starter/
+cool-timeline/
+esm/
+family-collab/
+hatch/
+product_insights/
+searxng/
+texas_teacup_morkies/
+webhost-automation/
+data/
+src/
+tests/
+
+# Extraneous Root Files (Local only)
+*.zip
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.docx
+*.pdf
+*.xml
+*.bat
+config.yaml
+requirements.txt
+README.md
+extract_pdf.py
+legacy_keeper_debug.py
+start_app.bat
+streamlit.txt
+test_checklist.md
+TOOLBOX_debug.md
+B2B-Outreach-Tools.txt
+Code_Maps.html
+Code_Maps.md
