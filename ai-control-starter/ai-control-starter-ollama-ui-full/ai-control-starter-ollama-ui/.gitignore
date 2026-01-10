@@ -1,9 +1,0 @@
-__pycache__/
-*.pyc
-.env
-
-idea.txt
-artifacts/
-!.gitkeep
-control.md
-model_config.json

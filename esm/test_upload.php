@@ -1,1 +1,0 @@
-<?php echo "Upload Test Successful"; ?>
