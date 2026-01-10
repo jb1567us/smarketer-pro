@@ -1,177 +1,0 @@
-
-[     UTC     ] Logs for smarketer-pro.streamlit.app/
-────────────────────────────────────────────────────────────────────────────────────────
-[02:13:28] 🖥 Provisioning machine...
-[02:13:28] 🎛 Preparing system...
-[02:13:28] ⛓ Spinning up manager process...
-[02:13:26] 🚀 Starting up repository: 'smarketer-pro', branch: 'main', main module: 'b2b_outreach_tool/src/app.py'
-[02:13:26] 🐙 Cloning repository...
-[02:13:46] 🐙 Cloning into '/mount/src/smarketer-pro'...
-Updating files:  23% (1726/7491)Updating files:  24% (1798/7491)Updating files:  25% (1873/7491)Updating files:  26% (1948/7491)Updating files:  27% (2023/7491)Updating files:  28% (2098/7491)Updating files:  29% (2173/7491)Updating files:  30% (2248/7491)Updating files:  31% (2323/7491)Updating files:  32% (2398/7491)Updating files:  33% (2473/7491)Updating files:  34% (2547/7491)Updating files:  35% (2622/7491)Updating files:  36% (2697/7491)Updating files:  37% (2772/7491)Updating files:  38% (2847/7491)Updating files:  39% (2922/7491)Updating files:  40% (2997/7491)Updating files:  41% (3072/7491)Updating files:  42% (3147/7491)Updating files:  43% (3222/7491)Updating files:  44% (3297/7491)Updating files:  45% (3371/7491)Updating files:  45% (3436/7491)Updating files:  46% (3446/7491)Updating files:  47% (3521/7491)Updating files:  48% (3596/7491)Updating files:  49% (3671/7491)Updating files:  50% (3746/7491)Updating files:  51% (3821/7491)Updating files:  52% (3896/7491)Updating files:  53% (3971/7491)Updating files:  54% (4046/7491)Updating files:  55% (4121/7491)Updating files:  56% (4195/7491)Updating files:  57% (4270/7491)Updating files:  58% (4345/7491)Updating files:  59% (4420/7491)Updating files:  60% (4495/7491)Updating files:  61% (4570/7491)Updating files:  62% (4645/7491)Updating files:  63% (4720/7491)Updating files:  64% (4795/7491)Updating files:  65% (4870/7491)Updating files:  66% (4945/7491)Updating files:  67% (5019/7491)Updating files:  68% (5094/7491)Updating files:  69% (5169/7491)Updating files:  70% (5244/7491)Updating files:  71% (5319/7491)Updating files:  72% (5394/7491)Updating files:  73% (5469/7491)Updating files:  74% (5544/7491)Updating files:  75% (5619/7491)Updating files:  76% (5694/7491)Updating files:  77% (5769/7491)Updating files:  78% (5843/7491)Updating files:  79% (5918/7491)Updating files:  80% (5993/7491)Updating files:  81% (6068/7491)Updating files:  82% (6143/7491)Updating files:  83% (6218/7491)Updating files:  84% (6293/7491)Updating files:  85% (6368/7491)Updating files:  86% (6443/7491)Updating files:  87% (6518/7491)Updating files:  88% (6593/7491)Updating files:  89% (6667/7491)Updating files:  90% (6742/7491)Updating files:  91% (6817/7491)Updating files:  92% (6892/7491)Updating files:  93% (6967/7491)Updating files:  94% (7042/7491)Updating files:  95% (7117/7491)Updating files:  96% (7192/7491)Updating files:  97% (7267/7491)Updating files:  98% (7342/7491)Updating files:  98% (7355/7491)Updating files:  99% (7417/7491)Updating files: 100% (7491/7491)Updating files: 100% (7491/7491), done.
-
-[02:13:46] 🐙 Cloned repository!
-[02:13:46] 🐙 Pulling code changes from Github...
-[02:13:50] 📦 Processing dependencies...
-
-──────────────────────────────────────── uv ───────────────────────────────────────────
-
-Using uv pip install.
-Using Python 3.13.11 environment at /home/adminuser/venv
-Resolved 70 packages in 810ms
-Prepared 70 packages in 2.26s
-Installed 70 packages in 292ms
- + aiodns==3.6.1
- + aiohappyeyeballs==2.6.1
- + aiohttp==3.13.3
- + aiosignal==1.4.0
- + altair==6.0.0
- + attrs==25.4.0
- + beautifulsoup4==4.14.3
- + blinker==1.9.0[2026-01-10 02:13:54.580753] 
- + cachetools==6.2.4
- + certifi==2026.1.4
- + cffi==2.0.0
- + charset-normalizer==3.4.4
- + click==8.3.1
- + defusedxml==0.7.1
- [2026-01-10 02:13:54.581000] + flask==3.1.2
- + fonttools==4.61.1
- + fpdf2==2.8.5
- + frozenlist==1.8.0
- + gitdb==4.0.12
- + gitpython==3.1.46
- + greenlet[2026-01-10 02:13:54.581236] ==3.3.0
- + idna==3.11
- + iniconfig==2.3.0
- + itsdangerous==2.2.0
- + jinja2[2026-01-10 02:13:54.581465] ==3.1.6
- + jsonschema==4.26.0
- + jsonschema-specifications==2025.9.1
- + lxml==6.0.2
- + markupsafe==3.0.3
- + multidict==6.7.0
- + narwhals==2.15.0
- + [2026-01-10 02:13:54.581776] numpy==2.4.0
- + packaging==25.0
- + pandas==2.3.3
- + pillow==12.1.0
- + playwright==1.57.0
- +[2026-01-10 02:13:54.581980]  pluggy==1.6.0
- + propcache==0.4.1
- + protobuf==6.33.3
- + psutil==7.2.1
- + pyarrow==22.0.0
- +[2026-01-10 02:13:54.582158]  pycares==4.11.0
- + pycparser==2.23
- + pydeck==0.9.1
- + pyee==13.0.0
- + pygments==2.19.2
- + pytest[2026-01-10 02:13:54.582320] ==9.0.2
- + python-dateutil==2.9.0.post0
- + python-dotenv==1.2.1
- + pytz==2025.2
- + pyyaml==6.0.3
- + referencing==[2026-01-10 02:13:54.582482] 0.37.0
- + requests==2.32.5
- + rpds-py==0.30.0
- + semantic-version==2.10.0
- + setuptools==80.9.0
- + [2026-01-10 02:13:54.582687] setuptools-rust==1.12.0
- + six==1.17.0
- + smmap==5.0.2
- + soupsieve==2.8.1
- + streamlit==1.52.2
- + tenacity[2026-01-10 02:13:54.584312] ==9.1.2
- + toml==0.10.2
- + tornado==6.5.4
- + typing-extensions==4.15.0
- + tzdata==2025.3
- + urllib3==2.6.3
- + watchdog==6.0.0
- + werkzeug==3.1.5
- + yarl==1.22.0
-Checking if Streamlit is installed
-Found Streamlit version 1.52.2 in the environment
-Installing rich for an improved exception logging
-Using uv pip install.
-Using Python 3.13.11 environment at /home/adminuser/venv
-Resolved 4 packages in 131ms
-Prepared 3 packages in 53ms
-Installed 3 packages in 8ms
- + markdown-it-py==4.0.0[2026-01-10 02:13:56.114457] 
- + mdurl==0.1.2
- + rich==14.2.0
-
-────────────────────────────────────────────────────────────────────────────────────────
-
-[02:13:56] 🐍 Python dependencies were installed from /mount/src/smarketer-pro/requirements.txt using uv.
-Check if streamlit is installed
-Streamlit is already installed
-[02:13:58] 📦 Processed dependencies!
-
-
-
-
-
-==================================================
-NUCLEAR UNSTICK DEPLOYED v2026.1.9.2
-IF YOU SEE THIS LATER THAN NOW, REBUILD IS WORKING
-==================================================
-
-
-────────────────────── Traceback (most recent call last) ───────────────────────
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-  nner/exec_code.py:129 in exec_func_with_error_handling                        
-                                                                                
-  /home/adminuser/venv/lib/python3.13/site-packages/streamlit/runtime/scriptru  
-  nner/script_runner.py:671 in code_to_exec                                     
-                                                                                
-  /mount/src/smarketer-pro/b2b_outreach_tool/src/app.py:63 in <module>          
-                                                                                
-      60 │   get_setting, save_setting                                          
-      61 )                                                                      
-      62 from workflow_manager import list_workflows, load_workflow, save_work  
-  ❱   63 from workflow import run_outreach                                      
-      64 from campaign_manager import start_campaign_step_research, start_camp  
-      65 from dsr_manager import DSRManager                                     
-      66 from ui.agent_lab_ui import render_agent_lab, render_tuning_dialog, r  
-                                                                                
-  /mount/src/smarketer-pro/b2b_outreach_tool/src/workflow.py:22 in <module>     
-                                                                                
-     19 from analyzer import analyze_content                                    
-     20                                                                         
-     21 # === AGENT IMPORTS ===                                                 
-  ❱  22 from agents import ResearcherAgent, QualifierAgent                      
-     23 from enrichment_manager import EnrichmentManager                        
-     24                                                                         
-     25 async def run_outreach(keywords, profile_names=["default"], target_nic  
-                                                                                
-  /mount/src/smarketer-pro/b2b_outreach_tool/src/agents/__init__.py:1 in        
-  <module>                                                                      
-                                                                                
-  ❱  1 from .base import BaseAgent                                              
-     2 from .reviewer import ReviewerAgent                                      
-     3 from .syntax import SyntaxAgent                                          
-     4 from .ux import UXAgent                                                  
-                                                                                
-  /mount/src/smarketer-pro/b2b_outreach_tool/src/agents/base.py:5 in <module>   
-                                                                                
-      2 from utils.memory import memory_manager                                 
-      3 from database import save_agent_work_product                            
-      4 from utils.persona_manager import persona_manager                       
-  ❱   5 from services.rag_service import rag_service                            
-      6 from utils.voice_manager import VoiceManager                            
-      7 import json                                                             
-      8 import asyncio                                                          
-                                                                                
-  /mount/src/smarketer-pro/b2b_outreach_tool/src/services/rag_service.py:3 in   
-  <module>                                                                      
-                                                                                
-     1 import os                                                                
-     2 from pathlib import Path                                                 
-  ❱  3 from safe_store import SafeStore, LogLevel                               
-     4                                                                          
-     5 class RAGService:                                                        
-     6 │   def __init__(self, db_path=None, log_level=LogLevel.INFO):           
-────────────────────────────────────────────────────────────────────────────────
-ModuleNotFoundError: No module named 'safe_store'
