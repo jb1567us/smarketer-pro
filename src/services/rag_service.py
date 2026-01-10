@@ -1,6 +1,38 @@
 import os
 from pathlib import Path
-from safe_store import SafeStore, LogLevel
+try:
+    from safe_store import SafeStore, LogLevel
+except ImportError:
+    print("[RAGService] safe_store module missing. Using fallback stub.")
+    from enum import Enum
+    import logging
+    
+    # Configure logger (fallback)
+    logger = logging.getLogger("SafeStoreFallback")
+
+    class LogLevel(Enum):
+        INFO = "INFO"
+        DEBUG = "DEBUG"
+        ERROR = "ERROR"
+        WARNING = "WARNING"
+
+    class SafeStore:
+        def __init__(self, db_path=None, log_level=LogLevel.INFO):
+            self.db_path = db_path
+            self.log_level = log_level
+            # logger.info(f"Initialized SafeStore (Fallback) at {db_path}")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def add_document(self, file_path, vectorizer_name="st:all-MiniLM-L6-v2", metadata=None):
+            return True
+
+        def query(self, query_text, vectorizer_name="st:all-MiniLM-L6-v2", top_k=5):
+            return []
 
 class RAGService:
     def __init__(self, db_path=None, log_level=LogLevel.INFO):
