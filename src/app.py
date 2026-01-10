@@ -16,11 +16,6 @@ except ImportError:
 import json
 from utils.logger_service import start_global_logging
 
-print("\n\n" + "="*50)
-print("NUCLEAR UNSTICK DEPLOYED v2026.1.9.2")
-print("IF YOU SEE THIS LATER THAN NOW, REBUILD IS WORKING")
-print("="*50 + "\n\n")
-
 # Initialize Global Logging (Singleton)
 # Using cache_resource ensures this runs only once per server lifetime (mostly)
 @st.cache_resource
