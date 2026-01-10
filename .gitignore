@@ -103,3 +103,8 @@ TOOLBOX_debug.md
 B2B-Outreach-Tools.txt
 Code_Maps.html
 Code_Maps.md
+
+# Final remnants
+.env.override
+logs-*.txt
+
