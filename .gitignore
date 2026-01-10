@@ -103,3 +103,5 @@ Code_Maps.md
 .env.override
 logs-*.txt
 
+Google Gemini*_files/
+Google Gemini*.html
