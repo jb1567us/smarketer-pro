@@ -1,18 +1,16 @@
 requests
+streamlit
+python-dotenv
+pandas
 beautifulsoup4
 lxml
 pyyaml
 aiohttp
 aiodns
 flask
-streamlit
-pandas
-python-dotenv
 playwright
-openai-whisper
-torch
-ffmpeg-python
 setuptools-rust
 psutil
 pytest
 fpdf2
+# force rebuild 2
