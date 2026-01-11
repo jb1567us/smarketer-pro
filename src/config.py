@@ -56,11 +56,16 @@ def _inject_env_config():
     if os.getenv('FTP_PASS'): config['ftp']['pass'] = os.getenv('FTP_PASS')
     if os.getenv('FTP_PORT'): config['ftp']['port'] = os.getenv('FTP_PORT')
 
-    # SearXNG Override from Env
-    if os.getenv('SEARXNG_URL'):
-        if 'search' not in config:
-            config['search'] = {}
-        config['search']['searxng_url'] = os.getenv('SEARXNG_URL')
+    # SearXNG Config: Env > Auto-Fallback > Default
+    if 'search' not in config:
+        config['search'] = {}
+
+    env_url = os.getenv('SEARXNG_URL')
+    if env_url:
+         config['search']['searxng_url'] = env_url
+    elif "localhost" in config['search'].get('searxng_url', ''):
+         # Auto-fallback for cloud deployments (avoid localhost)
+         config['search']['searxng_url'] = "https://searx.be/search"
 
 # Initial injection
 _inject_env_config()
