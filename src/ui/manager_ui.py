@@ -74,6 +74,18 @@ def render_manager_ui():
         st.title("🤖 Manager Agent")
         st.caption("Your personal AI Manager.")
         st.divider()
+
+        # --- LIVE SYSTEM STATUS ---
+        if 'automation_engine' in st.session_state:
+            engine = st.session_state['automation_engine']
+            if engine.is_running:
+                st.success(f"🚀 **Mission Running**\n\n'{engine.current_mission}'")
+                if st.button("Stop Mission"):
+                    engine.stop()
+                    st.rerun()
+            else:
+                st.caption("System Status: Idle ⚪")
+        st.divider()
         
         st.subheader("💬 Chat Controls")
         
@@ -126,6 +138,85 @@ def render_manager_ui():
                         voice.speak(f"I've saved the workflow {wf_name}.")
                     else:
                         st.warning("No tool actions found in this chat session to convert.")
+
+            st.divider()
+            with st.expander("🚀 Plan Execution", expanded=True):
+                st.caption("Convert the last brainstormed plan into a live mission.")
+                if st.button("Convert Last Plan to Mission", type="primary"):
+                    # Get last assistant message
+                    last_msg = None
+                    if st.session_state['manager_messages']:
+                         for m in reversed(st.session_state['manager_messages']):
+                             if m['role'] == 'assistant' and m.get('content'):
+                                 last_msg = m['content']
+                                 break
+                    
+                    if not last_msg:
+                        st.warning("No assistant plan found to convert.")
+                    else:
+                        with st.spinner("Analyzing plan and generating mission sequence..."):
+                            # dedicated conversion prompt
+                            conv_prompt = (
+                                "You are an Expert Planner. Convert the following strategic plan into a JSON sequence for the 'conductor_mission' tool.\n"
+                                "Schema: [{'type': 'agent'|'workflow', 'agent': 'NAME', 'task': '...'}, ...]\n"
+                                "Rules:\n"
+                                "- Map 'Research'/'Find' -> RESEARCHER agent.\n"
+                                "- Map 'Write'/'Email' -> COPYWRITER agent.\n"
+                                "- Map 'Visuals' -> IMAGE agent.\n"
+                                "- Map 'Review' -> REVIEWER agent.\n"
+                                "- Return ONLY the raw JSON list.\n\n"
+                                f"Input Plan:\n{last_msg}"
+                            )
+                            
+                            try:
+                                conv_res = agent.provider.generate_json(conv_prompt)
+                                
+                                # Normalize Result
+                                final_sequence = []
+                                if isinstance(conv_res, list):
+                                    # Fix: Handle nested lists (LLM sometimes wraps result in [ [... ] ])
+                                    if len(conv_res) > 0 and isinstance(conv_res[0], list):
+                                        final_sequence = conv_res[0]
+                                    else:
+                                        final_sequence = conv_res
+                                elif isinstance(conv_res, dict):
+                                    # Check common keys
+                                    if "steps" in conv_res and isinstance(conv_res["steps"], list):
+                                        final_sequence = conv_res["steps"]
+                                    elif "sequence" in conv_res and isinstance(conv_res["sequence"], list):
+                                        final_sequence = conv_res["sequence"]
+                                    elif "plan" in conv_res and isinstance(conv_res["plan"], list):
+                                        final_sequence = conv_res["plan"]
+                                    else:
+                                        # Assume single object task if it has 'type'
+                                        if "type" in conv_res:
+                                            final_sequence = [conv_res]
+
+                                if final_sequence and len(final_sequence) > 0:
+                                    # Launch Mission
+                                    start_goal = "Executed from converted plan"
+                                    # Try to extract a goal title from the plan text
+                                    lines = last_msg.split('\n')
+                                    if lines: start_goal = lines[0][:50]
+
+                                    strategy = {
+                                        "strategy_name": f"Converted: {start_goal}",
+                                        "goal": start_goal,
+                                        "mode": "conductor",
+                                        "sequence": final_sequence
+                                    }
+                                    
+                                    engine = st.session_state['automation_engine']
+                                    engine.start_mission(strategy, agent)
+                                    st.success("✅ Conversion successful! Mission Launched.")
+                                    voice.speak("I've successfully converted the plan and started the mission.")
+                                    # Switch to mission tab conceptually (user matches manually)
+                                else:
+                                    st.error("Could not generate a valid sequence from the text.")
+                                    st.write("Debug - Raw Response:")
+                                    st.json(conv_res)
+                            except Exception as e:
+                                st.error(f"Conversion failed: {e}")
             
         st.subheader("🎙️ Voice Control")
         
