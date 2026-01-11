@@ -16,3 +16,4 @@ fpdf2
 SpeechRecognition
 pyttsx3
 openai-whisper
+static-ffmpeg
