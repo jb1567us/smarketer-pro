@@ -56,6 +56,12 @@ def _inject_env_config():
     if os.getenv('FTP_PASS'): config['ftp']['pass'] = os.getenv('FTP_PASS')
     if os.getenv('FTP_PORT'): config['ftp']['port'] = os.getenv('FTP_PORT')
 
+    # SearXNG Override from Env
+    if os.getenv('SEARXNG_URL'):
+        if 'search' not in config:
+            config['search'] = {}
+        config['search']['searxng_url'] = os.getenv('SEARXNG_URL')
+
 # Initial injection
 _inject_env_config()
 
