@@ -1,0 +1,70 @@
+{
+  "id": "StartupHunter",
+  "name": "Find and Email AI Startups in San Francisco",
+  "nodes": [
+    {
+      "id": "trigger_manual_1",
+      "type": "trigger.manual"
+    },
+    {
+      "id": "startups_search_1",
+      "type": "domain.search",
+      "params": {
+        "query": "AI startups in San Francisco"
+      }
+    },
+    {
+      "id": "results_enrich_1",
+      "type": "domain.enrich",
+      "params": {
+        "input_type": "search_results"
+      }
+    },
+    {
+      "id": "if_results_1",
+      "type": "core.if",
+      "params": {
+        "condition": "results have contact email"
+      }
+    },
+    {
+      "id": "email_send_1",
+      "type": "domain.email",
+      "params": {
+        "subject": "Hello from StartupHunter",
+        "body": "Hi, we are excited to learn about your AI startup in San Francisco."
+      }
+    },
+    {
+      "id": "email_log_1",
+      "type": "core.debug",
+      "params": {
+        "log_level": "info",
+        "message": "Email sent to {email}"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "trigger_manual_1",
+      "target": "startups_search_1"
+    },
+    {
+      "source": "startups_search_1",
+      "target": "results_enrich_1"
+    },
+    {
+      "source": "results_enrich_1",
+      "target": "if_results_1"
+    },
+    {
+      "source": "if_results_1",
+      "target": "email_send_1",
+      "condition": "if_results == true"
+    },
+    {
+      "source": "email_send_1",
+      "target": "email_log_1"
+    }
+  ]
+}

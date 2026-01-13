@@ -2,6 +2,7 @@ import json
 from .base import BaseAgent
 from utils.rss_manager import RSSManager
 from utils.bookmark_manager import BookmarkManager
+from hosting_bridge import hosting_bridge
 
 class SEOExpertAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -20,6 +21,7 @@ class SEOExpertAgent(BaseAgent):
         self.bookmark_manager = BookmarkManager()
         from utils.gsa_service import GSAService
         self.gsa_service = GSAService()
+        self.hosting_bridge = hosting_bridge
 
     def run(self, context):
         """
@@ -579,3 +581,10 @@ class SEOExpertAgent(BaseAgent):
         
         self.save_work(results, artifact_type="bulk_domain_audit", metadata={"count": len(results)})
         return results
+
+    def publish_to_wordpress(self, title, content):
+        """
+        Publishes the generated content to the connected WordPress site via Hosting Bridge.
+        """
+        self.logger.info(f"Publishing to WordPress: {title}")
+        return self.hosting_bridge.publish_to_wordpress(title, content)

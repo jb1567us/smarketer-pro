@@ -8,42 +8,45 @@ import os
 class WordPressAgent(BaseAgent):
     def __init__(self, provider=None):
         super().__init__(
-            role="WP Ops + SEO Steward",
-            goal="Install, configure, secure, SEO-optimize, and maintain WordPress sites with a focus on performance and content safety.",
+            role="WordPress Automation Orchestrator",
+            goal="Build, maintain, and optimize WordPress sites with a senior DevOps + SEO + Content Operations focus.",
             provider=provider
         )
 
     def _get_system_instructions(self):
         return """
+YOU ARE THE "WORDPRESS AUTOMATION ORCHESTRATOR"
+You are a senior WordPress DevOps + SEO + Content Operations lead. Your mission is to build and maintain a complete WordPress automation system that is minimal, fast, secure, SEO-complete, and auditable.
+
 PRIMARY OBJECTIVES
-1) Install WordPress reliably (or audit/repair an existing install).
-2) Configure essential site settings + security hardening.
-3) Implement technical SEO best practices end-to-end.
-4) Keep the site healthy: updates, backups, monitoring, performance.
-5) Publish content with consistent SEO metadata and internal linking.
+1) SITE ARCHITECTURE: Maintain a human-in-the-loop system where risky changes and publishing require approval.
+2) FOUNDATION: Enforce the "Minimum Viable Stack" (GeneratePress, Rank Math, Wordfence, LiteSpeed/WP Super Cache, UpdraftPlus).
+3) SECURITY: Hardened baseline (Least privilege, strong passwords, updates, logging, WAF).
+4) SEO END-TO-END: Technical, On-Page, and Local SEO best practices.
+5) PERFORMANCE: Core Web Vitals focus (minimal plugin bloat, image optimization).
+6) CONTENT ENGINE: Research -> Outline -> Draft -> QA -> Schedule.
 
-OPERATING PRINCIPLES (NON-NEGOTIABLE)
-- Safety-first: ensure backup + rollback plan before major changes.
-- Least plugins: install only what’s needed; prefer reputable plugins.
-- No credential leakage: refer to secrets as [REDACTED].
-- Confirm destructive actions: require explicit confirmation unless user says “auto-approve destructive changes”.
+NON-NEGOTIABLE GUARDRAILS
+1) Never recommend black-hat SEO, link spam, scraped plagiarism, or fake reviews.
+2) Backup + Rollback plan BEFORE any risky change.
+3) Prefer staging-first or off-peak scheduling with maintenance mode.
+4) All automation must be auditable via logs and clear change records.
+5) Optimize for CWV; avoid redundant or heavy plugins.
 
-WORKFLOW PHASES
-PHASE 0: Preflight & Risk Control (Environment check, Backup first).
-PHASE 1: Install / Repair (DB user creation, secure wp-config, audit existing).
-PHASE 2: Core Configuration (Permalinks to /%postname%/, Enforce HTTPS, create essential pages).
-PHASE 3: Security Hardening (Strong admin policy, Auto-backups, Disable XML-RPC).
-PHASE 4: Technical SEO (Robots.txt, XML sitemaps, Structured data, Pagespeed/CWV basics).
-PHASE 5: Content Publishing (Unique Meta-titles/descriptions, Internal links, Image Alt text).
-PHASE 6: Maintenance (Weekly updates, Uptime monitoring, Monthly SEO checks).
+WORKFLOWS YOU MANAGE
+- Daily Health Check: Site up, backups success, update availability, critical errors.
+- Weekly SEO Scan: Broken links, 404s, redirect review, index coverage.
+- Content Queue: Pull GSC queries, generate ideas, outlines, and drafts.
+- Media Optimization: Compress images, ensure dimensions, alt text hygiene.
+- Repurposing: Social snippets and newsletter summaries for all posts.
 
 OUTPUT FORMAT
-A) Summary of actions (1-5 bullets)
-B) Assumptions
-C) Step-by-step Actions (WP-CLI commands or wp-admin click-path instructions)
-D) Verification checklist
-E) Rollback plan
-F) Next recommended actions (prioritized)
+A) Summary of Actions (What was/will be changed)
+B) Risk Assessment & Rollback Plan
+C) Implementation Steps (WP-CLI, code scripts, or UI pathing)
+D) SEO & Performance Impact
+E) Verification Steps
+F) Next Ordered Actions (The "Next 10 Actions" style)
 """
 
     def generate_install_config(self, project_name="my_wordpress"):
@@ -186,9 +189,10 @@ volumes:
                 await browser.close()
                 return {"error": f"Automation failed: {str(e)}"}
 
-    async def cpanel_install_wp(self, cpanel_url, cp_user, cp_pass, domain):
+    async def cpanel_install_wp(self, cpanel_url, cp_user, cp_pass, domain, directory=""):
         """
         Uses Playwright to log into cPanel and install WordPress via Softaculous.
+        directory: Optional subfolder (e.g. 'dsr-test')
         """
         try:
             from playwright.async_api import async_playwright
@@ -208,21 +212,33 @@ volumes:
                 await page.wait_for_load_state("networkidle")
 
                 # 2. Find Softaculous/WordPress Manager
-                # This part is tricky as cPanel UIs vary. We'll search for 'WordPress'
-                await page.fill("#filter", "WordPress")
-                await asyncio.sleep(2) # Wait for filter
+                # Try Jupiter theme sidebar link first
+                try:
+                    await page.wait_for_selector("#wp_softaculous-main-menu", timeout=5000)
+                    await page.click("#wp_softaculous-main-menu")
+                except:
+                    # Fallback to search if sidebar link not found
+                    await page.fill("#search-input", "WordPress")
+                    await asyncio.sleep(2)
+                    await page.click("text=WordPress Manager by Softaculous")
                 
-                # Click the first match (usually WordPress Manager or Softaculous)
-                await page.click("text=WordPress Manager by Softaculous")
                 await page.wait_for_load_state("networkidle")
 
                 # 3. Trigger Install
-                await page.click("text=Install")
+                # Use ID found by browser agent
+                try:
+                    await page.click("#install_button")
+                except:
+                    # Fallback
+                    await page.click("text=Install")
+                    
                 await page.wait_for_load_state("networkidle")
 
-                # 4. Fill Install Form (Simplified)
-                # We'll assume default settings for now, just setting the domain
-                # Softaculous often uses an iframe or new page
+                # Fill Install Form (Simplified)
+                # We'll assume default settings for now, just setting the domain and directory
+                if directory:
+                    await page.fill("#softdirectory", directory)
+                
                 await page.fill("input[name='site_name']", "My Outreach Site")
                 await page.fill("input[name='admin_username']", "admin")
                 # Generate a random password for admin or use a default
@@ -236,11 +252,12 @@ volumes:
                 await page.wait_for_selector("text=Congratulations, the software was installed successfully", timeout=60000)
                 
                 await browser.close()
+                full_url = f"http://{domain}/{directory}" if directory else f"http://{domain}"
                 return {
                     "status": "success",
                     "admin_user": "admin",
                     "admin_pass": admin_pass,
-                    "url": f"http://{domain}"
+                    "url": full_url
                 }
 
             except Exception as e:

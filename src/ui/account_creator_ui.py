@@ -1,10 +1,13 @@
 
 import streamlit as st
 import asyncio
+import json
+import pandas as pd
 from agents.account_creator import AccountCreatorAgent
 from config import get_cpanel_config, config
-
 from proxy_manager import proxy_manager
+from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
+from agents import ManagerAgent
 
 def render_account_creator_ui():
     st.header("🤖 Automated Account Creator")
@@ -167,12 +170,19 @@ def render_account_creator_ui():
     if accounts:
         # Sort by creation date
         accounts = sorted(accounts, key=lambda x: x['created_at'], reverse=True)
-        st.dataframe(
-            accounts, 
-            column_config={
-                "metadata": st.column_config.JsonColumn("Metadata")
-            },
-            use_container_width=True
-        )
+        
+        # 1. Bar
+        render_data_management_bar(accounts, filename_prefix="managed_accounts")
+
+        # 2. Table
+        acc_df = pd.DataFrame(accounts)
+        render_enhanced_table(acc_df, key="managed_accounts_table")
     else:
         st.info("No accounts created yet.")
+
+    # 3. Page Level Chat
+    render_page_chat(
+        "Account Automation", 
+        ManagerAgent(), 
+        json.dumps(accounts, indent=2) if accounts else "No accounts yet."
+    )

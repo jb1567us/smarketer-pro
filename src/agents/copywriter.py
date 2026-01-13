@@ -10,15 +10,62 @@ class CopywriterAgent(BaseAgent):
         )
 
     def think(self, context, instructions=None):
+        """Standard draft generation."""
+        return self.generate_optimized_email(context, instructions)
+
+    def generate_optimized_email(self, context, instructions=None):
         """
-        Context should include:
-        - Lead info (Business type, pain points, contact name)
-        - Value Proposition (what we are selling)
-        - Enrichment Data (Intent signals, social profiles, social_intel)
+        Ralph-Style Autonomous Optimization: 
+        Generates a draft, critiques it, and iterates until high quality.
         """
         from config import config
         personalization_level = config.get('campaign', {}).get('personalization', 'hyper')
         
+        # 1. Initial Draft
+        self.logger.info("  [Copywriter] Generating initial draft...")
+        draft = self._draft_email(context, instructions, personalization_level)
+        
+        # 2. Ralph Loop: Critique and Iterate
+        max_iterations = 2
+        for i in range(max_iterations):
+            self.logger.info(f"  [Copywriter] Ralph Critique Loop {i+1}/{max_iterations}...")
+            
+            critique_prompt = (
+                f"You are a critical Sales Manager. Critique this cold email draft:\n\n"
+                f"SUBJECT: {draft.get('subject_line')}\n"
+                f"BODY: {draft.get('body')}\n\n"
+                "Check for:\n"
+                "1. Fluff/Generic intros (e.g. 'I hope this finds you well')\n"
+                "2. Length (too long?)\n"
+                "3. Personalization (does it actually use the context provided?)\n"
+                "4. CTA (is it soft and effective?)\n\n"
+                "Return JSON: {'score': int (1-10), 'issues': list, 'suggestions': str}"
+            )
+            
+            critique = self.provider.generate_json(critique_prompt)
+            score = critique.get('score', 0)
+            
+            if score >= 8:
+                self.logger.info(f"  ✅ Draft passed with score {score}/10.")
+                break
+            
+            self.logger.info(f"  ⚠️ Draft score {score}/10. Refining based on suggestions...")
+            
+            # 3. Refine
+            refine_prompt = (
+                f"Refine the following cold email based on this critique: {critique.get('suggestions')}\n\n"
+                f"Original Subject: {draft.get('subject_line')}\n"
+                f"Original Body: {draft.get('body')}\n\n"
+                f"Context: {context}\n\n"
+                "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
+            )
+            draft = self.provider.generate_json(refine_prompt)
+            
+        self.save_work(json.dumps(draft), artifact_type="text", metadata={"context": "optimized_email_draft", "iterations": i+1})
+        return draft
+
+    def _draft_email(self, context, instructions, personalization_level):
+        """Internal helper for initial drafting."""
         base_instructions = ""
         if personalization_level == 'generic':
              base_instructions = (
@@ -30,15 +77,14 @@ class CopywriterAgent(BaseAgent):
                 "4. Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': 'Generic mode active'}"
              )
         else:
-            # Hyper personalization (default)
             base_instructions = (
                 "Draft a highly personalized cold email for this lead.\n"
                 "Rules:\n"
                 "1. Use a hook relevant to their specific business.\n"
-                "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences to show deep research.\n"
+                "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences.\n"
                 "3. Keep it under 150 words.\n"
-                "4. End with a soft call to action (e.g. 'Worth a chat?').\n"
-                "5. Do NOT use generic fluff like 'I hope this finds you well'.\n\n"
+                "4. End with a soft call to action.\n"
+                "5. NO generic fluff.\n\n"
                 "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
             )
         
@@ -46,9 +92,7 @@ class CopywriterAgent(BaseAgent):
         if instructions:
             full_instructions += f"\n\nADDITIONAL USER INSTRUCTIONS:\n{instructions}"
             
-        result = self.provider.generate_json(f"Context for Email:\n{context}\n\n{full_instructions}")
-        self.save_work(json.dumps(result), artifact_type="text", metadata={"context": "email_draft"})
-        return result
+        return self.provider.generate_json(f"Context for Email:\n{context}\n\n{full_instructions}")
 
     def generate_dsr_copy(self, context):
         """

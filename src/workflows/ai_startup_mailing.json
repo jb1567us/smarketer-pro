@@ -1,0 +1,54 @@
+{
+  "id": "ai_startup_mailing",
+  "name": "Find and Email AI Startups in San Francisco",
+  "nodes": [
+    {
+      "id": "node_trigger",
+      "type": "trigger.manual",
+      "name": "Manual Trigger"
+    },
+    {
+      "id": "node_search",
+      "type": "domain.search",
+      "name": "Search Companies",
+      "params": {
+        "query": "ai startups San Francisco"
+      }
+    },
+    {
+      "id": "node_if_filter",
+      "type": "core.if",
+      "name": "Filter Results by AI Focus"
+    },
+    {
+      "id": "node_enrich_analysis",
+      "type": "domain.enrich",
+      "name": "Analyze and Enrich Results",
+      "params": {}
+    },
+    {
+      "id": "node_email_sender",
+      "type": "domain.email",
+      "name": "Email Sender (SMTP)",
+      "params": {}
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_trigger",
+      "target": "node_search"
+    },
+    {
+      "source": "node_search",
+      "target": "node_if_filter"
+    },
+    {
+      "source": "node_if_filter",
+      "target": "node_enrich_analysis"
+    },
+    {
+      "source": "node_enrich_analysis",
+      "target": "node_email_sender"
+    }
+  ]
+}

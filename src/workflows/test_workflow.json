@@ -1,0 +1,40 @@
+{
+    "id": "post_processing_v1",
+    "name": "Post-Outreach Actions",
+    "nodes": [
+        {
+            "id": "start",
+            "type": "core.debug",
+            "params": {
+                "message": "Workflow Started: Post-Processing Leads"
+            }
+        },
+        {
+            "id": "check_leads",
+            "type": "core.if",
+            "params": {
+                "value1": "1",
+                "operator": "==",
+                "value2": "1"
+            }
+        },
+        {
+            "id": "log_success",
+            "type": "core.debug",
+            "params": {
+                "message": "Leads Processed Successfully!"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "start",
+            "target": "check_leads"
+        },
+        {
+            "source": "check_leads",
+            "target": "log_success",
+            "label": "true"
+        }
+    ]
+}

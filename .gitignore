@@ -52,7 +52,6 @@ src/user_memory.json
 # Temporary/Debug scripts and logs
 reproduce_*.py
 reproduction_log*.txt
-refactor_tools/
 test_legacy/
 test_snapshots/
 TOOLBOX.md
@@ -75,7 +74,7 @@ hatch/
 product_insights/
 searxng/
 texas_teacup_morkies/
-webhost-automation/
+
 data/
 
 # Extraneous Root Files (Local only)

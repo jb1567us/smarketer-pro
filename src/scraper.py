@@ -62,11 +62,19 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
                     break
 
                 links_on_page = 0
-                # SearXNG results 
-                for article in soup.select('article.result'):
-                    a_tag = article.find('a', href=True)
-                    if a_tag:
+                # SearXNG results - Resilient selection (handles multiple themes)
+                results_containers = soup.select('article.result') or soup.select('.result') or soup.select('.res-container')
+                
+                for article in results_containers:
+                    # Title/Link selection
+                    a_tag = article.select_one('h3 a') or article.select_one('.result_header a') or article.find('a', href=True)
+                    
+                    if a_tag and a_tag.get('href'):
                         url = a_tag['href']
+                        # Basic cleanup of SearXNG internal redirect links if present
+                        if url.startswith('/url?q='):
+                            url = urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get('q', [url])[0]
+                        
                         title = a_tag.get_text(strip=True)
                         
                         if url.startswith('http') and url not in unique_links:
@@ -77,7 +85,9 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
                 
                 if links_on_page == 0:
                      print("Zero links extracted from this page (parsing issue or end of results).")
-                     print(f"DEBUG: HTML DUMP (First 500 chars):\n{html[:500]}")
+                     with open("src/last_search_dump.html", "w", encoding="utf-8") as f:
+                         f.write(html)
+                     print("DEBUG: Full HTML dumped to src/last_search_dump.html")
                      if "captcha" in html.lower(): print("🚫 CAPTCHA DETECTED")
                      break
 

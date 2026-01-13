@@ -1,0 +1,47 @@
+{
+  "id": "ai_startup_finder",
+  "name": "Find AI Startups in San Francisco",
+  "nodes": [
+    {
+      "id": "start_trigger",
+      "type": "trigger.manual"
+    },
+    {
+      "id": "search_companies",
+      "type": "domain.search",
+      "params": {
+        "query": "San Francisco AI startup"
+      }
+    },
+    {
+      "id": "enrich_results",
+      "type": "domain.enrich"
+    },
+    {
+      "id": "filter_results",
+      "type": "core.if"
+    },
+    {
+      "id": "email_hellos",
+      "type": "domain.email"
+    }
+  ],
+  "edges": [
+    {
+      "source": "start_trigger",
+      "target": "search_companies"
+    },
+    {
+      "source": "search_companies",
+      "target": "enrich_results"
+    },
+    {
+      "source": "enrich_results",
+      "target": "filter_results"
+    },
+    {
+      "source": "filter_results",
+      "target": "email_hellos"
+    }
+  ]
+}

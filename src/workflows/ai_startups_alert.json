@@ -1,0 +1,53 @@
+{
+  "id": "ai_startups_alert",
+  "name": "AI Startups Alert Workflow",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "trigger.manual",
+      "name": "Manual Trigger"
+    },
+    {
+      "id": "search",
+      "type": "domain.search",
+      "name": "Search (Researcher Agent)",
+      "params": {
+        "query": "AI startups in San Francisco"
+      }
+    },
+    {
+      "id": "if",
+      "type": "core.if",
+      "name": "If / Else"
+    },
+    {
+      "id": "enrich",
+      "type": "domain.enrich",
+      "name": "Enrich (Scrape & Analyze)"
+    },
+    {
+      "id": "email",
+      "type": "domain.email",
+      "name": "Email Sender (SMTP)"
+    }
+  ],
+  "edges": [
+    {
+      "source": "start",
+      "target": "search"
+    },
+    {
+      "source": "search",
+      "target": "if"
+    },
+    {
+      "source": "if",
+      "target": "enrich",
+      "condition": "true"
+    },
+    {
+      "source": "enrich",
+      "target": "email"
+    }
+  ]
+}

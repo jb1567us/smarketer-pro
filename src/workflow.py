@@ -202,6 +202,30 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
             elif r:
                 candidates.append(r)
         
+        # --- RALPH-STYLE CAPTCHA HEALING ---
+        healed_raw = await researcher.process_captcha_queue()
+        if healed_raw:
+            log(f"\n--- Phase 2.5: Captcha Healing ({len(healed_raw)} leads) ---")
+            for res in healed_raw:
+                log(f"  [Agent] Evaluating HEALED candidate: {res['url']}")
+                # Simplified qualification for healed leads to avoid full recursion
+                q_context = f"Company URL: {res['url']}\nContent: {res.get('html_preview', '')[:3000]}\nCriteria: {icp_criteria}"
+                try:
+                    qualification = qualifier.think(q_context)
+                    if qualification.get('qualified'):
+                        log(f"    ✅ Healed lead qualified!")
+                        candidates.append({
+                            "url": res['url'],
+                            "emails": res.get('emails', []),
+                            "analysis": qualification,
+                            "intel": res,
+                            "details": {} # Optional: could run analyze_content here too
+                        })
+                    else:
+                        log(f"    ❌ Healed lead rejected: {qualification.get('reason')}")
+                except Exception as e:
+                    log(f"    ⚠️ Error qualifying healed lead: {e}")
+
         log(f"Phase 2 Complete. {len(candidates)} qualified leads found.")
 
     # === PHASE 3: SAVE ===
@@ -248,7 +272,36 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
         filename = f"leads_agentic_{timestamp}.csv"
         # ... (CSV logic if needed, keeping it minimal) ...
         
+        # === POST-PROCESS ENGINE ===
+        try:
+            log("\n--- Triggering Automation Engine ---")
+            from src.engine.core import WorkflowEngine
+            from src.engine.loader import WorkflowLoader
+            import src.nodes # Register Core Nodes
+
+            
+            # Load Test Workflow (In production this would be dynamic)
+            # using absolute path relative to this file
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            workflow_path = os.path.join(base_dir, "workflows", "test_workflow.json")
+            
+            if os.path.exists(workflow_path):
+                engine = WorkflowEngine()
+                workflow_def = WorkflowLoader.load_from_file(workflow_path)
+                
+                # Pass context (the new leads)
+                payload = {"new_leads_count": len(new_leads), "leads": new_leads}
+                
+                execution_id = await engine.run_workflow(workflow_def, payload)
+                log(f"✅ Automation Engine Triggered! Execution ID: {execution_id}")
+            else:
+                log(f"⚠️ Workflow file not found at {workflow_path}")
+                
+        except Exception as e:
+            log(f"❌ Automation Engine Error: {e}")
+
     log("Workflow completed.")
+    return new_leads
 
 if __name__ == "__main__":
     if sys.platform == 'win32':

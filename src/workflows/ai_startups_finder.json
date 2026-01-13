@@ -1,0 +1,57 @@
+{
+  "id": "ai_startups_finder",
+  "name": "AI Startups Finder in San Francisco",
+  "nodes": [
+    {
+      "id": "node_1",
+      "type": "trigger.manual"
+    },
+    {
+      "id": "node_2",
+      "type": "domain.search",
+      "params": {
+        "query": "AI startups in San Francisco"
+      }
+    },
+    {
+      "id": "node_3",
+      "type": "core.if",
+      "params": {
+        "condition": "isStartup == True"
+      }
+    },
+    {
+      "id": "node_4",
+      "type": "domain.enrich",
+      "params": {
+        "params": "extract_contact_info"
+      }
+    },
+    {
+      "id": "node_5",
+      "type": "domain.email",
+      "params": {
+        "subject": "Hello from workflow",
+        "content": "Hello from workflow team."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_1",
+      "target": "node_2"
+    },
+    {
+      "source": "node_2",
+      "target": "node_3"
+    },
+    {
+      "source": "node_3",
+      "target": "node_4"
+    },
+    {
+      "source": "node_4",
+      "target": "node_5"
+    }
+  ]
+}

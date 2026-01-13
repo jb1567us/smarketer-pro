@@ -39,12 +39,17 @@ def get_random_headers():
 
 async def fetch_html(session, url, timeout=10, use_proxy=True):
     """Async fetch of a URL using rotated proxies and anti-bot headers."""
-    retries = 3 if (proxy_manager.enabled and use_proxy) else 2
+    # Ralph-Style Resilience: Increase retries and rotate strategies on failure
+    max_retries = 3 if (proxy_manager.enabled and use_proxy) else 2
     
-    # Anti-Bot: Small initial jitter to avoid burst patterns
-    await asyncio.sleep(random.uniform(0.5, 1.5))
-    
-    for attempt in range(retries):
+    is_last_captcha = False
+    for attempt in range(max_retries):
+        if attempt > 0:
+            delay = random.uniform(2.0, 5.0) * attempt
+            await asyncio.sleep(delay)
+        else:
+            await asyncio.sleep(random.uniform(0.5, 1.5))
+        
         proxy = proxy_manager.get_proxy() if use_proxy else None
         start_time = time.time()
         headers = get_random_headers()
@@ -54,40 +59,35 @@ async def fetch_html(session, url, timeout=10, use_proxy=True):
                 latency = time.time() - start_time
                 content = await response.text(errors='ignore')
                 
-                # --- CAPTCHA / BAN DETECTION ---
-                # Check for Cloudflare/generic captcha signatures
                 lower_content = content.lower()
                 banned_signatures = [
-                    "turnstile", 
-                    "challenge-platform", 
-                    "cf-challenge", 
-                    "captcha-delivery", 
-                    "human verification",
-                    "are you a human",
-                    "security check"
+                    "turnstile", "challenge-platform", "cf-challenge", 
+                    "captcha-delivery", "human verification", 
+                    "are you a human", "security check", "access denied"
                 ]
                 
                 is_captcha = any(sig in lower_content for sig in banned_signatures)
+                is_last_captcha = is_captcha
                 
                 if response.status == 200 and not is_captcha:
                     if proxy:
                         proxy_manager.report_result(proxy, success=True, latency=latency)
                     return content
                 
-                elif response.status in [403, 429, 503] or is_captcha:
+                elif response.status in [403, 429, 503, 401] or is_captcha:
                     if proxy:
-                        # Don't penalize too hard if it's just a tough site, but mark fail for rotation
-                        # If detecting CAPTCHA on 200 OK, report fail
-                        print(f"  [Extractor] Block/Challenge detected (Status: {response.status}, Proxy: {proxy})")
+                        print(f"  [Extractor] Ralph-Retry: Block detected (Status: {response.status}, Proxy: {proxy}). Rotating strategy...")
                         proxy_manager.report_result(proxy, success=False)
-                    # Instant retry loop will pick new proxy
+                    continue
+                else:
+                    return None
                     
         except Exception as e:
             if proxy:
                 proxy_manager.report_result(proxy, success=False)
             pass
             
-    return None
+    return "__CAPTCHA_BLOCKED__" if is_last_captcha else None
 
 def extract_emails_from_text(text):
     """Regex extraction from text."""

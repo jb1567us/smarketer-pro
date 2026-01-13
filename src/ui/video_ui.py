@@ -1,7 +1,10 @@
 import streamlit as st
 import time
 import asyncio
+import json
+import pandas as pd
 from agents.video_agent import VideoAgent
+from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
 
 def render_video_studio():
     st.header("🎬 Smart Video Studio")
@@ -280,8 +283,33 @@ def render_video_studio():
 
     with tab_history:
         st.subheader("Generation History")
-        if 'video_history' in st.session_state and st.session_state['video_history']:
-            for item in st.session_state['video_history']:
+        history = st.session_state.get('video_history', [])
+        if history:
+            # 1. Standard Data Management Bar
+            render_data_management_bar(history, filename_prefix="video_history")
+
+            # 2. Enhanced Table
+            hist_df = pd.DataFrame([
+                {
+                    "ID": item.get('job_id'),
+                    "Provider": item.get('provider'),
+                    "Prompt": item.get('optimized_prompt', '')[:100],
+                    "Status": item.get('status')
+                } for item in history
+            ])
+            edited_hist = render_enhanced_table(hist_df, key="video_history_table")
+            
+            selected_items = edited_hist[edited_hist['Select'] == True]
+            if not selected_items.empty:
+                if st.button(f"🗑️ Remove {len(selected_items)} from local history", type="secondary"):
+                    selected_ids = selected_items['ID'].tolist()
+                    st.session_state['video_history'] = [i for i in history if i.get('job_id') not in selected_ids]
+                    st.success("Removed!")
+                    st.rerun()
+
+            st.divider()
+            st.subheader("🖼️ Detail View")
+            for item in history:
                 with st.expander(f"[{item.get('provider').upper()}] {item.get('optimized_prompt')[:50]}...", expanded=False):
                     if item.get('url'): # Check locally cached/updated URL
                         st.video(item.get('url'))
@@ -292,3 +320,10 @@ def render_video_studio():
                         st.warning("Processing or Failed.")
         else:
             st.info("No videos generated yet.")
+
+    # 3. Page Level Chat
+    render_page_chat(
+        "Video Creation", 
+        agent, 
+        json.dumps(history, indent=2)
+    )

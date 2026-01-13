@@ -13,4 +13,13 @@ setuptools-rust
 psutil
 pytest
 fpdf2
-# force rebuild 2
+typer
+rich
+SpeechRecognition
+pyttsx3
+pywin32
+PyAudio
+openai-whisper
+torch
+static-ffmpeg
+# force rebuild 3

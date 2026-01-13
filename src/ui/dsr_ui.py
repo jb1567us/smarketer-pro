@@ -7,6 +7,8 @@ from agents import WordPressAgent
 from database import (
     get_all_campaigns, get_campaign_leads, get_wp_sites, get_connection
 )
+from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
+from agents import ManagerAgent
 
 def render_dsr_page():
     st.header("💼 Digital Sales Room (DSR) Manager")
@@ -88,6 +90,17 @@ def render_dsr_page():
             if status_filter != "All":
                 dsrs = dsrs[dsrs['status'] == status_filter]
 
+            # 1. Standard Data Management Bar
+            render_data_management_bar(dsrs, filename_prefix="dsr_list")
+
+            # 2. Enhanced Table
+            edited_dsrs = render_enhanced_table(dsrs, key="dsr_manage_table")
+            
+            selected_dsrs = edited_dsrs[edited_dsrs['Select'] == True]
+            if not selected_dsrs.empty:
+                st.warning("Bulk actions for DSRs (Delete/Republish) coming soon in this view.")
+
+            st.divider()
             for index, row in dsrs.iterrows():
                 with st.container(border=True):
                     c1, c2, c3 = st.columns([3, 1, 1.5])
@@ -134,4 +147,11 @@ def render_dsr_page():
             st.dataframe(pd.DataFrame(sites)[['url', 'username', 'id']], hide_index=True)
         else:
             st.warning("No sites connected. Go to user settings or add one here.")
+
+    # 3. Page Level Chat
+    render_page_chat(
+        "DSR Strategy", 
+        ManagerAgent(), 
+        "Microsite Personalization and Deployment Control"
+    )
             

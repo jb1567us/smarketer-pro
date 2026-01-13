@@ -48,8 +48,6 @@ class AutomationEngine:
         self.stats["start_time"] = time.time()
         self._stop_event.clear()
 
-        # Terminal spawning is now handled globally at app startup.
-
         # Start background thread
         self._thread = threading.Thread(
             target=self._run_loop,
@@ -58,6 +56,28 @@ class AutomationEngine:
         )
         self._thread.start()
         self.log(f"🚀 Mission Started: {self.current_mission}")
+
+    def start_workflow(self, workflow_id, inputs, manager_agent):
+        """
+        Starts a specific graph workflow in a separate thread.
+        """
+        if self._is_running:
+            self.log("⚠️ Automation is already running.")
+            return
+
+        self._is_running = True
+        self.current_mission = f"Workflow: {workflow_id}"
+        self.stats["start_time"] = time.time()
+        self._stop_event.clear()
+
+        # Start background thread
+        self._thread = threading.Thread(
+            target=self._run_workflow,
+            args=(workflow_id, inputs, manager_agent),
+            daemon=True
+        )
+        self._thread.start()
+        self.log(f"🚀 Starting Workflow Mission: {workflow_id}")
 
     def stop(self):
         """Signals the loop to stop."""
@@ -69,8 +89,6 @@ class AutomationEngine:
         """
         The main execution loop running in a background thread.
         """
-        # Stdout redirection is now global.
-
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
@@ -84,6 +102,33 @@ class AutomationEngine:
         finally:
             self._is_running = False
             self.log("🏁 Automation Finished.")
+            loop.close()
+
+    def _run_workflow(self, workflow_id, inputs, manager_agent):
+        """
+        Runs a specific graph workflow in a background thread.
+        """
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            self.log(f"⚡ Executing Workflow Graph: {workflow_id}")
+            # Fix: We MUST use wait=True here because this is a background thread.
+            # If we don't wait, the loop will close immediately after spawning the task.
+            loop.run_until_complete(manager_agent.execute_workflow(
+                workflow_id, 
+                inputs, 
+                status_callback=self.log, 
+                wait=True
+            ))
+            self.log(f"✅ Workflow {workflow_id} execution finished.")
+        except Exception as e:
+            self.log(f"💥 Error executing workflow {workflow_id}: {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            self._is_running = False
+            self.log("🏁 Mission Complete.")
             loop.close()
 
     async def _execute_mission_logic(self, strategy, manager_agent):

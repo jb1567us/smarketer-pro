@@ -8,7 +8,7 @@ from config import config
 DB_PATH = "leads.db"
 
 def get_connection():
-    return sqlite3.connect(DB_PATH)
+    return sqlite3.connect(DB_PATH, timeout=30, check_same_thread=False)
 
 def init_db():
     """Initialize the database tables."""
@@ -1777,5 +1777,332 @@ def mark_registration_task_completed(task_id):
     conn = get_connection()
     c = conn.cursor()
     c.execute("UPDATE registration_tasks SET status = 'completed' WHERE id = ?", (task_id,))
+    conn.commit()
+    conn.close()
+
+
+def save_campaign_state(campaign_id, step):
+    """Updates the current step of a campaign."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE campaigns 
+        SET current_step = ?, updated_at = ? 
+        WHERE id = ?
+    ''', (step, int(time.time()), campaign_id))
+    conn.commit()
+    conn.close()
+
+
+def get_campaign(campaign_id):
+    """Retrieves full campaign data."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM campaigns WHERE id = ?', (campaign_id,))
+    result = c.fetchone()
+    conn.close()
+    return dict(result) if result else None
+
+def load_data(table):
+    import pandas as pd
+    conn = get_connection()
+    df = pd.read_sql_query(f"SELECT * from {table}", conn)
+    conn.close()
+    return df
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM campaigns WHERE id = ?', (campaign_id,))
+    res = c.fetchone()
+    conn.close()
+    return dict(res) if res else None
+
+def get_campaign_state(campaign_id):
+    """Retrieves current step."""
+    c = get_campaign(campaign_id)
+    return c['current_step'] if c else 0
+
+def update_campaign_step(campaign_id, step):
+    """Updates step."""
+    save_campaign_state(campaign_id, step)
+
+def update_campaign_pain_point(campaign_id, pp_id):
+    """Updates selected pain point."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('UPDATE campaigns SET selected_pain_point_id = ?, updated_at = ? WHERE id = ?', (pp_id, int(time.time()), campaign_id))
+    conn.commit()
+    conn.close()
+
+def add_lead_to_campaign(campaign_id, lead_id):
+    """Links a lead to a campaign."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO campaign_leads (campaign_id, lead_id) VALUES (?, ?)', (campaign_id, lead_id))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        pass
+    conn.close()
+
+def save_lead_search_result(keyword, result):
+    """Saves a raw search result (simplified for now)."""
+    # Placeholder if actual logic isn't strictly defined elsewhere
+    pass
+
+def get_leads_by_source(source):
+    """Retrieves leads filtered by source."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM leads WHERE source = ?', (source,))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def get_campaign_leads(campaign_id):
+    """Retrieves leads associated with a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('''
+        SELECT l.* FROM leads l
+        JOIN campaign_leads cl ON l.id = cl.lead_id
+        WHERE cl.campaign_id = ?
+    ''', (campaign_id,))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def create_dsr(campaign_id, lead_id, title, content_json, status='draft'):
+    """Creates a Digital Sales Room entry."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO digital_sales_rooms (campaign_id, lead_id, title, content_json, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (campaign_id, lead_id, title, content_json, status, int(time.time())))
+    did = c.lastrowid
+    conn.commit()
+    conn.close()
+    return did
+
+def update_dsr_wp_info(dsr_id, wp_page_id, public_url, status='published'):
+    """Updates DSR with WordPress deployment info."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE digital_sales_rooms 
+        SET wp_page_id = ?, public_url = ?, status = ?
+        WHERE id = ?
+    ''', (wp_page_id, public_url, status, dsr_id))
+    conn.commit()
+    conn.close()
+
+def get_dsrs_for_campaign(campaign_id):
+    """Get all DSRs for a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM digital_sales_rooms WHERE campaign_id = ?', (campaign_id,))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def get_dsr_by_lead(campaign_id, lead_id):
+    """Get DSR for a specific lead in a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM digital_sales_rooms WHERE campaign_id = ? AND lead_id = ?', (campaign_id, lead_id))
+    res = c.fetchone()
+    conn.close()
+    return dict(res) if res else None
+
+def create_sequence(campaign_id, name):
+    """Creates a new cadence sequence."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('INSERT INTO sequences (campaign_id, name, created_at) VALUES (?, ?, ?)', (campaign_id, name, int(time.time())))
+    sid = c.lastrowid
+    conn.commit()
+    conn.close()
+    return sid
+
+def add_sequence_step(sequence_id, step_number, touch_type, delay, content):
+    """Adds a step to a sequence."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO sequence_steps (sequence_id, step_number, touch_type, delay_days, content_json)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (sequence_id, step_number, touch_type, delay, content))
+    conn.commit()
+    conn.close()
+
+def enroll_lead_in_sequence(lead_id, sequence_id):
+    """Enrolls a lead in a sequence."""
+    conn = get_connection()
+    c = conn.cursor()
+    # Check if already enrolled
+    c.execute('SELECT id FROM sequence_enrollments WHERE lead_id = ? AND sequence_id = ?', (lead_id, sequence_id))
+    if c.fetchone():
+        conn.close()
+        return # Already enrolled
+        
+    c.execute('''
+        INSERT INTO sequence_enrollments (lead_id, sequence_id, next_scheduled_at, status)
+        VALUES (?, ?, ?, 'active')
+    ''', (lead_id, sequence_id, int(time.time())))
+    conn.commit()
+    conn.close()
+
+def get_due_enrollments():
+    """Get enrollments ready for next step."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('''
+        SELECT se.*, s.campaign_id 
+        FROM sequence_enrollments se
+        JOIN sequences s ON se.sequence_id = s.id
+        WHERE se.status = 'active' AND se.next_scheduled_at <= ?
+    ''', (int(time.time()),))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def get_sequence_steps(sequence_id):
+    """Get steps for a sequence."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM sequence_steps WHERE sequence_id = ? ORDER BY sequence_id, step_number ASC', (sequence_id,))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def get_campaign_sequences(campaign_id):
+    """Get sequences for a campaign."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM sequences WHERE campaign_id = ?', (campaign_id,))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def update_enrollment_progress(enrollment_id, new_step_index, next_run_time, status='active'):
+    """Updates enrollment state after processing."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE sequence_enrollments 
+        SET current_step_index = ?, next_scheduled_at = ?, status = ?, last_touch_at = ?
+        WHERE id = ?
+    ''', (new_step_index, next_run_time, status, int(time.time()), enrollment_id))
+    conn.commit()
+    conn.close()
+
+def load_data(table_name):
+    """Loads a table into a Pandas DataFrame."""
+    conn = get_connection()
+    try:
+        import pandas as pd
+        df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+        conn.close()
+        return df
+    except Exception as e:
+        conn.close()
+        # Return empty DF with basic fallback if possible, or just re-raise
+        print(f"Error loading {table_name}: {e}")
+        return pd.DataFrame()
+
+def get_deals():
+    """Retrieves all deals."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('''
+        SELECT d.*, l.company_name, l.email 
+        FROM deals d 
+        JOIN leads l ON d.lead_id = l.id
+    ''')
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def get_tasks(status='pending'):
+    """Retrieves tasks by status."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM tasks WHERE status = ? ORDER BY due_date ASC', (status,))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def get_scheduled_posts(status='pending'):
+    """Retrieves scheduled posts."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM scheduled_posts WHERE status = ? ORDER BY scheduled_at ASC', (status,))
+    res = c.fetchall()
+    conn.close()
+    return [dict(r) for r in res]
+
+def save_scheduled_post(agent_type, platforms, content, scheduled_at, metadata=None):
+    """Saves a scheduled post."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    plats_json = json.dumps(platforms)
+    meta_json = json.dumps(metadata) if metadata else "{}"
+    
+    c.execute('''
+        INSERT INTO scheduled_posts (agent_type, platforms, content, scheduled_at, metadata, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (agent_type, plats_json, content, scheduled_at, meta_json, int(time.time())))
+    conn.commit()
+    conn.close()
+
+def delete_scheduled_post(post_id):
+    """Deletes a scheduled post."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('DELETE FROM scheduled_posts WHERE id = ?', (post_id,))
+    conn.commit()
+    conn.close()
+
+def save_creative_content(title, body, agent_type="Creative Agent", content_type="text"):
+    """Saves creative content."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO creative_content (title, body, agent_type, content_type, created_at)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (title, body, agent_type, content_type, int(time.time())))
+    conn.commit()
+    conn.close()
+def delete_leads_bulk(lead_ids):
+    """Deletes multiple leads by their IDs."""
+    if not lead_ids:
+        return
+    conn = get_connection()
+    c = conn.cursor()
+    placeholders = ','.join(['?'] * len(lead_ids))
+    c.execute(f'DELETE FROM leads WHERE id IN ({placeholders})', lead_ids)
+    conn.commit()
+    conn.close()
+
+def delete_deals_bulk(deal_ids):
+    """Deletes multiple deals by their IDs."""
+    if not deal_ids:
+        return
+    conn = get_connection()
+    c = conn.cursor()
+    placeholders = ','.join(['?'] * len(deal_ids))
+    c.execute(f'DELETE FROM deals WHERE id IN ({placeholders})', deal_ids)
     conn.commit()
     conn.close()

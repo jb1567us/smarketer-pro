@@ -9,7 +9,9 @@ from utils.recorder import WorkflowRecorder
 from utils.voice_manager import VoiceManager
 from workflow import run_outreach
 from workflow_manager import save_workflow, list_workflows, load_workflow, extract_steps_from_workflow
-from utils.agent_registry import get_agent_class, list_available_agents
+from automation_engine import AutomationEngine
+# Force registration of WordPressNode
+import src.nodes.domain.wordpress_node
 from memory import Memory
 from discovery_engine import DiscoveryEngine
 from database import (
@@ -19,8 +21,8 @@ from database import (
 
 def render_manager_ui():
     # Initialize Session State
-    if 'manager_agent' not in st.session_state:
-        st.session_state['manager_agent'] = ManagerAgent()
+    # Force re-instantiation to ensure latest code is picked up
+    st.session_state['manager_agent'] = ManagerAgent()
     
     if 'workflow_recorder' not in st.session_state:
         st.session_state['workflow_recorder'] = WorkflowRecorder()
@@ -85,6 +87,18 @@ def render_manager_ui():
                     st.rerun()
             else:
                 st.caption("System Status: Idle ⚪")
+        
+        # Auto-refresh for background logs
+        if 'auto_refresh' not in st.session_state:
+            st.session_state['auto_refresh'] = False
+            
+        if st.checkbox("🔄 Auto-refresh Logs", value=st.session_state['auto_refresh'], key="auto_refresh_toggle"):
+            st.session_state['auto_refresh'] = True
+            time.sleep(2)
+            st.rerun()
+        else:
+            st.session_state['auto_refresh'] = False
+
         st.divider()
         
         st.subheader("💬 Chat Controls")
@@ -349,15 +363,22 @@ def render_manager_ui():
                 reply = response_json.get("reply", "Processing request...")
 
             st.markdown(reply)
+            # DEBUG: Show detected tool
+            if tool and tool != "chat":
+                st.caption(f"🔧 Tool Detected: `{tool}`")
             # Update session state with metadata (useful for runtime)
+            display_content = reply
+            if tool and tool != "chat":
+                display_content = f"{reply}\n\n🔧 **Tool Call Detected:** `{tool}`"
+            
             st.session_state['manager_messages'].append({
                 "role": "assistant", 
-                "content": reply, 
+                "content": display_content, 
                 "tool_call": tool, 
                 "tool_params": params
             })
             # Save to DB with metadata
-            save_chat_message(st.session_state['current_session_id'], "assistant", reply, tool_call=tool, tool_params=params)
+            save_chat_message(st.session_state['current_session_id'], "assistant", display_content, tool_call=tool, tool_params=params)
             
             # --- GUARD RAIL --- 
             # If the agent just said "Done" without a tool, we scold it in the next turn or show error
@@ -540,6 +561,100 @@ def render_manager_ui():
                                 voice.speak(f"I found {len(wfs)} workflows.")
                             else:
                                 voice.speak("I found no saved workflows.")
+
+                        elif tool == "design_workflow":
+                            goal = params.get("goal")
+                            nodes_desc = params.get("nodes_description", "")
+                            st.info(f"🎨 Designing Workflow: {goal}")
+                            with st.spinner("Architecting..."):
+                                result = agent.design_workflow(goal, nodes_desc)
+                                if "error" in result:
+                                    content = f"❌ **Workflow Design Failed:** {result['error']}"
+                                    st.error(content)
+                                else:
+                                    content = f"✅ **Workflow Designed!**\n\n- **Goal:** {goal}\n- **File:** `{result['file']}`\n\n```json\n{json.dumps(result['design'], indent=2)}\n```"
+                                    st.success(f"Workflow saved to: {result['file']}")
+                                    st.json(result['design'])
+                                    voice.speak(f"I've designed the workflow for {goal}.")
+                                
+                                # PERSIST RESULT
+                                st.session_state['manager_messages'].append({"role": "assistant", "content": content})
+                                save_chat_message(st.session_state['current_session_id'], "assistant", content)
+
+                        elif tool == "execute_workflow":
+                            wf_name = params.get("workflow_name")
+                            payload = params.get("payload", {})
+                            st.info(f"🚀 Executing Workflow: {wf_name}")
+                            with st.spinner("Running engine..."):
+                                # agent.execute_workflow is async
+                                result = asyncio.run(agent.execute_workflow(wf_name, payload))
+                                if result.get("status") == "error":
+                                    content = f"❌ **Workflow Execution Failed:** {result.get('error')}"
+                                    st.error(content)
+                                else:
+                                    exec_id = result.get('execution_id')
+                                    content = f"🚀 **Workflow Execution Started!**\n\n- **Workflow:** `{wf_name}`\n- **Execution ID:** `{exec_id}`\n\nCheck 'Mission Control' for progress."
+                                    st.success(f"Workflow {wf_name} is now running. ID: {exec_id}")
+                                    voice.speak(f"Started workflow {wf_name}.")
+                                
+                                # PERSIST RESULT
+                                st.session_state['manager_messages'].append({"role": "assistant", "content": content})
+                                save_chat_message(st.session_state['current_session_id'], "assistant", content)
+
+                        elif tool == "build_wordpress_site":
+                            goal = params.get("goal")
+                            domain = params.get("domain", "lookoverhere.xyz")
+                            directory = params.get("directory", "")
+                            
+                            cp_pass = os.getenv("CPANEL_PASS", "")
+                            if not cp_pass:
+                                st.warning("⚠️ **CPANEL_PASS** not found in environment. The automation might fail during login. Please ensure your `.env` file is configured.")
+                            
+                            st.info(f"🏗️ Initiating Site Build: {goal}")
+                            recorder.log_step("build_wordpress_site", params, description=f"Build mission for {goal}")
+                            with st.spinner("Preparing automation..."):
+                                # Step 1: Design the workflow automatically
+                                design_res = agent.design_workflow(
+                                    goal=f"Install WordPress and setup site for: {goal}",
+                                    nodes_description=f"Action: cpanel_install. Domain: {domain}. Directory: {directory}."
+                                )
+                                
+                                if "error" in design_res:
+                                    content = f"❌ **Site Build Failed at Design Phase:** {design_res['error']}"
+                                    st.error(content)
+                                else:
+                                    wf_id = design_res['design'].get('id')
+                                    st.write(f"Workflow designed: `{wf_id}`. Offloading execution to background engine...")
+                                    
+                                    # Step 2: Execute the workflow ASYNCHRONOUSLY
+                                    engine = st.session_state.get('automation_engine')
+                                    if engine:
+                                        engine.start_workflow(wf_id, {
+                                            "cpanel_url": os.getenv("CPANEL_URL", "https://lookoverhere.xyz:2083"),
+                                            "cp_user": os.getenv("CPANEL_USER", "baron"),
+                                            "cp_pass": os.getenv("CPANEL_PASS", ""),
+                                            "domain": domain,
+                                            "directory": directory
+                                        }, agent)
+                                        
+                                        content = f"🏗️ **Site Build Mission Launched!**\n\n- **Goal:** {goal}\n- **Workflow:** `{wf_id}`\n\nI am now building the site at `{domain}/{directory}` in the background. You can track detailed progress in the **Mission Control** sidebar."
+                                        st.success("Mission offloaded to engine!")
+                                        voice.speak("I am building your site in the background.")
+                                    else:
+                                        # Fallback to blocking if engine missing (not ideal)
+                                        exec_res = asyncio.run(agent.execute_workflow(wf_id, {
+                                            "cpanel_url": os.getenv("CPANEL_URL", "https://lookoverhere.xyz:2083"),
+                                            "cp_user": os.getenv("CPANEL_USER", "baron"),
+                                            "cp_pass": os.getenv("CPANEL_PASS", ""),
+                                            "domain": domain,
+                                            "directory": directory
+                                        }))
+                                        content = f"🏗️ **Site Build Started (Blocking Mode):** {exec_res.get('status')}"
+                                        st.info("Engine not found, running synchronously.")
+
+                                # PERSIST RESULT
+                                st.session_state['manager_messages'].append({"role": "assistant", "content": content})
+                                save_chat_message(st.session_state['current_session_id'], "assistant", content)
 
                     except Exception as e:
                         st.error(f"Error executing {tool}: {e}")

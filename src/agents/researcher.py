@@ -1,6 +1,6 @@
 from .base import BaseAgent
 from scraper import search_searxng
-from extractor import fetch_html, extract_emails_from_site
+from extractor import fetch_html, extract_emails_from_site, extract_emails_from_text
 from social_scraper import SocialScraper
 import json
 import asyncio
@@ -20,6 +20,7 @@ class ResearcherAgent(BaseAgent):
             provider=provider
         )
         self.social_scraper = SocialScraper()
+        self.captcha_queue = []
 
     def _load_footprints(self):
         """Loads Hrefer-style footprints from JSON."""
@@ -44,7 +45,7 @@ class ResearcherAgent(BaseAgent):
         profile = config['search']['profiles'].get('default', {})
         engines = profile.get('engines', ['google', 'bing', 'yahoo'])
         
-        results = await self._perform_search(footprint, limit=num_results)
+        results = await self._perform_search(footprint, limit=num_results, status_callback=status_callback)
         urls = results.get("results", [])
         
         if status_callback: status_callback(f"✅ Harvested {len(urls)} raw URLs. Analyzing platforms...")
@@ -156,7 +157,7 @@ class ResearcherAgent(BaseAgent):
                 return {"error": "Invalid query provided", "results": []}
                 
             limit = context.get("limit")
-            res = await self._perform_search(query, limit=limit)
+            res = await self._perform_search(query, limit=limit, status_callback=lambda m: self.logger.info(m)) # Basic bridge for now
             self.save_work(res, artifact_type="search_results", metadata={"query": query})
             return res
         
@@ -170,7 +171,7 @@ class ResearcherAgent(BaseAgent):
 
         return {"error": "No query or URL provided in context"}
 
-    async def _perform_search(self, query, limit=None):
+    async def _perform_search(self, query, limit=None, status_callback=None):
         from .list_parser import ListParser
         from config import config
         list_parser = ListParser()
@@ -185,13 +186,41 @@ class ResearcherAgent(BaseAgent):
         categories = profile.get('categories')
 
         async with aiohttp.ClientSession() as session:
-            raw_results = await search_searxng(
-                query, 
-                session, 
-                num_results=limit,
-                categories=categories,
-                engines=engines
-            )
+            # Ralph-Style Discovery: Retry with broadening if results are empty
+            max_retries = 2
+            for attempt in range(max_retries + 1):
+                msg = f"  [Discovery] Searching for: '{query}' (Attempt {attempt+1})"
+                self.logger.info(msg)
+                if status_callback: status_callback(msg)
+                raw_results = await search_searxng(
+                    query, 
+                    session, 
+                    num_results=limit,
+                    categories=categories,
+                    engines=engines
+                )
+                
+                if raw_results:
+                    break
+                    
+                if attempt < max_retries:
+                    msg = f"  ⚠️ No results for '{query}'. Broadening search keywords..."
+                    self.logger.info(msg)
+                    if status_callback: status_callback(msg)
+                    # Ask LLM to broaden the query
+                    broaden_prompt = (
+                        f"The search query '{query}' returned 0 results. "
+                        f"Suggest a broader, similar search query that would find relevant B2B leads in the same niche. "
+                        f"Keep it to a single search phrase. Return ONLY the new query string."
+                    )
+                    new_query = self.provider.generate_text(broaden_prompt).strip().strip('"').strip("'")
+                    if new_query and new_query.lower() != query.lower():
+                        query = new_query
+                    else:
+                        break # Give up if LLM fails to provide a new query
+                else:
+                    self.logger.warning(f"  ❌ No results found after broadening.")
+                    return {"action": "search_failed", "results": [], "reason": "No results after broadening"}
             
             final_urls = []
             
@@ -227,41 +256,123 @@ class ResearcherAgent(BaseAgent):
             return {"action": "search_completed", "results": results}
 
     async def _deep_scrape(self, url):
+        """Alpha Ralph-Style: Scrapes homepage and automatically scouts for contact/about pages if needed."""
         async with aiohttp.ClientSession() as session:
-            # Basic scrape
+            # 1. Homepage Scrape
             html = await fetch_html(session, url)
-            emails = await extract_emails_from_site(session, url)
             
-            # Self-Correction Logic: Check if we have enough info
-            # Simple heuristic: If main page is empty or minimal, we might need to look for specific pages
+            if html == "__CAPTCHA_BLOCKED__":
+                self.logger.warning(f"  [Scraper] Captcha detected on {url}. Adding to healing queue.")
+                self.captcha_queue.append(url)
+                return {"url": url, "status": "captcha_blocked", "emails": []}
+
+            emails = await extract_emails_from_site(session, url) if html else set()
             
             info = {
                 "url": url,
-                "html_preview": html[:2000] if html else "", # Truncate for LLM
+                "html_preview": html[:2000] if html else "",
                 "emails": list(emails)
             }
             
-            # Ask LLM if we gathered enough info
+            # 2. Heuristic Check: If no email found, try specific strategy rotation
+            if not emails and html:
+                self.logger.info(f"  [Scraper] No emails on homepage of {url}. Triggering scout loop...")
+                scout_paths = ["/contact", "/about", "/contact-us", "/about-us"]
+                for path in scout_paths:
+                    scout_url = url.rstrip('/') + path
+                    self.logger.debug(f"    Scouting: {scout_url}")
+                    s_html = await fetch_html(session, scout_url)
+                    
+                    if s_html == "__CAPTCHA_BLOCKED__":
+                         self.logger.warning(f"    [Scraper] Captcha detected on sub-page {scout_url}. Queuing.")
+                         self.captcha_queue.append(scout_url)
+                         continue
+
+                    if s_html:
+                        s_emails = extract_emails_from_text(s_html)
+                        if s_emails:
+                            self.logger.info(f"    ✅ Success! Found {len(s_emails)} emails on {path}")
+                            emails.update(s_emails)
+                            info['emails'] = list(emails)
+                            break # Found some, good enough for now
+            
+            # 3. LLM-based Strategy Correction
             instructions = (
                 "Analyze the gathered info. Do we have enough to identify the company's business model and a contact point?\n"
-                "If not, suggest a specific sub-page to look specifically for (e.g. '/about', '/pricing', '/team').\n"
+                "If not, suggest a specific sub-page to look specifically for (e.g. '/pricing', '/team', '/legal').\n"
                 "Return JSON: {'complete': bool, 'missing_info': str, 'next_step_url': str or None}"
             )
             
             decision = self.generate_json(f"Gathered Info:\n{info}\n\n{instructions}")
             
             if decision and not decision.get("complete") and decision.get("next_step_url"):
-                # "Agentic Loop": Go deeper (one level for now to avoid infinite loops)
-                # Ensure the next_step_url is absolute or relative joined
+                self.logger.info(f"  [Scraper] Ralph Recommendation: Scouting {decision['next_step_url']}")
                 next_url = decision['next_step_url']
                 if not next_url.startswith('http'):
                     next_url = url.rstrip('/') + '/' + next_url.lstrip('/')
                     
                 sub_html = await fetch_html(session, next_url)
-                info['additional_page'] = next_url
-                info['additional_html'] = sub_html[:2000] if sub_html else ""
+                if sub_html == "__CAPTCHA_BLOCKED__":
+                    self.captcha_queue.append(next_url)
+                elif sub_html:
+                    info['additional_page'] = next_url
+                    info['additional_html'] = sub_html[:2000]
+                    # One last email grab
+                    emails.update(extract_emails_from_text(sub_html))
+                    info['emails'] = list(emails)
                 
             return info
+
+    async def process_captcha_queue(self):
+        """
+        Ralph-Style 'Healing' Loop: 
+        Uses a real browser (Playwright) to bypass captchas for blocked leads.
+        """
+        if not self.captcha_queue:
+            return []
+
+        self.logger.info(f"🚀 Starting Captcha Healing Loop for {len(self.captcha_queue)} URLs...")
+        
+        from utils.browser_manager import BrowserManager
+        bm = BrowserManager(session_id="captcha_healing")
+        
+        healed_data = []
+        try:
+            # We use headless=False because some captcha solvers/detectors work better with a head
+            await bm.launch(headless=True) 
+            
+            for url in self.captcha_queue:
+                self.logger.info(f"  [Healer] Navigating to blocked URL: {url}")
+                await bm.page.goto(url, wait_until="networkidle", timeout=30000)
+                
+                # Check for captcha and solve
+                solved = await bm.solve_captcha_if_present()
+                if solved:
+                    self.logger.info(f"  ✅ Captcha Solved! Capturing content...")
+                    # Wait for redirect/load after solving
+                    await bm.page.wait_for_timeout(3000)
+                    content = await bm.page.content()
+                    
+                    # Extract emails from the "healed" content
+                    emails = extract_emails_from_text(content)
+                    
+                    res = {
+                        "url": url,
+                        "status": "healed",
+                        "html_preview": content[:3000],
+                        "emails": list(emails)
+                    }
+                    healed_data.append(res)
+                else:
+                    self.logger.warning(f"  ❌ Could not solve captcha for {url}")
+                    
+        except Exception as e:
+            self.logger.error(f"  [Healer] Error during healing loop: {e}")
+        finally:
+            await bm.close()
+            self.captcha_queue = [] # Clear queue after processing
+            
+        return healed_data
 
     async def enrich_lead_data(self, url):
         """
@@ -312,8 +423,25 @@ class ResearcherAgent(BaseAgent):
                     if isinstance(c_res, list):
                         all_signals.extend(c_res)
             
-            # Deduplicate signals
-            res['intent_signals'] = list(set(all_signals))
+            # Deduplicate signals - handles both strings and dicts
+            seen = set()
+            unique_signals = []
+            for sig in all_signals:
+                if isinstance(sig, dict):
+                    # Convert dict to a stable string representation for hashing
+                    sig_hash = json.dumps(sig, sort_keys=True)
+                else:
+                    sig_hash = str(sig)
+                
+                if sig_hash not in seen:
+                    seen.add(sig_hash)
+                    unique_signals.append(sig)
+            
+            res['intent_signals'] = unique_signals
+
+            # 4. Metadata Integration (Required by workflow engine)
+            res['emails'] = list(await extract_emails_from_site(session, url))
+            res['html_preview'] = html[:5000] if html else "" # Provide preview for analyzer/qualifier
 
             # Add technographics to intent or as a separate field if needed for DB
             # For now we'll merge them or keep them in the dict as is.

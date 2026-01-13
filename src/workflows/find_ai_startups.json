@@ -1,0 +1,57 @@
+{
+  "id": "find_ai_startups",
+  "name": "Find AI Startups in San Francisco and Send Hello Message",
+  "nodes": [
+    {
+      "id": "manual_trigger",
+      "type": "trigger.manual"
+    },
+    {
+      "id": "search_node",
+      "type": "domain.search",
+      "params": {
+        "query": "San Francisco AI startups"
+      }
+    },
+    {
+      "id": "enrich_node",
+      "type": "domain.enrich",
+      "params": {
+        "source": "search_node"
+      }
+    },
+    {
+      "id": "filter_node",
+      "type": "core.if",
+      "params": {
+        "condition": "enrich_node.enrichedData"
+      }
+    },
+    {
+      "id": "email_node",
+      "type": "domain.email",
+      "params": {
+        "source": "filter_node",
+        "template": "Hello {companyName}"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "manual_trigger",
+      "target": "search_node"
+    },
+    {
+      "source": "search_node",
+      "target": "enrich_node"
+    },
+    {
+      "source": "enrich_node",
+      "target": "filter_node"
+    },
+    {
+      "source": "filter_node",
+      "target": "email_node"
+    }
+  ]
+}
