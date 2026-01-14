@@ -142,6 +142,45 @@ volumes:
                 resp = requests.post(f"{base_url}/pages", headers=headers, json=payload, timeout=15)
                 return resp.json()
 
+            elif action == "list_plugins":
+                resp = requests.get(f"{base_url}/plugins", headers=headers, timeout=15)
+                # Note: The /plugins endpoint might require a specific plugin (like App Runner) or sufficient permissions.
+                # If standard WP doesn't expose it, we might need to rely on inference or a custom endpoint.
+                # But let's try the standard endpoint first as it's often available for admins.
+                if resp.status_code == 404:
+                    return {"error": "Plugins endpoint not found. Ensure REST API is enabled and user has permissions."}
+                return resp.json()
+
+            elif action == "upload_media":
+                # data should have 'file_path' and optional 'alt_text', 'caption'
+                file_path = data.get('file_path')
+                if not file_path or not os.path.exists(file_path):
+                    return {"error": f"File not found: {file_path}"}
+                
+                media_url = base_url + "/media"
+                
+                # MIME detection prompt
+                import mimetypes
+                mime_type, _ = mimetypes.guess_type(file_path)
+                if not mime_type:
+                    mime_type = "application/octet-stream"
+                
+                filename = os.path.basename(file_path)
+                
+                media_headers = headers.copy()
+                media_headers.update({
+                    "Content-Type": mime_type,
+                    "Content-Disposition": f'attachment; filename="{filename}"'
+                })
+                
+                with open(file_path, 'rb') as img_file:
+                    resp = requests.post(media_url, headers=media_headers, data=img_file, timeout=60)
+                
+                if resp.status_code == 201:
+                    return resp.json()
+                else:
+                    return {"error": f"Upload failed: {resp.status_code} - {resp.text}"}
+
             else:
                 return {"error": f"Unsupported action: {action}"}
 
@@ -498,6 +537,14 @@ volumes:
                 app_pass = "OutreachAgent2026!"
                 headers = self._get_headers(username, app_pass)
 
+                # Initialize Optimizer
+                try:
+                    from src.utils.image_optimizer import ImageOptimizer
+                    optimizer = ImageOptimizer(target_size_kb=150, quality=85)
+                except ImportError:
+                    self.logger.warning("ImageOptimizer not found. Skipping optimization.")
+                    optimizer = None
+
                 for item in content_list:
                     # 1. Handle Feature Image (if keyword present)
                     keyword = item.get('image_keyword')
@@ -510,23 +557,52 @@ volumes:
                             img_resp = requests.get(img_url, timeout=10)
                             
                             if img_resp.status_code == 200:
+                                # Save to temp file for optimization
+                                temp_dir = Path("temp_images")
+                                temp_dir.mkdir(exist_ok=True)
+                                raw_path = temp_dir / f"{keyword.replace(' ', '_')}.jpg"
+                                
+                                with open(raw_path, 'wb') as f:
+                                    f.write(img_resp.content)
+                                
+                                final_path = raw_path
+                                final_filename = raw_path.name
+                                content_type = "image/jpeg"
+
+                                # OPTIMIZE
+                                if optimizer:
+                                    self.logger.info(f"WP DEBUG: Optimizing image {raw_path}...")
+                                    opt_res = optimizer.optimize_image(str(raw_path), str(temp_dir))
+                                    if opt_res['success']:
+                                        final_path = Path(opt_res['output_file'])
+                                        final_filename = opt_res['filename']
+                                        content_type = "image/webp"
+                                        self.logger.info(f"WP DEBUG: Optimization success: {final_filename} ({opt_res['optimized_size_kb']} KB)")
+                                
                                 # Upload to WordPress
                                 media_url = site_url.rstrip('/') + "/wp-json/wp/v2/media"
-                                # We need separate headers for binary upload, OR use multipart
-                                # Simplest is Content-Disposition header with binary body
                                 media_headers = headers.copy()
                                 media_headers.update({
-                                    "Content-Type": "image/jpeg",
-                                    "Content-Disposition": f'attachment; filename="{keyword.replace(" ", "_")}.jpg"'
+                                    "Content-Type": content_type,
+                                    "Content-Disposition": f'attachment; filename="{final_filename}"'
                                 })
                                 
-                                upload_resp = requests.post(media_url, headers=media_headers, data=img_resp.content, timeout=30)
+                                with open(final_path, 'rb') as img_file:
+                                    upload_resp = requests.post(media_url, headers=media_headers, data=img_file, timeout=60)
+                                
                                 if upload_resp.status_code == 201:
                                     img_id = upload_resp.json().get('id')
                                     item['featured_media'] = img_id
                                     self.logger.info(f"WP DEBUG: Image uploaded. ID: {img_id}")
                                 else:
                                     self.logger.error(f"WP DEBUG: Image upload failed: {upload_resp.text}")
+                                    
+                                # Cleanup
+                                try:
+                                    if raw_path.exists(): os.remove(raw_path)
+                                    if optimizer and final_path != raw_path and final_path.exists(): os.remove(final_path)
+                                except: pass
+
                         except Exception as img_e:
                             self.logger.error(f"WP DEBUG: Image processing error: {img_e}")
 
