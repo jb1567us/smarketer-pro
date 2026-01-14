@@ -20,12 +20,18 @@ class ImageGenManager:
         except ImportError:
             pass
 
+        try:
+            from .pollination_provider import PollinationImageProvider
+            self.providers['pollination'] = PollinationImageProvider()
+        except ImportError:
+            pass
+
     def generate_image(self, prompt: str, provider_name: str = None, **kwargs) -> str:
         """
         Generates an image using the specified provider or the default one.
         """
         if not provider_name:
-            provider_name = config.get('image_gen', {}).get('default_provider', 'openai')
+            provider_name = config.get('image_gen', {}).get('default_provider', 'pollination')
         
         provider = self.providers.get(provider_name)
         if not provider:

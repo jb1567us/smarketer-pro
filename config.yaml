@@ -215,7 +215,7 @@ llm:
 logging:
   spawn_background_window: false
 image_gen:
-  default_provider: openai
+  default_provider: pollination
   openai:
     model: dall-e-3
   stability:

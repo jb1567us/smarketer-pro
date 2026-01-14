@@ -11,6 +11,9 @@ project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+# Force node registration
+import src.nodes
+
 import asyncio
 import time
 import subprocess
@@ -1722,11 +1725,8 @@ def main():
                     render_agent_chat("last_custom_agent_response", custom_agent, "ca_context")
 
 if __name__ == '__main__':
-    print("DEBUG: Entering __name__ == '__main__'")
     try:
-        print("DEBUG: Calling main()...")
         main()
-        print("DEBUG: main() finished normal execution.")
     except Exception as e:
         # Allow Streamlit Control Flow Exceptions to pass through
         if type(e).__name__ in ["RerunException", "StopException"]:

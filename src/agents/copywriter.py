@@ -9,6 +9,18 @@ class CopywriterAgent(BaseAgent):
             provider=provider
         )
 
+    async def think_async(self, context, instructions=None):
+        """Async entry point. Handles generic content tasks or delegates to email logic."""
+        # Check for generic content generation triggers (e.g. for WordPress site building)
+        prompt_lower = str(context).lower()
+        if "json list" in prompt_lower or "website pages" in prompt_lower or "article" in prompt_lower:
+            # Direct generation for site content
+            self.logger.info(f"  [Copywriter] Handling generic content request via think_async")
+            return self.provider.generate_json(context)
+        
+        # Default to existing email logic (blocking call is acceptable for now)
+        return self.think(context, instructions)
+
     def think(self, context, instructions=None):
         """Standard draft generation."""
         return self.generate_optimized_email(context, instructions)

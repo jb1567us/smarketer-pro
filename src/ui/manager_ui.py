@@ -74,7 +74,7 @@ def render_manager_ui():
     # Sidebar Voice Status & Discovery
     with st.sidebar:
         st.title("🤖 Manager Agent")
-        st.caption("Your personal AI Manager.")
+        st.caption("Your personal AI Manager. v2.6 (Stable)")
         st.divider()
 
         # --- LIVE SYSTEM STATUS ---
@@ -98,6 +98,19 @@ def render_manager_ui():
             st.rerun()
         else:
             st.session_state['auto_refresh'] = False
+            
+        if st.button("🔄 Manual Refresh"):
+            st.rerun()
+
+        # LOG VIEWER
+        st.divider()
+        with st.expander("📜 Mission Control Logs", expanded=True):
+            if 'automation_engine' in st.session_state and st.session_state['automation_engine'].logs:
+                # Show last 20 logs
+                for log in reversed(st.session_state['automation_engine'].logs[-20:]):
+                    st.caption(f"_{log}_")
+            else:
+                st.caption("No logs yet.")
 
         st.divider()
         
@@ -333,8 +346,9 @@ def render_manager_ui():
         final_prompt = voice_command
 
     if final_prompt:
-        # 1. User Message
-        st.session_state['manager_messages'].append({"role": "user", "content": final_prompt})
+        with chat_container:
+            # 1. User Message
+            st.session_state['manager_messages'].append({"role": "user", "content": final_prompt})
         save_chat_message(st.session_state['current_session_id'], "user", final_prompt)
         
         # Update Title if it's the first user message (simple heuristic)
@@ -398,19 +412,28 @@ def render_manager_ui():
 
             # 3. Execution
             if tool and tool != "chat":
-                with st.status(f"Executing: {tool}...", expanded=True) as status:
+                # Use expanded=False to keep the UI clean / fixed
+                with st.status(f"⚡ Working: {tool}...", expanded=False) as status:
                     try:
                         if tool == "run_search":
                             recorder.log_step(tool, params, description=f"Search for '{params.get('query')}'")
-                            st.write(f"Running search for: {params.get('query')}")
-                            asyncio.run(run_outreach(
-                                params.get("query"), 
-                                target_niche=params.get("niche"), 
-                                profile_names=params.get("profile", "default")
-                            ))
-                            st.success("Search completed! Results saved to Leads DB.")
-                            voice.speak("Search completed.")
-                            memory.add_feedback(tool, "Success", 5, "Auto-logged success")
+                            st.write(f"Offloading search for: {params.get('query')} to Mission Control...")
+                            
+                            # Use AutomationEngine for background execution
+                            engine = st.session_state['automation_engine']
+                            
+                            strategy = {
+                                "strategy_name": f"Search: {params.get('query')}",
+                                "goal": params.get('query'),
+                                "mode": "conductor",
+                                "sequence": [{"type": "agent", "agent": "RESEARCHER", "task": params.get('query')}]
+                            }
+                            
+                            engine.start_mission(strategy, agent)
+                            
+                            st.success("Search task sent to Mission Control! Check the sidebar or 'Mission Control' tab for progress.")
+                            voice.speak("I've started the search in the background.")
+                            memory.add_feedback(tool, "Success", 5, "Offloaded search to engine")
 
                         elif tool == "save_workflow":
                             name = params.get("name", "untitled_workflow")
@@ -449,6 +472,74 @@ def render_manager_ui():
                                 memory.add_feedback(tool, "Success", 5, f"Ran workflow {name}")
                             else:
                                 st.error("Workflow not found or empty.")
+
+                        elif tool == "build_wordpress_site":
+                            goal = params.get("goal")
+                            domain = params.get("domain")
+                            directory = params.get("directory")
+                            st.write(f"Initiating WordPress Build: {domain}/{directory}...")
+                            
+                            engine = st.session_state['automation_engine']
+                            
+                            # Construct a "Mission" for the Engine
+                            
+                            # Content Pipeline Detection
+                            # Check strict 'goal' param AND the full 'final_prompt' for context
+                            full_context = (goal + " " + (final_prompt or "")).lower()
+                            has_content_intent = any(k in full_context for k in ["page", "content", "blog", "article", "post", "website"])
+                            
+                            sequence = []
+                            # 1. Install
+                            sequence.append({
+                                "type": "agent",
+                                "agent": "WORDPRESS",
+                                "task": f"Install WordPress on {domain} in directory '{directory}'."
+                            })
+                            
+                            if has_content_intent:
+                                st.write("📝 Content request detected: Generating multi-agent pipeline...")
+                                st.caption(f"DEBUG: Goal='{goal}'")
+                                
+                                # 2. Research Context
+                                sequence.append({
+                                    "type": "agent",
+                                    "agent": "RESEARCHER",
+                                    "task": f"Research key sub-topics and keywords for a website about: {goal}. Return a bulleted list of 5 page topics."
+                                })
+                                
+                                # 3. Generate Content (JSON)
+                                sequence.append({
+                                    "type": "agent",
+                                    "agent": "COPYWRITER",
+                                    "task": f"Write 5 website pages based on the research provided. Return ONLY a valid JSON list of objects: [{{'title': 'Page Title', 'content': 'HTML Content', 'image_keyword': 'Short keyword for finding a stock image'}}]. Do not wrap in markdown code blocks."
+                                })
+                                
+                                # 4. Publish
+                                sequence.append({
+                                    "type": "agent",
+                                    "agent": "WORDPRESS",
+                                    "task": f"Publish the provided content pages to the site at {domain}/{directory}. If 'image_keyword' is present, use it to fetch a featured image."
+                                })
+                                
+                                st.caption(f"DEBUG: Sequence has {len(sequence)} steps.")
+                                
+                            strategy = {
+                                "strategy_name": f"WP Build: {domain}",
+                                "mode": "conductor", # Use conductor to execute sequence
+                                "goal": goal,
+                                "sequence": sequence
+                            }
+                            
+                            engine.start_mission(strategy, agent)
+                            
+                            content = f"✅ **Mission Launched**\n\nI've offloaded the build for `{domain}` to the Automation Engine.\n\n**Mission:** `{strategy['strategy_name']}`\n**Sequence:** {len(sequence)} steps.\n\nYou can monitor progress in the 'Mission Control' logs."
+                            st.success(f"Mission offloaded to Engine! Monitoring {domain}...")
+                            voice.speak("I've started the site build mission.")
+                            memory.add_feedback(tool, "Success", 5, "Offloaded WP build to engine")
+                            
+                            # PERSIST RESULT
+                            st.session_state['manager_messages'].append({"role": "assistant", "content": content})
+                            save_chat_message(st.session_state['current_session_id'], "assistant", content)
 
                         elif tool == "delegate_task":
                             agent_name = params.get("agent_name")

@@ -50,13 +50,18 @@ class ResearcherAgent(BaseAgent):
         
         if status_callback: status_callback(f"✅ Harvested {len(urls)} raw URLs. Analyzing platforms...")
         
-        # Platform Detection
+        # Platform Detection (Parallelized)
         analyzed = []
-        for item in urls:
-            url = item['url']
-            plat = await self.detect_platform(url)
-            item['platform'] = plat
-            analyzed.append(item)
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for item in urls:
+                tasks.append(self.detect_platform(item['url'], session=session))
+            
+            platforms = await asyncio.gather(*tasks)
+            
+            for item, plat in zip(urls, platforms):
+                item['platform'] = plat
+                analyzed.append(item)
             
         self.save_work(analyzed, artifact_type="harvested_urls", metadata={"footprint": footprint})
         return analyzed
@@ -103,7 +108,7 @@ class ResearcherAgent(BaseAgent):
         self.save_work(results, artifact_type="keyword_list", metadata={"seeds": seeds})
         return results
 
-    async def detect_platform(self, url):
+    async def detect_platform(self, url, session=None):
         """
         Identifies if a site is WordPress, Joomla, Drupal, 4image, etc.
         """
@@ -133,12 +138,22 @@ class ResearcherAgent(BaseAgent):
         
         try:
             from extractor import fetch_html
-            async with aiohttp.ClientSession() as session:
-                 html = await fetch_html(session, url, timeout=5)
-                 if html:
+            
+            # Use provided session or create a temp one
+            if session:
+                html = await fetch_html(session, url, timeout=5)
+                if html:
                      for platform, markers in signatures.items():
                          if any(marker in html for marker in markers):
                              return platform
+            else:
+                async with aiohttp.ClientSession() as temp_session:
+                     html = await fetch_html(temp_session, url, timeout=5)
+                     if html:
+                         for platform, markers in signatures.items():
+                             if any(marker in html for marker in markers):
+                                 return platform
+
         except Exception as e:
             self.logger.debug(f"Platform detection failed: {e}")
             pass
@@ -493,6 +508,28 @@ class ResearcherAgent(BaseAgent):
             
         return "Social data found but format unrecognized."
 
+    async def think_async(self, context, instructions=None):
+        """
+        Async version of think. Use this to avoid nested event loop issues.
+        """
+        # Heuristic: If context is a short string and not JSON/Data, treat as search query
+        is_query = False
+        if isinstance(context, str) and len(context) < 300:
+            is_query = True
+            if "{" in context and "}" in context: # vague check for JSON
+                is_query = False
+        
+        if is_query:
+            self.logger.info(f"ResearcherAgent received query via think_async(): {context}")
+            self.logger.info(f"Searching for: '{context}'...")
+            res = await self.gather_intel({"query": context})
+            self.logger.info(f"Found {len(res.get('results', []))} results.")
+            return res
+        
+        # Make sync call async-friendly if needed, but for now just call it
+        # as generating text usually doesn't involve complex nested loops that crash
+        return self.think(context, instructions)
+
     def think(self, context, instructions=None):
         """
         Processes a request. If it looks like a search query, perform the search.
@@ -508,10 +545,26 @@ class ResearcherAgent(BaseAgent):
         if is_query:
             self.logger.info(f"ResearcherAgent received query via think(): {context}")
             self.logger.info(f"Searching for: '{context}'...")
-            # Run async gather_intel synchronously
-            res = asyncio.run(self.gather_intel({"query": context}))
-            self.logger.info(f"Found {len(res.get('results', []))} results.")
-            return res
+            
+            # CHECK FOR RUNNING LOOP to avoid RuntimeError
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                # We are in a loop (e.g. AutomationEngine thread), but think() was called synchronously.
+                # This is tricky. Ideally the caller should use think_async.
+                # If we are here, we might fail if we try asyncio.run()
+                self.logger.warning("think() called from running loop! Trying to schedule task (might fail if caller expects immediate return).")
+                # We can't really return the result synchronously here if we are deep in a loop.
+                # But for now, let's just attempt asyncio.run if NO loop, else warn.
+                return {"error": "Method think() called synchronously from async context. Use think_async() instead."}
+            else:
+                # No loop, safe to run
+                res = asyncio.run(self.gather_intel({"query": context}))
+                self.logger.info(f"Found {len(res.get('results', []))} results.")
+                return res
         
         # Fallback: Analyze provided data
         prompt = f"Analyze this research data:\n{context}"

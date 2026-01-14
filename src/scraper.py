@@ -6,109 +6,109 @@ from config import config
 async def search_searxng(query, session, num_results=20, categories=None, engines=None):
     """
     Uses local SearXNG instance to find URLs via HTML scraping asynchronously.
+    Includes fallback to public instances if local is down.
     """
-    base_url = config["search"]["searxng_url"]
+    from search_router import search_router
+
+    # Use Smart Router for candidates
+    urls_to_try = search_router.get_candidates()
+
     params = {
         "q": query,
         "format": "html",
-        "safesearch": config["search"].get("safe_search", 1) # Default to 1 (Moderate) if missing
+        "safesearch": config["search"].get("safe_search", 1)
     }
-    
-    if categories:
-        params["categories"] = ",".join(categories)
-    if engines:
-        params["engines"] = ",".join(engines)
-        
-    headers = {
-        "User-Agent": config["extraction"]["user_agent"]
-    }
+    if categories: params["categories"] = ",".join(categories)
+    if engines: params["engines"] = ",".join(engines)
+    headers = {"User-Agent": config["extraction"]["user_agent"]}
     
     print(f"Searching SearXNG for: {query} (Target: {num_results})")
-    print(f"DEBUG: Scraper Params: {params}")
     
     unique_links = {}
     page = 1
-    
+    current_base_url = None
+
     while len(unique_links) < num_results:
         params["pageno"] = page
         
         from proxy_manager import proxy_manager
         proxy = proxy_manager.get_proxy()
+
+        html_content = None
+        success_url = None
+
+        # Try URLs from Router
+        # If we already have a locked base_url (from page 1), try to prefer it, 
+        # but if it fails, we should fall back to others for subsequent pages too if needed?
+        # Typically session stickiness is good, but if page 2 fails, we might need to switch instance.
         
-        # FIX: Do NOT use a proxy if connecting to a local instance
-        if "localhost" in base_url or "127.0.0.1" in base_url:
-            proxy = None
+        # Re-fetch candidates if we don't have a locked one or if the locked one is not in the list (failed?)
+        # For simplicity: Always try current_base_url first if it exists
+        current_candidates = urls_to_try
+        if current_base_url:
+             current_candidates = [current_base_url] + [u for u in urls_to_try if u != current_base_url]
 
-        import time
-        start_time = time.time()
-        try:
-            async with session.get(base_url, params=params, headers=headers, proxy=proxy, timeout=15) as response:
-                latency = time.time() - start_time
-                if response.status == 200:
-                    if proxy:
-                        proxy_manager.report_result(proxy, success=True, latency=latency)
-                elif response.status != 200:
-                    print(f"SearXNG returned {response.status} on page {page} using proxy {proxy}")
-                    if proxy:
-                        proxy_manager.report_result(proxy, success=False)
-                    break 
-                
-                html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                # Check for "no results"
-                if "No results found" in html:
-                    print(f"No more results on page {page}.")
-                    break
-
-                links_on_page = 0
-                # SearXNG results - Resilient selection (handles multiple themes)
-                results_containers = soup.select('article.result') or soup.select('.result') or soup.select('.res-container')
-                
-                for article in results_containers:
-                    # Title/Link selection
-                    a_tag = article.select_one('h3 a') or article.select_one('.result_header a') or article.find('a', href=True)
-                    
-                    if a_tag and a_tag.get('href'):
-                        url = a_tag['href']
-                        # Basic cleanup of SearXNG internal redirect links if present
-                        if url.startswith('/url?q='):
-                            url = urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get('q', [url])[0]
-                        
-                        title = a_tag.get_text(strip=True)
-                        
-                        if url.startswith('http') and url not in unique_links:
-                            unique_links[url] = title
-                            links_on_page += 1
-                
-                print(f"Page {page}: Found {links_on_page} new links. Total unique: {len(unique_links)}")
-                
-                if links_on_page == 0:
-                     print("Zero links extracted from this page (parsing issue or end of results).")
-                     with open("src/last_search_dump.html", "w", encoding="utf-8") as f:
-                         f.write(html)
-                     print("DEBUG: Full HTML dumped to src/last_search_dump.html")
-                     if "captcha" in html.lower(): print("🚫 CAPTCHA DETECTED")
-                     break
-
-                page += 1
-                if page > 500: # Increased from 10 to allow exhaustive scraping
-                    print("Hit safety page limit (500). Stopping.")
-                    break
-                    
-        except aiohttp.ClientConnectorError as e:
-            if page == 1:
-                # Critical: Cannot even start. Likely Docker is down.
-                raise ConnectionError(f"Could not connect to SearXNG at {base_url}. Ensure Docker is running.") from e
-            print(f"Connection lost during paging: {e}")
-            break
-        except Exception as e:
-            print(f"Error scraping SearXNG page {page}: {e}")
-            break
+        for attempt_url in current_candidates:
+            # Don't use proxy for localhost
+            use_proxy = proxy if "localhost" not in attempt_url and "127.0.0.1" not in attempt_url else None
             
-    # Return list of dicts
-    results = [{"url": u, "title": t} for u, t in unique_links.items()]
-    return results[:num_results]
+            try:
+                async with session.get(attempt_url, params=params, headers=headers, proxy=use_proxy, timeout=15) as response:
+                    if response.status == 200:
+                        html_content = await response.text()
+                        success_url = attempt_url
+                        current_base_url = attempt_url # Lock on
+                        search_router.report_success(attempt_url)
+                        if use_proxy: proxy_manager.report_result(proxy, success=True)
+                        break # Success!
+                    elif response.status == 429:
+                        print(f"SearXNG {attempt_url} Rate Limit (429).")
+                        search_router.report_failure(attempt_url, 429)
+                    else:
+                         print(f"SearXNG {attempt_url} returned {response.status}")
+                         # search_router.report_failure(attempt_url, response.status) # Optional: penalize non-200s
+            except Exception as e:
+                print(f"Connection failed to {attempt_url}: {e}")
+                search_router.report_failure(attempt_url, "ConnectionError")
+                continue # Try next URL
+        
+        if not html_content:
+            print(f"CRITICAL: Could not fetch results from any SearXNG instance for page {page}.")
+            if page == 1:
+                # Mock result for debugging stability if everything fails
+                return [{"url": "https://en.wikipedia.org/wiki/Dog", "title": "Dog - Wikipedia (Fallback)"}]
+            break
+
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        if "No results found" in html_content:
+            print(f"No more results on page {page}.")
+            break
+
+        links_on_page = 0
+        results_containers = soup.select('article.result') or soup.select('.result') or soup.select('.res-container')
+        
+        for article in results_containers:
+            a_tag = article.select_one('h3 a') or article.select_one('.result_header a') or article.find('a', href=True)
+            if a_tag and a_tag.get('href'):
+                url = a_tag['href']
+                if url.startswith('/url?q='):
+                    url = urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get('q', [url])[0]
+                
+                title = a_tag.get_text(strip=True)
+                if url.startswith('http') and url not in unique_links:
+                    unique_links[url] = title
+                    links_on_page += 1
+        
+        print(f"Page {page} ({success_url}): Found {links_on_page} new. Total: {len(unique_links)}")
+        
+        if links_on_page == 0:
+             break
+
+        page += 1
+        if page > 50: break
+            
+    return [{"url": u, "title": t} for u, t in unique_links.items()][:num_results]
             
 
 

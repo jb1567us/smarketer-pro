@@ -6,7 +6,22 @@ import time
 import queue
 
 class VoiceManager:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            with cls._lock:
+                if not cls._instance:
+                    cls._instance = super(VoiceManager, cls).__new__(cls)
+                    cls._instance._initialized = False
+        return cls._instance
+
     def __init__(self, wake_word="hey stanley", sleep_word="stanley go to sleep"):
+        if getattr(self, "_initialized", False):
+            return
+        self._initialized = True
+        
         self.wake_word = wake_word.lower()
         self.sleep_word = sleep_word.lower()
         self.is_listening = False

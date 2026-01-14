@@ -27,8 +27,12 @@ class ImageGenAgent(BaseAgent):
         if instructions:
             full_context += f"\nInstructions: {instructions}"
 
-        response = self.provider.generate_json(f"{full_context}\n\n{enhancement_prompt}")
-        enhanced_prompt = response.get('enhanced_prompt', context)
+        try:
+            response = self.provider.generate_json(f"{full_context}\n\n{enhancement_prompt}")
+            enhanced_prompt = response.get('enhanced_prompt', context)
+        except Exception as e:
+            self.logger.warning(f"[ImageAgent] Prompt enhancement failed (LLM error): {e}. Using original prompt.")
+            enhanced_prompt = context
         
         # 2. Generate Image
         print(f"  [ImageAgent] meaningful prompt: {enhanced_prompt[:50]}...")

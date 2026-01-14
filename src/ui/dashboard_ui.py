@@ -29,12 +29,21 @@ def render_dashboard():
     with col2:
         # Mini System Health
         status_color = "green" if proxy_manager.enabled else "orange"
+        is_running = st.session_state.get('automation_engine') and st.session_state['automation_engine'].is_running
+        
         st.markdown(f"""
         <div style="text-align: right; padding: 10px; border: 1px solid #333; border-radius: 5px;">
             <b>Proxies:</b> :{status_color}[{'Active' if proxy_manager.enabled else 'Disabled'}]<br>
-            <b>Automation:</b> {'Running' if st.session_state.get('automation_engine') and st.session_state['automation_engine'].is_running else 'Idle'}
+            <b>Automation:</b> {'Running 🟢' if is_running else 'Idle ⚪'}
         </div>
         """, unsafe_allow_html=True)
+        
+        # Auto-refresh logic for Dashboard
+        if is_running:
+            if st.checkbox("Auto-refresh", value=True, key="dash_refresh"):
+                import time
+                time.sleep(2)
+                st.rerun()
 
     st.divider()
 

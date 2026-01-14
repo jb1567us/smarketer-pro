@@ -181,11 +181,22 @@ class AutomationEngine:
                     if AgentClass:
                         sub_agent = AgentClass()
                         # Generic delegation
-                        if hasattr(sub_agent, 'think'):
+                        if hasattr(sub_agent, 'think_async'):
+                            res = await sub_agent.think_async(task)
+                            if isinstance(res, dict) and 'reply' in res:
+                                self.log(f"💬 {agent_name}: {res['reply']}")
+                            elif isinstance(res, str):
+                                self.log(f"💬 {agent_name}: {res}")
+                            self.log(f"✅ {agent_name} completed task (async).")
+                        elif hasattr(sub_agent, 'think'):
                             res = sub_agent.think(task)
-                            self.log(f"✅ {agent_name} completed task.")
+                            if isinstance(res, dict) and 'reply' in res:
+                                self.log(f"💬 {agent_name}: {res['reply']}")
+                            elif isinstance(res, str):
+                                self.log(f"💬 {agent_name}: {res}")
+                            self.log(f"✅ {agent_name} completed task (sync).")
                         else:
-                            self.log(f"⚠️ Agent {agent_name} does not have a 'think' method.")
+                            self.log(f"⚠️ Agent {agent_name} does not have a 'think' or 'think_async' method.")
                     else:
                         self.log(f"❌ Agent {agent_name} not found.")
 
