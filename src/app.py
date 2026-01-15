@@ -236,7 +236,7 @@ def main():
             menu_unified = [
                 "Dashboard",
                 "--- SALES CRM ---", "CRM Dashboard", "Pipeline (Deals)", "Tasks", "DSR Manager",
-                "--- MARKETING ---", "Campaigns", "Social Scheduler", "Creative Library", "Video Studio", "Strategy Laboratory", "Reports",
+                "--- MARKETING ---", "Campaigns", "Social Scheduler", "Creative Library", "Video Studio", "Strategy Laboratory", "Affiliate Command", "Reports",
                 "--- LEAD GEN ---", "Lead Discovery", "Mass Tools", "Account Creator",
                 "--- INNOVATION ---", "Product Lab",
                 "--- SEO ---", "SEO Audit", "Keyword Research", "Link Wheel Builder",
@@ -282,7 +282,7 @@ def main():
                     st.rerun()
 
 
-            with st.expander("📣 Marketing Hub", expanded=st.session_state['current_view'] in ["Campaigns", "Social Scheduler", "Creative Library", "Strategy Laboratory"]):
+            with st.expander("📣 Marketing Hub", expanded=st.session_state['current_view'] in ["Campaigns", "Social Scheduler", "Creative Library", "Strategy Laboratory", "Affiliate Command", "Reports"]):
                 if st.button("Campaigns", use_container_width=True): 
                     st.session_state['current_view'] = "Campaigns"
                     st.rerun()
@@ -305,6 +305,10 @@ def main():
 
                 if st.button("Video Studio", use_container_width=True):
                     st.session_state['current_view'] = "Video Studio"
+                    st.rerun()
+
+                if st.button("Affiliate Command", use_container_width=True):
+                    st.session_state['current_view'] = "Affiliate Command"
                     st.rerun()
 
             with st.expander("🚀 Innovation Lab", expanded=st.session_state['current_view'] in ["Product Lab"]):

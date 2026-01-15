@@ -433,10 +433,3 @@ Create the NEXT 10 ACTIONS list using these default actions (adapt if conflicts 
 Is this conversation helpful so far?
 
 
-
-
-
-
-
-No file chosenNo file chosen
-ChatGPT can make mistakes. Check important info.

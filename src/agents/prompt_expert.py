@@ -18,3 +18,24 @@ class PromptExpertAgent(BaseAgent):
             ),
             provider=provider
         )
+
+    def analyze_niche(self, niche: str) -> dict:
+        """
+        Deeply analyzes a niche to extract psychological drivers.
+        Returns a dict suitable for populating partial PromptContext.
+        """
+        self.logger.info(f"🧠 PROMPT EXPERT: Analyzing niche '{niche}' for behavioral drivers...")
+        
+        prompt = (
+            f"You are a World-Class Market Researcher. Analyze the target audience for the '{niche}' industry.\n"
+            "Identify the deep psychological drivers, not just surface-level features.\n\n"
+            "Return JSON ONLY with this structure:\n"
+            "{\n"
+            "  'icp_role': 'Specific Role Title (e.g. Busy Mom, CTO, procurement officer)',\n"
+            "  'icp_pain_points': ['Pain 1', 'Pain 2', 'Pain 3 (Deep emotional)'],\n"
+            "  'icp_desires': ['Desire 1', 'Desire 2 (Transformational)'],\n"
+            "  'brand_voice': 'Adjectives describing the ideal tone (e.g. Empathetic but Authoritative)'\n"
+            "}"
+        )
+        
+        return self.generate_json(prompt)

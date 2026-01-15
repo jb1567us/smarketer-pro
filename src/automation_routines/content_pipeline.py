@@ -11,6 +11,8 @@ from src.agents.researcher import ResearcherAgent
 from src.agents.copywriter import CopywriterAgent
 from src.agents.designer import GraphicsDesignerAgent
 from src.agents.qualifier import QualifierAgent
+from src.agents.prompt_expert import PromptExpertAgent
+from src.prompt_engine.models import PromptContext
 
 # Configure logging
 logging.basicConfig(
@@ -24,12 +26,13 @@ logging.basicConfig(
 logger = logging.getLogger("ContentPipeline")
 
 class ContentPipeline:
-    def __init__(self, wp_agent=None, researcher=None, copywriter=None, designer=None, qualifier=None):
+    def __init__(self, wp_agent=None, researcher=None, copywriter=None, designer=None, qualifier=None, prompt_expert=None):
         self.wp_agent = wp_agent if wp_agent else WordPressAgent()
         self.researcher = researcher if researcher else ResearcherAgent()
         self.copywriter = copywriter if copywriter else CopywriterAgent()
         self.designer = designer if designer else GraphicsDesignerAgent()
         self.qualifier = qualifier if qualifier else QualifierAgent()
+        self.prompt_expert = prompt_expert if prompt_expert else PromptExpertAgent()
 
     async def run_pipeline(self, site_url, username, app_password, niche, location):
         logger.info(f"--- Starting Autonomous Content Pipeline for {site_url} ---")
@@ -139,6 +142,24 @@ class ContentPipeline:
         3. Content Publishing
         """
         logger.info(f"STARTING FULL SITE BUILD for {niche} in {location}")
+        
+        # --- STEP 0: BOOTSTRAP KERNEL ---
+        logger.info("🧠 PROMPT EXPERT: Updating Kernel for new Mission...")
+        kernel_data = self.prompt_expert.analyze_niche(niche)
+        
+        # Create Context
+        kernel = PromptContext(
+            niche=niche,
+            icp_role=kernel_data.get('icp_role', 'Potential Customer'),
+            icp_pain_points=kernel_data.get('icp_pain_points', []),
+            icp_desires=kernel_data.get('icp_desires', []),
+            brand_voice=kernel_data.get('brand_voice', 'Professional'),
+            extra_context={"location": location}
+        )
+        
+        # Inject into Qualifier
+        self.qualifier.set_kernel(kernel)
+        logger.info("✅ Kernel Loaded into QualifierAgent.")
         
         # --- STEP 1: ASSET GENERATION ---
         logger.info("--- PHASE 1: ASSET GENERATION ---")

@@ -1,13 +1,51 @@
 from .base import BaseAgent
 import json
+from prompt_engine.interaction import PromptEngine
+from prompt_engine.models import PromptContext
 
 class QualifierAgent(BaseAgent):
-    def __init__(self, provider=None):
+    def __init__(self, provider=None, prompt_engine=None):
         super().__init__(
             role="Lead Qualification Gatekeeper",
             goal="Strictly evaluate leads against the Ideal Customer Profile (ICP). Reject unqualified leads.",
             provider=provider
         )
+        self.prompt_engine = prompt_engine if prompt_engine else PromptEngine()
+        # Default empty kernel
+        self.kernel = PromptContext(niche="General", icp_role="Evaluator")
+
+    def set_kernel(self, kernel: PromptContext):
+        self.kernel = kernel
+
+    def critique_copy(self, content, criteria):
+        """
+        Evaluates copy using Prompt Engine.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "qualifier/critique_copy.j2", 
+            self.kernel, 
+            content=content[:5000], 
+            criteria=criteria
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"approved": False, "feedback": prompt}
+        return self.generate_json(prompt)
+
+    def critique_visuals(self, image_description, criteria):
+        """
+        Evaluates visuals using Prompt Engine.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "qualifier/critique_visuals.j2", 
+            self.kernel, 
+            image_description=image_description, 
+            criteria=criteria
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"approved": False, "feedback": prompt}
+        return self.generate_json(prompt)
 
     async def think_async(self, context, instructions=None):
         """

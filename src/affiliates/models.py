@@ -9,6 +9,7 @@ class AffiliateLink(Base):
     Example: Promoting 'ConvertKit' to earn commissions.
     """
     __tablename__ = 'affiliate_links'
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)  # e.g. "ConvertKit"
@@ -25,6 +26,7 @@ class Program(Base):
     Rules for how partners get paid for promoting US.
     """
     __tablename__ = 'affiliate_programs'
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, default="Default Program")
@@ -37,6 +39,7 @@ class Partner(Base):
     Represents a third-party partner who promotes US (Merchant side).
     """
     __tablename__ = 'partners'
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(String, unique=True, nullable=False) # Link to local User table if exists, or email
@@ -52,6 +55,7 @@ class TrackingEvent(Base):
     Unified ledger for all affiliate events (Clicks, Conversions, Payouts).
     """
     __tablename__ = 'tracking_events'
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String, nullable=False) # click, lead, conversion, refund, payout

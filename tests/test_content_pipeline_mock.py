@@ -16,9 +16,18 @@ class TestContentPipeline(unittest.TestCase):
         self.mock_researcher = MagicMock() # think is sync
         self.mock_copywriter = MagicMock()
         self.mock_designer = MagicMock()
+        self.mock_designer = MagicMock()
         self.mock_qualifier = MagicMock()
+        self.mock_expert = MagicMock()
         
         # Setup specific returns
+        # Expert return for analyze_niche
+        self.mock_expert.analyze_niche.return_value = {
+            "icp_role": "Homeowner",
+            "icp_pain_points": ["Leak", "Mold"],
+            "icp_desires": ["Dry House"],
+            "brand_voice": "Reliable"
+        }
         # The new logic executes keyword discovery and returns a formatted string "\n- Topic ..."
         self.mock_researcher.think.return_value = "- Ranked Research Topic: Top 5 Roofing Tips"
         
@@ -48,7 +57,8 @@ class TestContentPipeline(unittest.TestCase):
             researcher=self.mock_researcher,
             copywriter=self.mock_copywriter,
             designer=self.mock_designer,
-            qualifier=self.mock_qualifier
+            qualifier=self.mock_qualifier,
+            prompt_expert=self.mock_expert
         )
 
     def test_run_pipeline(self):
@@ -140,6 +150,10 @@ class TestContentPipeline(unittest.TestCase):
             # Expect 2 calls to designer (1 initial + 1 revision)
             self.assertEqual(self.mock_designer.think.call_count, 2)
             
+            # Verify Kernel Bootstrap
+            self.mock_expert.analyze_niche.assert_called_once()
+            self.mock_qualifier.set_kernel.assert_called_once()
+
             # Qualifier Calls
             self.mock_qualifier.critique_copy.assert_called_once()
             self.assertEqual(self.mock_qualifier.critique_visuals.call_count, 2)

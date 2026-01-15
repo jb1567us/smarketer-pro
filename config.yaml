@@ -114,21 +114,13 @@ llm:
   router:
     candidates:
     - provider: groq
-      model_name: llama-3.1-8b-instant
-    - provider: groq
-      model_name: llama-3.3-70b-versatile
-    - provider: groq
-      model_name: mixtral-8x7b-32768
-    - provider: groq
-      model_name: gemma-7b-it
-    - provider: groq
-      model_name: gemma2-9b-it
-    - provider: groq
-      model_name: canopylabs/orpheus-v1-english
-    - provider: groq
       model_name: groq/compound
     - provider: groq
       model_name: groq/compound-mini
+    - provider: groq
+      model_name: llama-3.1-8b-instant
+    - provider: groq
+      model_name: llama-3.3-70b-versatile
     - provider: groq
       model_name: meta-llama/llama-4-maverick-17b-128e-instruct
     - provider: groq
@@ -145,10 +137,6 @@ llm:
       model_name: openai/gpt-oss-20b
     - provider: groq
       model_name: openai/gpt-oss-safeguard-20b
-    - provider: groq
-      model_name: whisper-large-v3
-    - provider: groq
-      model_name: whisper-large-v3-turbo
     - provider: gemini
       model_name: gemini-1.5-flash
     - provider: gemini
@@ -156,9 +144,9 @@ llm:
     - provider: gemini
       model_name: gemini-flash-latest
     - provider: openrouter
-      model_name: arcee-ai/trinity-mini:free
+      model_name: allenai/molmo-2-8b:free
     - provider: openrouter
-      model_name: cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      model_name: arcee-ai/trinity-mini:free
     - provider: openrouter
       model_name: google/gemini-2.0-flash-exp:free
     - provider: openrouter
@@ -174,17 +162,11 @@ llm:
     - provider: openrouter
       model_name: meta-llama/llama-3.1-405b-instruct:free
     - provider: openrouter
-      model_name: meta-llama/llama-3.2-3b-instruct:free
-    - provider: openrouter
       model_name: meta-llama/llama-3.3-70b-instruct:free
     - provider: openrouter
       model_name: mistralai/devstral-2512:free
     - provider: openrouter
       model_name: mistralai/mistral-7b-instruct:free
-    - provider: openrouter
-      model_name: mistralai/mistral-small-3.1-24b-instruct:free
-    - provider: openrouter
-      model_name: nousresearch/hermes-3-llama-3.1-405b:free
     - provider: openrouter
       model_name: nvidia/nemotron-3-nano-30b-a3b:free
     - provider: openrouter
@@ -195,14 +177,8 @@ llm:
       model_name: openai/gpt-oss-120b:free
     - provider: openrouter
       model_name: openai/gpt-oss-20b:free
-    - provider: huggingface
-      model_name: meta-llama/Meta-Llama-3-8B-Instruct
-    - provider: huggingface
-      model_name: mistralai/Mistral-7B-Instruct-v0.2
     - provider: ollama
       model_name: codellama:latest
-    - provider: ollama
-      model_name: deepseek-r1:latest
     - provider: ollama
       model_name: llama3:latest
     - provider: ollama
