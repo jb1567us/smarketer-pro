@@ -1,0 +1,163 @@
+{
+    "id": "affiliate_niche_site_launcher",
+    "name": "Niche Authority Site Launcher",
+    "description": "End-to-end workflow to research, setup, and seed a niche affiliate site.",
+    "persona": "Affiliate Marketer",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "niche_topic",
+                "type": "string",
+                "description": "The broad topic or specific niche (e.g., 'Indoor Gardening', 'Best Coffee Makers')."
+            },
+            {
+                "key": "target_domain",
+                "type": "string",
+                "description": "The domain name to set up (e.g., 'indoorgardenpro.com')."
+            },
+            {
+                "key": "wordpress_creds",
+                "type": "object",
+                "description": "Credentials for the fresh WordPress install."
+            }
+        ],
+        "constraints": {
+            "compliance": "Must include FTC affiliate disclosure on all money pages.",
+            "content_length": "Money pages > 1500 words, Info pages > 800 words.",
+            "images": "All images must be royalty-free or generated."
+        },
+        "metrics": [
+            "Niche Viability Score",
+            "Site Health Score",
+            "Number of Published Posts",
+            "Indexing Status"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Launcher",
+            "outputs": [
+                "niche_topic"
+            ]
+        },
+        {
+            "id": "research_viability",
+            "type": "agent.researcher",
+            "name": "Validate Niche Viability",
+            "params": {
+                "task": "Analyze the viability of the provided niche. Check keyword difficulty, search volume, and monetization potential.",
+                "input_variable": "niche_topic"
+            }
+        },
+        {
+            "id": "gate_viability",
+            "type": "logic.gate.score",
+            "name": "Viability Gate",
+            "params": {
+                "metric": "viability_score",
+                "threshold": 60,
+                "on_fail": "repair_pivot_advice"
+            }
+        },
+        {
+            "id": "wp_setup",
+            "type": "agent.wordpress",
+            "name": "Setup WordPress Site",
+            "params": {
+                "task": "Install core plugins (SEO, Security, Caching), set permalinks, and apply base theme settings.",
+                "input_variable": "wordpress_creds"
+            }
+        },
+        {
+            "id": "planning_topical_map",
+            "type": "agent.seo",
+            "name": "Generate Topical Map",
+            "params": {
+                "task": "Create a topical map with Pillar pages and Cluster topics.",
+                "input_variable": "niche_topic"
+            }
+        },
+        {
+            "id": "loop_content_creation",
+            "type": "control.loop.list",
+            "name": "Content Creation Loop",
+            "params": {
+                "list_variable": "topical_map_articles"
+            },
+            "nodes": [
+                {
+                    "id": "draft_article",
+                    "type": "agent.copywriter",
+                    "name": "Draft Article",
+                    "params": {
+                        "task": "Write an SEO-optimized article based on the brief. Include proper H-tags and affiliate disclosures.",
+                        "context": "item"
+                    }
+                },
+                {
+                    "id": "gen_images",
+                    "type": "agent.designer",
+                    "name": "Generate Images",
+                    "params": {
+                        "task": "Create a featured image and 2 body images for the article.",
+                        "context": "item"
+                    }
+                },
+                {
+                    "id": "seo_qa_check",
+                    "type": "agent.seo",
+                    "name": "SEO QA Check",
+                    "params": {
+                        "task": "Audit the draft for keyword density, readability, and meta tags.",
+                        "input_variable": "draft_content"
+                    }
+                },
+                {
+                    "id": "publish_post",
+                    "type": "agent.wordpress",
+                    "name": "Publish to WordPress",
+                    "params": {
+                        "status": "publish"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_completion",
+            "type": "notify.user",
+            "name": "Launch Complete",
+            "params": {
+                "message": "Niche site launched and seeded with content."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "research_viability"
+        },
+        {
+            "source": "research_viability",
+            "target": "gate_viability"
+        },
+        {
+            "source": "gate_viability",
+            "target": "wp_setup"
+        },
+        {
+            "source": "wp_setup",
+            "target": "planning_topical_map"
+        },
+        {
+            "source": "planning_topical_map",
+            "target": "loop_content_creation"
+        },
+        {
+            "source": "loop_content_creation",
+            "target": "notify_completion"
+        }
+    ]
+}

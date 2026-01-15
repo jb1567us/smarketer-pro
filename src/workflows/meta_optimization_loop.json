@@ -1,0 +1,110 @@
+{
+    "id": "meta_optimization_loop",
+    "name": "Analytics & Optimization Loop",
+    "description": "The 'Brain' of the system. Analyzes past workflow runs to improve future inputs.",
+    "persona": "System (Meta)",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "target_workflow_id",
+                "type": "string",
+                "description": "The ID of the workflow to optimize (e.g., 'sales_sniper_outreach')."
+            },
+            {
+                "key": "lookback_period",
+                "type": "string",
+                "description": "How far back to analyze (e.g., '30d')."
+            }
+        ],
+        "constraints": {
+            "safety": "Do not change constraints or compliance rules, only operational params.",
+            "autonomy": "Require human approval for radical changes (>20% deviation)."
+        },
+        "metrics": [
+            "Metric Improvement %",
+            "Optimization Confidence Score"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_schedule",
+            "type": "trigger.schedule",
+            "name": "Weekly Optimization",
+            "params": {
+                "cron": "0 0 * * 0"
+            }
+        },
+        {
+            "id": "fetch_performance",
+            "type": "system.analytics",
+            "name": "Get Workflow Stats",
+            "params": {
+                "task": "Fetch Input vs Output metrics for {target_workflow_id}.",
+                "metrics": [
+                    "Open Rate",
+                    "Conversion Rate",
+                    "Click Rate"
+                ]
+            }
+        },
+        {
+            "id": "identify_patterns",
+            "type": "agent.sales_analyzer",
+            "name": "Pattern Recognition",
+            "params": {
+                "task": "Correlate inputs (e.g., Subject Line styles, Send Times) with high performance.",
+                "input_variable": "performance_data"
+            }
+        },
+        {
+            "id": "generate_hypotheses",
+            "type": "agent.manager",
+            "name": "Propose Tweaks",
+            "params": {
+                "task": "Suggest 3 parameter changes for the next run (e.g., 'Shift send time to 10am', 'Use shorter subject lines').",
+                "input_variable": "patterns"
+            }
+        },
+        {
+            "id": "update_config",
+            "type": "system.config",
+            "name": "Update Workflow Config",
+            "params": {
+                "action": "stage_changes",
+                "target_workflow": "{target_workflow_id}",
+                "changes": "{proposed_tweaks}"
+            }
+        },
+        {
+            "id": "notify_admin",
+            "type": "notify.user",
+            "name": "Optimization Proposal",
+            "params": {
+                "message": "Optimization Loop found 3 improvements for {target_workflow_id}. Approve to apply."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_schedule",
+            "target": "fetch_performance"
+        },
+        {
+            "source": "fetch_performance",
+            "target": "identify_patterns"
+        },
+        {
+            "source": "identify_patterns",
+            "target": "generate_hypotheses"
+        },
+        {
+            "source": "generate_hypotheses",
+            "target": "update_config"
+        },
+        {
+            "source": "update_config",
+            "target": "notify_admin"
+        }
+    ]
+}

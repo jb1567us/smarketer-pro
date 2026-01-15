@@ -1,0 +1,117 @@
+{
+    "id": "ecom_affiliate_recruitment",
+    "name": "Affiliate Army Recruitment",
+    "description": "Find and recruit commission-based affiliates (bloggers, niche sites).",
+    "persona": "Ecommerce Brand Owner",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "niche_keywords",
+                "type": "list",
+                "description": "Keywords related to your product (e.g., 'best running shoes')."
+            },
+            {
+                "key": "commission_rate",
+                "type": "string",
+                "description": "Commission offer (e.g., '15%')."
+            }
+        ],
+        "constraints": {
+            "traffic": "Site must have > 5k monthly visitors.",
+            "relevance": "Must already have affiliate content."
+        },
+        "metrics": [
+            "Affiliates Joined",
+            "Active Links Created"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Recruitment",
+            "outputs": [
+                "niche_keywords",
+                "commission_rate"
+            ]
+        },
+        {
+            "id": "search_blogs",
+            "type": "agent.researcher",
+            "name": "Find Niche Blogs",
+            "params": {
+                "task": "Find top 50 blogs ranking for niche keywords that contain 'review' or 'best'.",
+                "inputs": "niche_keywords"
+            }
+        },
+        {
+            "id": "filter_traffic",
+            "type": "agent.seo",
+            "name": "Check Traffic",
+            "params": {
+                "task": "Estimate traffic and Domain Authority.",
+                "input_variable": "niche_blogs"
+            }
+        },
+        {
+            "id": "find_contacts",
+            "type": "agent.researcher",
+            "name": "Find Editors",
+            "params": {
+                "task": "Find contact info for 'Editor' or 'Partnerships' role.",
+                "input_variable": "filtered_sites"
+            }
+        },
+        {
+            "id": "send_invite",
+            "type": "control.loop.list",
+            "name": "Send Invitations",
+            "params": {
+                "list_variable": "contacts"
+            },
+            "nodes": [
+                {
+                    "id": "draft_invite",
+                    "type": "agent.copywriter",
+                    "name": "Draft Invite",
+                    "params": {
+                        "template": "affiliate_invite_cold",
+                        "commission": "{commission_rate}",
+                        "blog_name": "{item.blog_name}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_user",
+            "type": "notify.user",
+            "name": "Invites Sent",
+            "params": {
+                "message": "Invited {count} bloggers to the affiliate program."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "search_blogs"
+        },
+        {
+            "source": "search_blogs",
+            "target": "filter_traffic"
+        },
+        {
+            "source": "filter_traffic",
+            "target": "find_contacts"
+        },
+        {
+            "source": "find_contacts",
+            "target": "send_invite"
+        },
+        {
+            "source": "send_invite",
+            "target": "notify_user"
+        }
+    ]
+}

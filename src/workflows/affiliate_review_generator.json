@@ -1,0 +1,142 @@
+{
+    "id": "affiliate_review_generator",
+    "name": "Review Article Generator",
+    "description": "Deep-dive product review generator with comparison tables and schema.",
+    "persona": "Affiliate Marketer",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "product_url",
+                "type": "string",
+                "description": "URL of the product to review (Amazon, Manufacturer, etc.)."
+            },
+            {
+                "key": "affiliate_link",
+                "type": "string",
+                "description": "Your unique affiliate tracking link."
+            },
+            {
+                "key": "competitor_urls",
+                "type": "list",
+                "description": "Optional: List of competitor products for comparison."
+            }
+        ],
+        "constraints": {
+            "factuality": "Must verify specs against manufacturer data.",
+            "neutrality": "Maintain an objective tone, highlighting both pros and cons."
+        },
+        "metrics": [
+            "Word Count (>2000)",
+            "Schema Validation Pass",
+            "Affiliate Link Click Rate (tracked post-publish)"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Review Gen",
+            "outputs": [
+                "product_url",
+                "affiliate_link"
+            ]
+        },
+        {
+            "id": "research_product",
+            "type": "agent.researcher",
+            "name": "Deep Product Research",
+            "params": {
+                "task": "Scrape product specs, user reviews (Amazon/Reddit), and identifying key selling points and flaws.",
+                "input_variable": "product_url"
+            }
+        },
+        {
+            "id": "verify_claims",
+            "type": "agent.researcher",
+            "name": "Claim Watchdog",
+            "params": {
+                "task": "Cross-reference technical claims with official documentation. Flag discrepancies.",
+                "input_variable": "research_data"
+            }
+        },
+        {
+            "id": "generate_comparison",
+            "type": "agent.sales_analyzer",
+            "name": "Generate Comparison Table",
+            "params": {
+                "task": "Create a 'Best For' comparison table vs top 3 competitors.",
+                "input_variable": "product_data"
+            }
+        },
+        {
+            "id": "draft_content",
+            "type": "agent.copywriter",
+            "name": "Draft Review Content",
+            "params": {
+                "task": "Write comprehensive review. Include: Intro, Specs, Hands-on feeling, Pros/Cons, Comparison, Verdict.",
+                "affiliate_link": "{affiliate_link}"
+            }
+        },
+        {
+            "id": "generate_schema",
+            "type": "agent.seo",
+            "name": "Generate Schema Markup",
+            "params": {
+                "task": "Generate JSON-LD Product and FAQ schema.",
+                "input_variable": "draft_content"
+            }
+        },
+        {
+            "id": "qa_final_review",
+            "type": "logic.gate.check",
+            "name": "Final QA",
+            "params": {
+                "checks": [
+                    "Affiliate Links Present",
+                    "Schema Valid",
+                    "Images Present"
+                ]
+            }
+        },
+        {
+            "id": "output_delivery",
+            "type": "output.file",
+            "name": "Save Draft",
+            "params": {
+                "format": "markdown",
+                "path": "drafts/reviews/{product_name}.md"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "research_product"
+        },
+        {
+            "source": "research_product",
+            "target": "verify_claims"
+        },
+        {
+            "source": "verify_claims",
+            "target": "generate_comparison"
+        },
+        {
+            "source": "generate_comparison",
+            "target": "draft_content"
+        },
+        {
+            "source": "draft_content",
+            "target": "generate_schema"
+        },
+        {
+            "source": "generate_schema",
+            "target": "qa_final_review"
+        },
+        {
+            "source": "qa_final_review",
+            "target": "output_delivery"
+        }
+    ]
+}

@@ -1,0 +1,33 @@
+[CRITICAL KERNEL CONTEXT]
+You are writing for the '{{ niche }}' industry.
+Target Audience (ICP): {{ icp_role }}
+Key Pain Points:
+{{ icp_pain_points | bullet_list }}
+Deepest Desires:
+{{ icp_desires | bullet_list }}
+Brand Voice: {{ brand_voice }}
+
+{% if product_name %}
+Product/Service: {{ product_name }}
+Key Benefits:
+{{ product_benefits | bullet_list }}
+{% endif %}
+
+[TASK]
+Draft a cold email to a {{ recipient_role|default(icp_role) }}.
+
+[GUIDELINES]
+1. Hook them immediately with a specific problem related to {{ niche }} (e.g. {{ icp_pain_points[0] if icp_pain_points else 'efficiency' }}).
+2. Keep it under 150 words.
+3. Tone must be {{ brand_voice }}.
+4. Call to Action: {{ cta_type|default('Soft ask') }}
+
+[SPECIFIC INSTRUCTIONS]
+{{ instruction_override|default('No specific instructions.') }}
+
+Return JSON:
+{
+    "subject_line": "...",
+    "body": "...",
+    "explanation": "Why this fits the ICP"
+}

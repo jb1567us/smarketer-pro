@@ -510,64 +510,55 @@ class ResearcherAgent(BaseAgent):
 
     async def think_async(self, context, instructions=None):
         """
-        Async version of think. Use this to avoid nested event loop issues.
+        Async version of think with robust intent routing.
         """
-        # Heuristic: If context is a short string and not JSON/Data, treat as search query
-        is_query = False
-        if isinstance(context, str) and len(context) < 300:
-            is_query = True
-            if "{" in context and "}" in context: # vague check for JSON
-                is_query = False
+        input_text = str(context).lower()
         
-        if is_query:
-            self.logger.info(f"ResearcherAgent received query via think_async(): {context}")
-            self.logger.info(f"Searching for: '{context}'...")
-            res = await self.gather_intel({"query": context})
-            self.logger.info(f"Found {len(res.get('results', []))} results.")
-            return res
+        # INTENT: Topic/Keyword Research
+        if "topic" in input_text or "keyword" in input_text or "ideas" in input_text:
+            self.logger.info("⚡ RESEARCHER: Detected intent -> KEYWORD DISCOVERY")
+            # Convert context to seed list
+            # Simple extraction: just use the context as the seed phrase
+            seeds = [context]
+            if isinstance(context, dict) and "query" in context:
+                seeds = [context["query"]]
+            
+            self.logger.info(f"   Running keyword discovery for: {seeds}")
+            results = await self.keyword_discovery(seeds, levels=1, sources=['google', 'bing'])
+            return f"Ranked Research Topics:\n" + "\n".join([f"- {r}" for r in results[:10]])
+
+        # INTENT: Competitor/Lead Research
+        if "competitor" in input_text or "leads" in input_text or "companies" in input_text:
+            self.logger.info("⚡ RESEARCHER: Detected intent -> MASS HARVEST")
+            footprint = context
+            if isinstance(context, dict): footprint = context.get('query', context)
+            
+            results = await self.mass_harvest(footprint, num_results=10)
+            return results
+
+        # DEFAULT: General Intelligence / Search
+        self.logger.info("researcher: Defaulting to General Search/Intel Gathering")
+        if isinstance(context, str) and len(context) < 300 and "{" not in context:
+             return await self.gather_intel({"query": context})
         
-        # Make sync call async-friendly if needed, but for now just call it
-        # as generating text usually doesn't involve complex nested loops that crash
-        return self.think(context, instructions)
+        return await self.gather_intel(context if isinstance(context, dict) else {"query": str(context)})
 
     def think(self, context, instructions=None):
         """
-        Processes a request. If it looks like a search query, perform the search.
-        Otherwise, analyze the provided data.
+        Processes a request. Checks for loop to allow safe async execution.
         """
-        # Heuristic: If context is a short string and not JSON/Data, treat as search query
-        is_query = False
-        if isinstance(context, str) and len(context) < 300:
-            is_query = True
-            if "{" in context and "}" in context: # vague check for JSON
-                is_query = False
-        
-        if is_query:
-            self.logger.info(f"ResearcherAgent received query via think(): {context}")
-            self.logger.info(f"Searching for: '{context}'...")
-            
-            # CHECK FOR RUNNING LOOP to avoid RuntimeError
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
+        # CHECK FOR RUNNING LOOP to avoid RuntimeError
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
 
-            if loop and loop.is_running():
-                # We are in a loop (e.g. AutomationEngine thread), but think() was called synchronously.
-                # This is tricky. Ideally the caller should use think_async.
-                # If we are here, we might fail if we try asyncio.run()
-                self.logger.warning("think() called from running loop! Trying to schedule task (might fail if caller expects immediate return).")
-                # We can't really return the result synchronously here if we are deep in a loop.
-                # But for now, let's just attempt asyncio.run if NO loop, else warn.
-                return {"error": "Method think() called synchronously from async context. Use think_async() instead."}
-            else:
-                # No loop, safe to run
-                res = asyncio.run(self.gather_intel({"query": context}))
-                self.logger.info(f"Found {len(res.get('results', []))} results.")
-                return res
-        
-        # Fallback: Analyze provided data
-        prompt = f"Analyze this research data:\n{context}"
-        if instructions:
-            prompt += f"\n\nAdditional Instructions:\n{instructions}"
-        return self.provider.generate_text(prompt)
+        if loop and loop.is_running():
+            self.logger.warning("think() called from running loop! Use think_async() for best results.")
+            # We cannot block here. We must return a coroutine or fail.
+            # Ideally, we refactor the caller.
+            # For now, we return a 'promise' message if we can't await.
+            return {"error": "Async context detected. Please await agent.think_async() instead."}
+        else:
+            # No loop, safe to run sync
+            return asyncio.run(self.think_async(context, instructions))

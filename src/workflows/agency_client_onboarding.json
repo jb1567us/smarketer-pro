@@ -1,0 +1,167 @@
+{
+    "id": "agency_client_onboarding",
+    "name": "Client Onboarding Sprint",
+    "description": "Rapidly generate a launch-ready campaign asset pack for a new client (48-hour sprint).",
+    "persona": "Agency / Consultant",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "client_website",
+                "type": "string",
+                "description": "URL of the new client's website."
+            },
+            {
+                "key": "intake_form_data",
+                "type": "object",
+                "description": "Structured data from client intake (Goals, USP, Competitors)."
+            }
+        ],
+        "constraints": {
+            "brand_voice": "Must align with client's existing tone (Professional/Witty/Corporate).",
+            "approvals": "All assets must be tagged 'Pending Approval'."
+        },
+        "metrics": [
+            "Time to First Draft (< 24h)",
+            "Client Approval Rate",
+            "Asset Completeness Score"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Onboarding",
+            "outputs": [
+                "client_website",
+                "intake_form_data"
+            ]
+        },
+        {
+            "id": "analyze_brand",
+            "type": "agent.researcher",
+            "name": "Brand DNA Extraction",
+            "params": {
+                "task": "Analyze client website and intake form to extract ICP, Value Proposition, and Brand Voice.",
+                "input_variable": "client_website"
+            }
+        },
+        {
+            "id": "strategy_planning",
+            "type": "agent.manager",
+            "name": "Develop Channel Plan",
+            "params": {
+                "task": "Based on ICP, recommend the top 2 marketing channels (e.g., Cold Email + LinkedIn).",
+                "input_variable": "brand_dna"
+            }
+        },
+        {
+            "id": "gen_icp_profile",
+            "type": "agent.researcher",
+            "name": "Enrich ICP Profile",
+            "params": {
+                "task": "Find 50 'Lookalike' prospects that match the ICP to validate the market.",
+                "input_variable": "brand_dna"
+            }
+        },
+        {
+            "id": "parallel_asset_creation",
+            "type": "control.parallel",
+            "name": "Create Campaign Assets",
+            "nodes": [
+                {
+                    "id": "draft_email_sequence",
+                    "type": "agent.copywriter",
+                    "name": "Draft Cold Emails",
+                    "params": {
+                        "task": "Write a 4-step cold email sequence tailored to the ICP.",
+                        "tone": "{brand_voice}"
+                    }
+                },
+                {
+                    "id": "draft_linkedin_posts",
+                    "type": "agent.copywriter",
+                    "name": "Draft LinkedIn Bio & Posts",
+                    "params": {
+                        "task": "Optimize Founder's LinkedIn bio and write 3 introductory posts.",
+                        "tone": "{brand_voice}"
+                    }
+                },
+                {
+                    "id": "design_creatives",
+                    "type": "agent.designer",
+                    "name": "Create Ad/Social Graphics",
+                    "params": {
+                        "task": "Generate 3 header images and 2 ad creatives matching brand colors.",
+                        "style": "{brand_style}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "review_assets",
+            "type": "agent.reviewer",
+            "name": "Quality Assurance",
+            "params": {
+                "task": "Review the email drafts, social posts, and ad creative concepts. Ensure tone matches {brand_voice} and check for safety/quality.",
+                "inputs": [
+                    "draft_email_sequence",
+                    "draft_linkedin_posts",
+                    "design_creatives"
+                ]
+            }
+        },
+        {
+            "id": "compile_report",
+            "type": "agent.summarizer",
+            "name": "Compile Approval Pack",
+            "params": {
+                "task": "Aggregate all drafts and the QA feedback into a single structured Markdown report for client review.",
+                "inputs": [
+                    "draft_email_sequence",
+                    "draft_linkedin_posts",
+                    "design_creatives",
+                    "review_assets"
+                ]
+            }
+        },
+        {
+            "id": "notify_agency_owner",
+            "type": "notify.user",
+            "name": "Ready for Review",
+            "params": {
+                "message": "Client asset pack generated. Please review before sending to client."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "analyze_brand"
+        },
+        {
+            "source": "analyze_brand",
+            "target": "strategy_planning"
+        },
+        {
+            "source": "strategy_planning",
+            "target": "gen_icp_profile"
+        },
+        {
+            "source": "strategy_planning",
+            "target": "parallel_asset_creation"
+        },
+        {
+            "source": "parallel_asset_creation",
+            "target": "review_assets"
+        },
+        {
+            "source": "review_assets",
+            "target": "compile_report"
+        },
+        {
+            "source": "compile_report",
+            "target": "notify_agency_owner"
+        }
+    ]
+}

@@ -1,0 +1,138 @@
+{
+    "id": "sales_sniper_outreach",
+    "name": "Sniper Outreach (High-Ticket)",
+    "description": "Hyper-personalized account-based marketing (ABM) workflow for top-tier prospects.",
+    "persona": "Sales Representative",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "target_domain",
+                "type": "string",
+                "description": "The domain of the target account (e.g., 'acme.com')."
+            },
+            {
+                "key": "value_proposition",
+                "type": "string",
+                "description": "The core value prop specific to this account."
+            }
+        ],
+        "constraints": {
+            "contacts_per_account": "Limit to 3-5 decision makers.",
+            "personalization": "Every email must cite a specific recent news item or post."
+        },
+        "metrics": [
+            "Agreed Meetings",
+            "Response Rate",
+            "Account Penetration Rate"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Sniper Campaign",
+            "outputs": [
+                "target_domain",
+                "value_proposition"
+            ]
+        },
+        {
+            "id": "account_research",
+            "type": "agent.researcher",
+            "name": "Account Deep Dive",
+            "params": {
+                "task": "Find recent news, financial reports, and strategic initiatives for the target domain.",
+                "input_variable": "target_domain"
+            }
+        },
+        {
+            "id": "find_stakeholders",
+            "type": "agent.researcher",
+            "name": "Identify Stakeholders",
+            "params": {
+                "task": "Find top Decision Makers (CEO, CTO, VP Sales) and their LinkedIn profiles.",
+                "input_variable": "target_domain"
+            }
+        },
+        {
+            "id": "personalization_loop",
+            "type": "control.loop.list",
+            "name": "Personalization Loop",
+            "params": {
+                "list_variable": "stakeholders"
+            },
+            "nodes": [
+                {
+                    "id": "prospect_recon",
+                    "type": "agent.researcher",
+                    "name": "Prospect Recon",
+                    "params": {
+                        "task": "Find recent podcasts, tweets, or articles by this stakeholder.",
+                        "context": "item"
+                    }
+                },
+                {
+                    "id": "draft_email",
+                    "type": "agent.copywriter",
+                    "name": "Draft Sniper Email",
+                    "params": {
+                        "template": "sniper_cold_email",
+                        "hook": "{prospect_recon_data}",
+                        "value_prop": "{value_proposition}"
+                    }
+                },
+                {
+                    "id": "draft_linkedin",
+                    "type": "agent.copywriter",
+                    "name": "Draft LinkedIn Note",
+                    "params": {
+                        "task": "Write a 300-char connection request referencing the same hook.",
+                        "context": "item"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "multi_thread_plan",
+            "type": "agent.manager",
+            "name": "Create Buying Committee Plan",
+            "params": {
+                "task": "Organize detailed drafts into a staggered sending schedule (Day 1: Champion, Day 3: Decision Maker).",
+                "inputs": [
+                    "personalization_loop"
+                ]
+            }
+        },
+        {
+            "id": "notify_rep",
+            "type": "notify.user",
+            "name": "Drafts Ready",
+            "params": {
+                "message": "Sniper outreach drafts ready for 5 stakeholders at {target_domain}."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "account_research"
+        },
+        {
+            "source": "account_research",
+            "target": "find_stakeholders"
+        },
+        {
+            "source": "find_stakeholders",
+            "target": "personalization_loop"
+        },
+        {
+            "source": "personalization_loop",
+            "target": "multi_thread_plan"
+        },
+        {
+            "source": "multi_thread_plan",
+            "target": "notify_rep"
+        }
+    ]
+}

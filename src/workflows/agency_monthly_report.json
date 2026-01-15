@@ -1,0 +1,114 @@
+{
+    "id": "agency_monthly_reporting",
+    "name": "Monthly Client Report",
+    "description": "Automated KPI extraction, insight generation, and reporting for clients.",
+    "persona": "Agency / Consultant",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "client_id",
+                "type": "string",
+                "description": "ID of the client to report on."
+            },
+            {
+                "key": "date_range",
+                "type": "string",
+                "description": "Reporting period (e.g., 'last_30_days')."
+            }
+        ],
+        "constraints": {
+            "format": "PDF or White-labeled HTML link.",
+            "sensitivity": "Do not expose raw cost data unless specified."
+        },
+        "metrics": [
+            "Report Accuracy",
+            "Time Saved vs Manual Reporting"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_schedule",
+            "type": "trigger.schedule",
+            "name": "Monthly Trigger",
+            "params": {
+                "cron": "0 9 1 * *"
+            }
+        },
+        {
+            "id": "fetch_analytics",
+            "type": "system.analytics",
+            "name": "Fetch Cross-Channel Data",
+            "params": {
+                "channels": [
+                    "email_campaigns",
+                    "website_traffic",
+                    "linkedin_engagement"
+                ],
+                "client_id": "{client_id}"
+            }
+        },
+        {
+            "id": "generate_insights",
+            "type": "agent.sales_analyzer",
+            "name": "Analyze Performance",
+            "params": {
+                "task": "Identify top performing assets, low performers, and anomalies.",
+                "input_variable": "analytics_data"
+            }
+        },
+        {
+            "id": "propose_strategy",
+            "type": "agent.manager",
+            "name": "Propose Next Moves",
+            "params": {
+                "task": "Based on insights, suggest 3 key actions for the upcoming month.",
+                "input_variable": "insights"
+            }
+        },
+        {
+            "id": "draft_report",
+            "type": "agent.copywriter",
+            "name": "Draft Executive Summary",
+            "params": {
+                "task": "Write a professional executive summary highlighting wins and opportunities.",
+                "tone": "Consultative"
+            }
+        },
+        {
+            "id": "generate_pdf",
+            "type": "output.pdf",
+            "name": "Generate PDF Report",
+            "params": {
+                "template": "agency_monthly_v1",
+                "data": {
+                    "summary": "{draft_report}",
+                    "metrics": "{analytics_data}",
+                    "plan": "{propose_strategy}"
+                }
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_schedule",
+            "target": "fetch_analytics"
+        },
+        {
+            "source": "fetch_analytics",
+            "target": "generate_insights"
+        },
+        {
+            "source": "generate_insights",
+            "target": "propose_strategy"
+        },
+        {
+            "source": "propose_strategy",
+            "target": "draft_report"
+        },
+        {
+            "source": "draft_report",
+            "target": "generate_pdf"
+        }
+    ]
+}

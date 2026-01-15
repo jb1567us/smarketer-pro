@@ -1,9 +1,10 @@
 import streamlit as st
 import json
+import time
+import functools
 from agents import (
     ResearcherAgent, QualifierAgent, CopywriterAgent, ManagerAgent,
-    GraphicsDesignerAgent, SocialMediaAgent, AdCopyAgent, BrainstormerAgent,
-    PersonaAgent, WordPressAgent, ProductManagerAgent, LinkedInAgent,
+    GraphicsDesignerAgent, WordPressAgent, ProductManagerAgent, LinkedInAgent,
     ReviewerAgent, SyntaxAgent, UXAgent, SEOExpertAgent, VideoAgent,
     ContactFormAgent
 )
@@ -15,10 +16,10 @@ AGENTS = {
     "Copywriter": CopywriterAgent,
     "Manager": ManagerAgent,
     "Graphics Designer": GraphicsDesignerAgent,
-    "Social Media Strategist": SocialMediaAgent,
-    "Ad Copywriter": AdCopyAgent,
-    "Brainstormer": BrainstormerAgent,
-    "Persona Analyst": PersonaAgent,
+    "Social Media Strategist": functools.partial(CopywriterAgent, role="Expert Social Media Strategist", goal="Generate high-engagement social media posts for various platforms."),
+    "Ad Copywriter": functools.partial(CopywriterAgent, role="Direct Response Copywriter", goal="Write high-converting ad copy for Google, Facebook, and LinkedIn."),
+    "Brainstormer": functools.partial(CopywriterAgent, role="Creative Campaign Director", goal="Brainstorm innovative campaign angles, hooks, and themes."),
+    "Persona Analyst": functools.partial(CopywriterAgent, role="Market Research Analyst", goal="Create detailed Ideal Customer Personas (ICPs) based on market data."),
     "WordPress Expert": WordPressAgent,
     "Product Manager": ProductManagerAgent,
     "LinkedIn Specialist": LinkedInAgent,
@@ -206,49 +207,80 @@ def render_agent_chat(response_key, agent_instance, context_key):
     agent_instance: the agent object.
     context_key: session_state key where the original context is stored.
     """
+    if response_key not in st.session_state:
+        return
+
     st.divider()
     st.subheader("💬 Discussion & Tuning")
     st.caption("Not satisfied? Ask the agent to refine, rewrite, or explain.")
 
     # Initialize chat history for this session if needed
-    # We key it by the response key to reset on new runs
     history_key = f"chat_history_{response_key}"
     if history_key not in st.session_state:
         st.session_state[history_key] = []
 
+    # Mode Selection
+    mode = st.radio(
+        "Action:", 
+        ["Discuss (Chat)", "Refine (Update Output)"], 
+        horizontal=True, 
+        key=f"mode_{response_key}",
+        help="'Discuss' just asks questions. 'Refine' asks the agent to rewrite the output."
+    )
+
     # Display History
     for msg in st.session_state[history_key]:
         with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+            st.markdown(msg["content"]) # Use markdown for better rendering
 
     # Chat Input
-    if user_input := st.chat_input("Refine this output (e.g., 'Make it shorter', 'Change tone')..."):
+    if user_input := st.chat_input(f"Message the {agent_instance.role}..."):
         # Add user message
         st.session_state[history_key].append({"role": "user", "content": user_input})
         with st.chat_message("user"):
-            st.write(user_input)
+            st.markdown(user_input)
 
         # Agent Action
         with st.chat_message("assistant"):
-            with st.spinner("Refining..."):
+            with st.spinner(f"{'Refining' if 'Refine' in mode else 'Thinking'}..."):
                 original_context = st.session_state.get(context_key, "")
                 previous_response = st.session_state.get(response_key)
                 
+                # Retrieve history string for context
+                # simplified history text for the LLM
+                hist_text = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state[history_key]])
+                
                 try:
-                    new_response = agent_instance.tune(original_context, previous_response, user_input)
+                    new_response = None
+                    display_content = ""
                     
-                    if isinstance(new_response, (dict, list)):
-                        st.json(new_response)
-                        msg_content = f"```json\n{json.dumps(new_response, indent=2)}\n```"
+                    if "Refine" in mode:
+                        # TUNE / ITERATE
+                        new_response = agent_instance.tune(original_context, previous_response, user_input, history=hist_text)
+                        
+                        # Update the Main Result State
+                        st.session_state[response_key] = new_response
+                        
+                        if isinstance(new_response, (dict, list)):
+                            display_content = f"**Refined Output:**\n```json\n{json.dumps(new_response, indent=2)}\n```"
+                        else:
+                            display_content = f"**Refined Output:**\n{new_response}"
+                            
                     else:
-                        st.write(new_response)
-                        msg_content = str(new_response)
+                        # DISCUSS
+                        new_response = agent_instance.discuss(original_context, previous_response, user_input, history=hist_text)
+                        display_content = new_response
+
+                    st.markdown(display_content)
+                    st.session_state[history_key].append({"role": "assistant", "content": display_content})
                     
-                    st.session_state[history_key].append({"role": "assistant", "content": msg_content})
-                    st.session_state[response_key] = new_response
+                    if "Refine" in mode:
+                        st.success("Output updated!")
+                        time.sleep(1) # Brief pause to show success
+                        st.rerun() # Rerun to update the main view above
                     
                 except Exception as e:
-                    st.error(f"Tuning failed: {str(e)}")
+                    st.error(f"Agent failed: {str(e)}")
 
 # Alias for backwards compatibility if app.py imports it
 render_tuning_dialog = render_agent_chat

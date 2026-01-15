@@ -1,0 +1,108 @@
+{
+    "id": "content_newsletter_factory",
+    "name": "Newsletter Issue Factory",
+    "description": "Weekly workflow to scan trends, curate links, and write a newsletter issue.",
+    "persona": "Content Operator",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "newsletter_theme",
+                "type": "string",
+                "description": "Core topic (e.g., 'AI News')."
+            },
+            {
+                "key": "curation_sources",
+                "type": "list",
+                "description": "List of RSS feeds or Twitter handles to scan."
+            }
+        ],
+        "constraints": {
+            "length": "Max 1500 words.",
+            "sections": "Intro, Deep Dive, 5 Curated Links, Sponsor Block."
+        },
+        "metrics": [
+            "Open Rate",
+            "Click-Through Rate",
+            "Subscriber Growth"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_schedule",
+            "type": "trigger.schedule",
+            "name": "Weekly Trigger",
+            "params": {
+                "cron": "0 8 * * 3"
+            }
+        },
+        {
+            "id": "scan_trends",
+            "type": "agent.social_listener",
+            "name": "Scan Feeds",
+            "params": {
+                "task": "Find top 10 most engaged stories in {newsletter_theme} from the last 7 days.",
+                "inputs": "curation_sources"
+            }
+        },
+        {
+            "id": "select_topics",
+            "type": "agent.manager",
+            "name": "Editorial Selection",
+            "params": {
+                "task": "Pick the #1 story for the Deep Dive and 5 others for the Link Roundup.",
+                "input_variable": "scan_trends"
+            }
+        },
+        {
+            "id": "draft_content",
+            "type": "agent.copywriter",
+            "name": "Write Draft",
+            "params": {
+                "task": "Write the newsletter in 'Smart Brevity' style.",
+                "inputs": [
+                    "select_topics"
+                ]
+            }
+        },
+        {
+            "id": "inject_monetization",
+            "type": "logic.rule",
+            "name": "Add Sponsor/Affiliates",
+            "params": {
+                "rule": "Insert sponsor block after Intro. Auto-link keywords to affiliate offers.",
+                "assets": "sponsor_db"
+            }
+        },
+        {
+            "id": "notify_editor",
+            "type": "notify.user",
+            "name": "Draft Ready",
+            "params": {
+                "message": "Newsletter draft ready for final polish and scheduling."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_schedule",
+            "target": "scan_trends"
+        },
+        {
+            "source": "scan_trends",
+            "target": "select_topics"
+        },
+        {
+            "source": "select_topics",
+            "target": "draft_content"
+        },
+        {
+            "source": "draft_content",
+            "target": "inject_monetization"
+        },
+        {
+            "source": "inject_monetization",
+            "target": "notify_editor"
+        }
+    ]
+}

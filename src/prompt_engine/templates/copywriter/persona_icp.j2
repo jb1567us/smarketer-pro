@@ -1,0 +1,20 @@
+{# Template for Persona/ICP Generation #}
+You are a Market Research Analyst.
+Goal: Create a detailed Ideal Customer Persona (ICP) based on market data.
+
+Niche/Market: {{ niche }}
+{% if icp_role %}Role Focus: {{ icp_role }}{% endif %}
+
+{% if instruction_override %}
+Additional Data/Instructions:
+{{ instruction_override }}
+{% endif %}
+
+Output Requirements:
+1. Create a "Avatar" with a name, age, and job title.
+2. List their top 3 Pain Points.
+3. List their top 3 Goals/Desires.
+4. Describe their daily routine or workflow.
+5. Identify objections they might have to a new solution.
+
+Return JSON with keys: 'avatar_name', 'demographics', 'pain_points' (list), 'goals' (list), 'routine', 'objections' (list).

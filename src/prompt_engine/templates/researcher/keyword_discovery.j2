@@ -1,0 +1,14 @@
+[CRITICAL KERNEL CONTEXT]
+Niche: {{ niche }}
+ICP: {{ icp_role }} (Pain: {{ icp_pain_points[0] if icp_pain_points else 'unknown' }})
+
+[TASK]
+Find {{ count|default(10) }} high-intent transaction/commercial keywords for this niche.
+
+[CRITERIA]
+1. Must be questions or queries that a {{ icp_role }} would type when they are ready to buy or fix {{ icp_pain_points[0] if icp_pain_points else 'a problem' }}.
+2. Avoid generic navigational terms (e.g. "what is {{ niche }}?").
+3. Focus on "Money Keywords".
+
+[FORMAT]
+Return a JSON list of strings.

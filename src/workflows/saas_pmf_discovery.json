@@ -1,0 +1,135 @@
+{
+    "id": "saas_pmf_discovery",
+    "name": "PMF Discovery Loop",
+    "description": "Rapidly validate problems and positioning through customer interviews and outreach tests.",
+    "persona": "SaaS Founder",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "hypothesis",
+                "type": "string",
+                "description": "The problem/solution hypothesis you want to test."
+            },
+            {
+                "key": "target_interviews",
+                "type": "list",
+                "description": "List of URLs or transcripts from customer discovery calls."
+            }
+        ],
+        "constraints": {
+            "sample_size": "Min 5 interviews for pattern matching.",
+            "velocity": "Sprint duration < 1 week."
+        },
+        "metrics": [
+            "Pain Point Frequency",
+            "Landing Page Conversion Rate",
+            "Outreach Reply Rate"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start PMF Sprint",
+            "outputs": [
+                "hypothesis",
+                "target_interviews"
+            ]
+        },
+        {
+            "id": "extract_insights",
+            "type": "control.loop.list",
+            "name": "Extract Pain Themes",
+            "params": {
+                "list_variable": "target_interviews"
+            },
+            "nodes": [
+                {
+                    "id": "analyze_transcript",
+                    "type": "agent.summarizer",
+                    "name": "Analyze Interview",
+                    "params": {
+                        "task": "Extract top 3 pain points, current workarounds, and emotional triggers.",
+                        "context": "item"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "synthesize_trends",
+            "type": "agent.sales_analyzer",
+            "name": "Synthesize Trends",
+            "params": {
+                "task": "Identify the most frequent pain point and the language users use to describe it.",
+                "inputs": [
+                    "extract_insights"
+                ]
+            }
+        },
+        {
+            "id": "gen_positioning",
+            "type": "agent.copywriter",
+            "name": "Generate Positioning Variants",
+            "params": {
+                "task": "Create 3 distinct Value Propositions addressing the core pain point.",
+                "inputs": [
+                    "synthesize_trends"
+                ]
+            }
+        },
+        {
+            "id": "ab_test_prep",
+            "type": "control.parallel",
+            "name": "Prepare A/B Tests",
+            "nodes": [
+                {
+                    "id": "draft_landing_copy",
+                    "type": "agent.copywriter",
+                    "name": "Draft Landing Page Copy",
+                    "params": {
+                        "context": "Use 'Jobs to be Done' framework based on selected positioning."
+                    }
+                },
+                {
+                    "id": "draft_cold_outreach",
+                    "type": "agent.copywriter",
+                    "name": "Draft Validation Emails",
+                    "params": {
+                        "context": "Write a 'fake door' test email to gauge interest in the solution."
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_founder",
+            "type": "notify.user",
+            "name": "Experiments Ready",
+            "params": {
+                "message": "Pain themes extracted. Landing page copy and outreach drafts ready for testing."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "extract_insights"
+        },
+        {
+            "source": "extract_insights",
+            "target": "synthesize_trends"
+        },
+        {
+            "source": "synthesize_trends",
+            "target": "gen_positioning"
+        },
+        {
+            "source": "gen_positioning",
+            "target": "ab_test_prep"
+        },
+        {
+            "source": "ab_test_prep",
+            "target": "notify_founder"
+        }
+    ]
+}

@@ -1,0 +1,36 @@
+[CRITICAL KERNEL CONTEXT]
+Niche: {{ niche }}
+Target Audience: {{ icp_role }}
+Brand Voice: {{ brand_voice }}
+
+[TASK]
+Write a high-quality, informative SEO article about '{{ niche }}'.
+Target Keywords: {{ keywords | join(", ") }}
+
+[RULES]
+1. Length: 500-800 words.
+2. Structure: H1 title, intro, several sub-headings, and a conclusion.
+3. Tone: {{ brand_voice }}.
+
+{% if target_url %}
+4. Link Insertion: Naturally include a link to '{{ target_url }}' using the anchor text '{{ anchor_text|default(keywords[0]) }}'.
+{% endif %}
+
+{% if use_spintax %}
+5. USE NESTED SPINTAX. Every sentence must have at least 3 variations using the {choice1|choice2|choice3} format.
+6. Ensure the result is valid nested spintax.
+{% else %}
+5. NO SPINTAX. Write full, natural paragraphs.
+{% endif %}
+
+{% if affiliate_links %}
+7. AFFILIATE INTEGRATION: Naturally mention and link to the following tools where relevant:
+{% for link in affiliate_links %}
+   - '{{ link.text }}' (link to {{ link.url }})
+{% endfor %}
+   Do not label them as 'sponsored'. Integrate them naturally into the advice.
+{% endif %}
+
+8. Ensure the content provides ACTUAL VALUE to a reader, not just keyword stuffing.
+
+Return JSON: {'title': str, 'body_markdown': str, 'summary': str, 'tags': list}

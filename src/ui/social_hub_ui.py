@@ -8,7 +8,7 @@ from database import (
     get_scheduled_posts, delete_scheduled_post, save_scheduled_post, load_data, add_lead,
     save_creative_content
 )
-from agents import SocialMediaAgent, SocialListeningAgent
+from agents import CopywriterAgent, SocialListeningAgent
 from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
 
 def render_social_scheduler_page():
@@ -52,7 +52,7 @@ def render_social_scheduler_page():
         # 3. Page Level Chat
         render_page_chat(
             "Social Strategy", 
-            SocialMediaAgent(), 
+            CopywriterAgent(), 
             json.dumps(scheduled, indent=2)
         )
         st.divider()
@@ -85,14 +85,9 @@ def render_social_scheduler_page():
         strat_platform = st.selectbox("Select Platform", ["TikTok", "Instagram", "LinkedIn"])
         
         if st.button("Generate Strategy", type="primary"):
-            agent = SocialMediaAgent()
+            agent = CopywriterAgent()
             with st.spinner(f"Architecting {strat_platform} strategy..."):
-                if strat_platform == "TikTok":
-                    res = agent.generate_tiktok_strategy(p_niche, p_prod)
-                elif strat_platform == "Instagram":
-                    res = agent.generate_instagram_strategy(p_niche, p_prod)
-                else:
-                    res = agent.think(f"Generate strategy for {strat_platform} in {p_niche} for {p_prod}")
+                res = agent.generate_social_strategy(p_niche, p_prod, platform=strat_platform)
                 
                 st.session_state['last_social_strategy'] = res
                 st.rerun()

@@ -1,0 +1,130 @@
+{
+    "id": "local_business_dominance",
+    "name": "Local SEO Dominance",
+    "description": "Rank for 'Service in City' keywords with automated page building and citation fixing.",
+    "persona": "Small Business Owner",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "business_name",
+                "type": "string",
+                "description": "Name of the local business."
+            },
+            {
+                "key": "service_area",
+                "type": "list",
+                "description": "List of cities or neighborhoods to target."
+            },
+            {
+                "key": "primary_service",
+                "type": "string",
+                "description": "Main service provided (e.g., 'Emergency Plumbing')."
+            }
+        ],
+        "constraints": {
+            "geo_relevance": "Content must mention specific local landmarks.",
+            "nap_consistency": "Name, Address, Phone must match Google My Business exactly."
+        },
+        "metrics": [
+            "Local Pack Rankings",
+            "GMB Views",
+            "Inbound Calls"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Local Campaign",
+            "outputs": [
+                "business_name",
+                "service_area",
+                "primary_service"
+            ]
+        },
+        {
+            "id": "audit_citations",
+            "type": "agent.seo",
+            "name": "Audit Citations",
+            "params": {
+                "task": "Check major directories (Yelp, YellowPages) for NAP consistency.",
+                "input_variable": "business_name"
+            }
+        },
+        {
+            "id": "repair_citations_task",
+            "type": "agent.manager",
+            "name": "Generate Fix List",
+            "params": {
+                "task": "Create a checklist of directories with incorrect info to fix.",
+                "condition": "if audit_citations.errors > 0"
+            }
+        },
+        {
+            "id": "loop_location_pages",
+            "type": "control.loop.list",
+            "name": "Location Page Generator",
+            "params": {
+                "list_variable": "service_area"
+            },
+            "nodes": [
+                {
+                    "id": "research_local_hooks",
+                    "type": "agent.researcher",
+                    "name": "Local Facts Research",
+                    "params": {
+                        "task": "Find 3 landmarks and 1 local event for the specific city/neighborhood.",
+                        "context": "item"
+                    }
+                },
+                {
+                    "id": "draft_landing_page",
+                    "type": "agent.copywriter",
+                    "name": "Draft Location Page",
+                    "params": {
+                        "template": "local_service_landing_page",
+                        "service": "{primary_service}",
+                        "location": "{item}",
+                        "local_hooks": "{research_local_hooks}"
+                    }
+                },
+                {
+                    "id": "publish_wp",
+                    "type": "agent.wordpress",
+                    "name": "Publish Page",
+                    "params": {
+                        "status": "draft",
+                        "category": "Locations"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_owner",
+            "type": "notify.user",
+            "name": "Campaign Ready",
+            "params": {
+                "message": "Citation audit complete and {count} location pages drafted."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "audit_citations"
+        },
+        {
+            "source": "audit_citations",
+            "target": "repair_citations_task"
+        },
+        {
+            "source": "trigger_manual",
+            "target": "loop_location_pages"
+        },
+        {
+            "source": "loop_location_pages",
+            "target": "notify_owner"
+        }
+    ]
+}

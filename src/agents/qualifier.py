@@ -48,6 +48,7 @@ class QualifierAgent(BaseAgent):
         # Assuming context is a string or dict we can stringify
         return self.generate_json(f"Lead Evaluation Context:\n{context}\n\n{full_instructions}")
 
+
     def ask_researcher(self, missing_info):
         """
         Helper to formulate a query for the Researcher.

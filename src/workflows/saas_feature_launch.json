@@ -1,0 +1,109 @@
+{
+    "id": "saas_feature_launch",
+    "name": "Feature Launch Kit",
+    "description": "Turn a git commit or feature spec into a multi-channel marketing launch.",
+    "persona": "SaaS Founder",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "feature_spec",
+                "type": "string",
+                "description": "Description of the feature, target user, and benefits."
+            },
+            {
+                "key": "demo_url",
+                "type": "string",
+                "description": "Link to the feature demo or screenshot."
+            }
+        ],
+        "constraints": {
+            "channels": "Documentation, Email, LinkedIn, Twitter/X.",
+            "tone": "Exciting but clear."
+        },
+        "metrics": [
+            "Feature Adoption Rate",
+            "Announcement Engagement"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Launch",
+            "outputs": [
+                "feature_spec",
+                "demo_url"
+            ]
+        },
+        {
+            "id": "draft_assets",
+            "type": "control.parallel",
+            "name": "Draft Launch Assets",
+            "nodes": [
+                {
+                    "id": "write_release_notes",
+                    "type": "agent.copywriter",
+                    "name": "Write Release Notes/Docs",
+                    "params": {
+                        "task": "Write clear, step-by-step documentation for the Help Center.",
+                        "input_variable": "feature_spec"
+                    }
+                },
+                {
+                    "id": "write_announcement_email",
+                    "type": "agent.copywriter",
+                    "name": "Draft Customer Email",
+                    "params": {
+                        "task": "Write a 'New Feature' announcement focusing on user benefit.",
+                        "input_variable": "feature_spec"
+                    }
+                },
+                {
+                    "id": "write_social_thread",
+                    "type": "agent.copywriter",
+                    "name": "Draft LinkedIn/Twitter Thread",
+                    "params": {
+                        "task": "Create a hook-y thread explaining 'Why we built this'.",
+                        "input_variable": "feature_spec"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "gen_visuals",
+            "type": "agent.designer",
+            "name": "Generate Launch Graphics",
+            "params": {
+                "task": "Create a social media card and a 'What's New' modal image.",
+                "input_variable": "feature_spec"
+            }
+        },
+        {
+            "id": "package_kit",
+            "type": "notify.user",
+            "name": "Launch Kit Ready",
+            "params": {
+                "message": "All launch assets (Docs, Email, Social, Graphics) are drafted and ready for review."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "draft_assets"
+        },
+        {
+            "source": "trigger_manual",
+            "target": "gen_visuals"
+        },
+        {
+            "source": "draft_assets",
+            "target": "package_kit"
+        },
+        {
+            "source": "gen_visuals",
+            "target": "package_kit"
+        }
+    ]
+}

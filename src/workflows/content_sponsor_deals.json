@@ -1,0 +1,105 @@
+{
+    "id": "content_sponsor_deals",
+    "name": "Sponsor Deal Flow",
+    "description": "Identify potential sponsors bidding on your keywords and pitch them.",
+    "persona": "Content Operator",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "content_keywords",
+                "type": "list",
+                "description": "Keywords your content ranks for (e.g., 'email marketing software')."
+            },
+            {
+                "key": "audience_size",
+                "type": "string",
+                "description": "Your reach stats (e.g., '50k subscribers')."
+            }
+        ],
+        "constraints": {
+            "budget": "Target companies running paid ads (proven spenders).",
+            "ethics": "No gambling/crypto unless specified."
+        },
+        "metrics": [
+            "Qualified Leads Found",
+            "Deals Closed",
+            "Revenue Booked"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Deal Hunt",
+            "outputs": [
+                "content_keywords",
+                "audience_size"
+            ]
+        },
+        {
+            "id": "find_advertisers",
+            "type": "agent.researcher",
+            "name": "Scan Paid Ads",
+            "params": {
+                "task": "Find companies running Google/FB ads for the provided keywords.",
+                "input_variable": "content_keywords"
+            }
+        },
+        {
+            "id": "enrich_contacts",
+            "type": "agent.researcher",
+            "name": "Find Marketing Leads",
+            "params": {
+                "task": "Find 'CMO' or 'Head of Growth' at these companies.",
+                "input_variable": "advertisers"
+            }
+        },
+        {
+            "id": "draft_pitch",
+            "type": "control.loop.list",
+            "name": "Pitching Loop",
+            "params": {
+                "list_variable": "leads"
+            },
+            "nodes": [
+                {
+                    "id": "write_email",
+                    "type": "agent.copywriter",
+                    "name": "Write Sponsor Pitch",
+                    "params": {
+                        "template": "sponsor_pitch_cold",
+                        "hook": "I see you're bidding on {keyword}...",
+                        "value": "Reach {audience_size} organic readers for less than your CPC."
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_sales",
+            "type": "notify.user",
+            "name": "Pitches Ready",
+            "params": {
+                "message": "Drafted {count} sponsorship pitches to active advertisers."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "find_advertisers"
+        },
+        {
+            "source": "find_advertisers",
+            "target": "enrich_contacts"
+        },
+        {
+            "source": "enrich_contacts",
+            "target": "draft_pitch"
+        },
+        {
+            "source": "draft_pitch",
+            "target": "notify_sales"
+        }
+    ]
+}

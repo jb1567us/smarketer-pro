@@ -1,0 +1,113 @@
+{
+    "id": "sales_pre_meeting_dossier",
+    "name": "Pre-Meeting Dossier",
+    "description": "Automated research brief to prepare for high-stakes sales calls.",
+    "persona": "Sales Representative",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "prospect_email",
+                "type": "string",
+                "description": "Email of the person you are meeting."
+            },
+            {
+                "key": "company_domain",
+                "type": "string",
+                "description": "Company website."
+            }
+        ],
+        "constraints": {
+            "length": "One-pager (max 500 words summary).",
+            "freshness": "Must include news from last 30 days."
+        },
+        "metrics": [
+            "Dossier Completeness",
+            "Meeting Conversion Rate"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Generate Dossier",
+            "outputs": [
+                "prospect_email",
+                "company_domain"
+            ]
+        },
+        {
+            "id": "company_intel",
+            "type": "agent.researcher",
+            "name": "Company Intelligence",
+            "params": {
+                "task": "Find company size, recent funding, tech stack, and key competitors.",
+                "input_variable": "company_domain"
+            }
+        },
+        {
+            "id": "person_intel",
+            "type": "agent.linkedin",
+            "name": "Person Intelligence",
+            "params": {
+                "task": "Scrape LinkedIn profile for job history, education, and shared connections.",
+                "input_variable": "prospect_email"
+            }
+        },
+        {
+            "id": "generate_hypotheses",
+            "type": "agent.sales_analyzer",
+            "name": "Synthesize Hypotheses",
+            "params": {
+                "task": "Based on role and company stage, generate 3 likely pain points and 5 discovery questions.",
+                "inputs": [
+                    "company_intel",
+                    "person_intel"
+                ]
+            }
+        },
+        {
+            "id": "compile_brief",
+            "type": "agent.summarizer",
+            "name": "Compile One-Pager",
+            "params": {
+                "task": "Create a clear briefing document with: Bio, Company Stats, Red Flags, Hypotheses, and Questions.",
+                "format": "markdown"
+            }
+        },
+        {
+            "id": "deliver_dossier",
+            "type": "output.file",
+            "name": "Save Dossier",
+            "params": {
+                "path": "dossiers/{date}_{prospect_name}.md"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "company_intel"
+        },
+        {
+            "source": "trigger_manual",
+            "target": "person_intel"
+        },
+        {
+            "source": "company_intel",
+            "target": "generate_hypotheses"
+        },
+        {
+            "source": "person_intel",
+            "target": "generate_hypotheses"
+        },
+        {
+            "source": "generate_hypotheses",
+            "target": "compile_brief"
+        },
+        {
+            "source": "compile_brief",
+            "target": "deliver_dossier"
+        }
+    ]
+}

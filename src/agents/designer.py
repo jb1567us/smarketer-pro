@@ -5,6 +5,7 @@ import requests
 import os
 import hashlib
 import json
+from src.prompt_engine import PromptEngine, PromptContext
 
 class GraphicsDesignerAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -13,23 +14,28 @@ class GraphicsDesignerAgent(BaseAgent):
             goal="Generate high-quality, relevant visual assets for marketing campaigns using generative AI.",
             provider=provider
         )
+        self.prompt_engine = PromptEngine()
 
     def think(self, context, instructions=None):
         """
         Context: The concept or description of the image needed.
         Returns: A URL to the generated image.
         """
-        extra_guidance = ""
-        if instructions:
-            extra_guidance = f"\nAdditional Guidance:\n{instructions}"
-
-        # 1. Refine the prompt using LLM to be "Stable Diffusion friendly"
-        refine_prompt = (
-            f"Convert this concept into a detailed, high-quality image generation prompt for Stable Diffusion.\n"
-            f"Concept: {context}\n{extra_guidance}\n"
-            "Focus on lighting, style (e.g. photorealistic, cinematic, corporate memphis), and composition.\n"
-            "Return ONLY the refined prompt in English. DO NOT include any Arabic, notes, explanations, or meta-commentary. "
-            "Your entire response will be used as a URL parameter, so keep it concise and strictly image-focused."
+        # 1. Build Context (Infer or Default)
+        # Often 'context' is "editorial illustration for block post about Roofing"
+        # We can try to be smart or just treat it as the 'concept'.
+        ctx = PromptContext(
+            niche="General", 
+            icp_role="General Audience",
+            brand_voice="Professional"
+        )
+        
+        # 2. Render Prompt
+        refine_prompt = self.prompt_engine.get_prompt(
+            "designer/blog_image.j2", 
+            ctx, 
+            concept=context,
+            style=instructions # Pass instructions as style override/addition
         )
         
         image_prompt = self.provider.generate_text(refine_prompt).strip()

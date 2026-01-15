@@ -1,0 +1,104 @@
+{
+    "id": "recruiter_hiring_manager_outreach",
+    "name": "Hiring Manager BD",
+    "description": "Business Development workflow to find companies hiring and pitch staffing services.",
+    "persona": "Recruiter / Staffing",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "target_role",
+                "type": "string",
+                "description": "The role you specialize in placing (e.g., 'DevOps Engineer')."
+            },
+            {
+                "key": "location",
+                "type": "string",
+                "description": "Target city or 'Remote'."
+            }
+        ],
+        "constraints": {
+            "relevance": "Only target companies with active job postings < 14 days old.",
+            "pitch": "Focus on 'I have candidates ready' rather than generic sales."
+        },
+        "metrics": [
+            "Job Reqs Acquired",
+            "Meeting Booking Rate"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start BD Sprint",
+            "outputs": [
+                "target_role",
+                "location"
+            ]
+        },
+        {
+            "id": "find_jobs",
+            "type": "agent.researcher",
+            "name": "Scrape Job Boards",
+            "params": {
+                "task": "Find companies hiring for {target_role} in {location} on LinkedIn/Indeed.",
+                "input_variable": "inputs"
+            }
+        },
+        {
+            "id": "find_decision_maker",
+            "type": "agent.researcher",
+            "name": "Find Hiring Manager",
+            "params": {
+                "task": "Find the VP/Director of Engineering (or relevant dept) at these companies.",
+                "input_variable": "companies_hiring"
+            }
+        },
+        {
+            "id": "draft_outreach",
+            "type": "control.loop.list",
+            "name": "Draft MPC Pitch",
+            "params": {
+                "list_variable": "decision_makers"
+            },
+            "nodes": [
+                {
+                    "id": "write_email",
+                    "type": "agent.copywriter",
+                    "name": "Write MPC Email",
+                    "params": {
+                        "template": "recruiter_mpc_pitch",
+                        "hook": "I see you're hiring for {target_role}...",
+                        "value": "I have 3 vetted candidates ready to interview today."
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_recruiter",
+            "type": "notify.user",
+            "name": "Campaign Ready",
+            "params": {
+                "message": "Drafted {count} emails to Hiring Managers with active needs."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "find_jobs"
+        },
+        {
+            "source": "find_jobs",
+            "target": "find_decision_maker"
+        },
+        {
+            "source": "find_decision_maker",
+            "target": "draft_outreach"
+        },
+        {
+            "source": "draft_outreach",
+            "target": "notify_recruiter"
+        }
+    ]
+}

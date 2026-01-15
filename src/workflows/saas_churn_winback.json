@@ -1,0 +1,121 @@
+{
+    "id": "saas_churn_winback",
+    "name": "Churn Winback",
+    "description": "Automated sequence to recover cancelled subscriptions based on reason.",
+    "persona": "SaaS Founder",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "user_email",
+                "type": "string",
+                "description": "Email of the churned user."
+            },
+            {
+                "key": "cancel_reason",
+                "type": "string",
+                "description": "Reason code (e.g., 'too_expensive', 'missing_feature', 'no_use')."
+            }
+        ],
+        "constraints": {
+            "timing": "Trigger immediately upon cancellation.",
+            "offers": "Max discount 30%."
+        },
+        "metrics": [
+            "Reactivation Rate",
+            "Feedback Response Rate"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_webhook",
+            "type": "trigger.webhook",
+            "name": "Subscription Cancelled",
+            "outputs": [
+                "user_email",
+                "cancel_reason"
+            ]
+        },
+        {
+            "id": "segment_reason",
+            "type": "logic.switch",
+            "name": "Segment by Reason",
+            "params": {
+                "variable": "cancel_reason",
+                "cases": {
+                    "too_expensive": "offer_discount",
+                    "missing_feature": "offer_roadmap",
+                    "technical_issue": "offer_support",
+                    "default": "ask_feedback"
+                }
+            }
+        },
+        {
+            "id": "offer_discount",
+            "type": "agent.copywriter",
+            "name": "Draft Discount Offer",
+            "params": {
+                "task": "Write email acknowledging price concern and offering 20% off for 3 months.",
+                "tone": "Empathetic"
+            }
+        },
+        {
+            "id": "offer_roadmap",
+            "type": "agent.copywriter",
+            "name": "Draft Feature Tease",
+            "params": {
+                "task": "Write email asking which feature was missing and sharing upcoming roadmap.",
+                "tone": "Curious"
+            }
+        },
+        {
+            "id": "ask_feedback",
+            "type": "agent.copywriter",
+            "name": "Draft Exit Survey",
+            "params": {
+                "task": "Write short personal email from Founder asking 'What could we have done better?'.",
+                "tone": "Humble"
+            }
+        },
+        {
+            "id": "send_email",
+            "type": "agent.mailer",
+            "name": "Send Winback Email",
+            "params": {
+                "to": "{user_email}",
+                "subject": "Quick question before you go...",
+                "body": "{drafted_content}"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_webhook",
+            "target": "segment_reason"
+        },
+        {
+            "source": "segment_reason",
+            "target": "offer_discount"
+        },
+        {
+            "source": "segment_reason",
+            "target": "offer_roadmap"
+        },
+        {
+            "source": "segment_reason",
+            "target": "ask_feedback"
+        },
+        {
+            "source": "offer_discount",
+            "target": "send_email"
+        },
+        {
+            "source": "offer_roadmap",
+            "target": "send_email"
+        },
+        {
+            "source": "ask_feedback",
+            "target": "send_email"
+        }
+    ]
+}

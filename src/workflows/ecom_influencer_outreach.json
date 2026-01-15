@@ -1,0 +1,129 @@
+{
+    "id": "ecom_influencer_outreach",
+    "name": "Influencer Recruitment",
+    "description": "Find, qualify, and pitch creators on Instagram/TikTok for your brand.",
+    "persona": "Ecommerce Brand Owner",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "brand_niche",
+                "type": "string",
+                "description": "Niche of your brand (e.g., 'Sustainable Activewear')."
+            },
+            {
+                "key": "product_offer",
+                "type": "string",
+                "description": "What you are offering (Free product, 20% commission, etc.)."
+            }
+        ],
+        "constraints": {
+            "min_engagement": "Engagement rate > 2%.",
+            "platform": "Instagram (Reels) or TikTok."
+        },
+        "metrics": [
+            "Creators Contacted",
+            "Positive Reply Rate",
+            "Content Pieces Generated"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Recruitment",
+            "outputs": [
+                "brand_niche",
+                "product_offer"
+            ]
+        },
+        {
+            "id": "find_creators",
+            "type": "agent.researcher",
+            "name": "Find Creators",
+            "params": {
+                "task": "Find 50 influencers in the niche using hashtags.",
+                "platform": "Instagram",
+                "input_variable": "brand_niche"
+            }
+        },
+        {
+            "id": "qualify_creators",
+            "type": "logic.filter",
+            "name": "Quality Gate",
+            "params": {
+                "min_followers": 5000,
+                "max_followers": 100000,
+                "min_engagement_rate": 0.02
+            }
+        },
+        {
+            "id": "enrich_contact_info",
+            "type": "agent.researcher",
+            "name": "Find Emails",
+            "params": {
+                "task": "Extract email from bio or contact button.",
+                "input_variable": "qualified_creators"
+            }
+        },
+        {
+            "id": "outreach_loop",
+            "type": "control.loop.list",
+            "name": "Outreach Loop",
+            "params": {
+                "list_variable": "creators_with_email"
+            },
+            "nodes": [
+                {
+                    "id": "analyze_vibe",
+                    "type": "agent.social_listener",
+                    "name": "Vibe Check",
+                    "params": {
+                        "task": "Analyze last 3 posts to find a specific compliment.",
+                        "context": "item"
+                    }
+                },
+                {
+                    "id": "draft_dm_email",
+                    "type": "agent.copywriter",
+                    "name": "Draft Pitch",
+                    "params": {
+                        "template": "influencer_collab_pitch",
+                        "compliment": "{vibe_check_data}",
+                        "offer": "{product_offer}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_brand",
+            "type": "notify.user",
+            "name": "Pitches Ready",
+            "params": {
+                "message": "Drafted personalized pitches for {count} qualified creators."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "find_creators"
+        },
+        {
+            "source": "find_creators",
+            "target": "qualify_creators"
+        },
+        {
+            "source": "qualify_creators",
+            "target": "enrich_contact_info"
+        },
+        {
+            "source": "enrich_contact_info",
+            "target": "outreach_loop"
+        },
+        {
+            "source": "outreach_loop",
+            "target": "notify_brand"
+        }
+    ]
+}

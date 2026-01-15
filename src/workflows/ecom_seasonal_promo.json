@@ -1,0 +1,128 @@
+{
+    "id": "ecom_seasonal_promo",
+    "name": "Seasonal Promo Campaign",
+    "description": "Generate a full-stack marketing campaign for a holiday or event.",
+    "persona": "Ecommerce Brand Owner",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "event_name",
+                "type": "string",
+                "description": "Name of event (e.g., 'Valentine's Day', 'Summer Sale')."
+            },
+            {
+                "key": "offer_details",
+                "type": "string",
+                "description": "Discount or deal (e.g., 'BOGO 50% off')."
+            }
+        ],
+        "constraints": {
+            "timeline": "Start 2 weeks before event.",
+            "channels": "Email (3 sends), SMS (2 sends), Ads (FB/IG)."
+        },
+        "metrics": [
+            "Campaign Revenue",
+            "AOV (Average Order Value)",
+            "ROAS"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Campaign",
+            "outputs": [
+                "event_name",
+                "offer_details"
+            ]
+        },
+        {
+            "id": "gen_angles",
+            "type": "agent.copywriter",
+            "name": "Brainstorm Angles",
+            "params": {
+                "task": "Generate 3 creative concepts/angles for the sale (e.g., 'Treat Yourself', 'Last Minute', 'Bundle & Save').",
+                "input_variable": "event_name"
+            }
+        },
+        {
+            "id": "create_emails",
+            "type": "agent.copywriter",
+            "name": "Draft Email Sequence",
+            "params": {
+                "task": "Write 3 emails: Teaser, Launch (Day 1), Last Chance (Day 3).",
+                "inputs": [
+                    "gen_angles",
+                    "offer_details"
+                ]
+            }
+        },
+        {
+            "id": "create_ads",
+            "type": "agent.copywriter",
+            "name": "Draft Ad Copy",
+            "params": {
+                "task": "Write 3 primary text options and 3 headlines for Facebook Ads.",
+                "inputs": [
+                    "gen_angles",
+                    "offer_details"
+                ]
+            }
+        },
+        {
+            "id": "create_sms",
+            "type": "agent.copywriter",
+            "name": "Draft SMS",
+            "params": {
+                "task": "Write 2 punchy SMS messages (<160 chars).",
+                "inputs": [
+                    "offer_details"
+                ]
+            }
+        },
+        {
+            "id": "design_assets",
+            "type": "agent.designer",
+            "name": "Generate Campaign Visuals",
+            "params": {
+                "task": "Create banner images for Email and Email + Ad squares.",
+                "style": "Festive/Seasonal"
+            }
+        },
+        {
+            "id": "notify_brand",
+            "type": "notify.user",
+            "name": "Campaign Assets Ready",
+            "params": {
+                "message": "Full seasonal campaign drafted. Review emails, ads, and visuals."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "gen_angles"
+        },
+        {
+            "source": "gen_angles",
+            "target": "create_emails"
+        },
+        {
+            "source": "gen_angles",
+            "target": "create_ads"
+        },
+        {
+            "source": "offer_details",
+            "target": "create_sms"
+        },
+        {
+            "source": "gen_angles",
+            "target": "design_assets"
+        },
+        {
+            "source": "design_assets",
+            "target": "notify_brand"
+        }
+    ]
+}

@@ -93,8 +93,7 @@ from config import config, reload_config
 from proxy_manager import proxy_manager
 from agents import (
     ResearcherAgent, QualifierAgent, CopywriterAgent, ReviewerAgent, 
-    GraphicsDesignerAgent, WordPressAgent, SocialMediaAgent, AdCopyAgent,
-    BrainstormerAgent, PersonaAgent, ManagerAgent, ProductManagerAgent,
+    GraphicsDesignerAgent, WordPressAgent, ManagerAgent, ProductManagerAgent,
     SyntaxAgent, UXAgent, SEOExpertAgent, InfluencerAgent, SocialListeningAgent, LinkedInAgent
 )
 from agents.custom_agent import CustomAgent
@@ -112,82 +111,7 @@ from ui.styles import load_css
 # load_css call moved to main()
 
 
-def render_agent_chat(agent_key, agent_instance, context_key):
-    """
-    Renders a unified chat/tuning box for any agent.
-    agent_key: The session state key where the result is stored (e.g. 'last_ad')
-    agent_instance: An instance of the agent class to call
-    context_key: The session state key where the original input context is stored
-    """
-    if agent_key not in st.session_state:
-        return
 
-    st.divider()
-    st.subheader("💬 Agent Discussion & Tuning")
-    
-    # Initialize history for this agent if not present
-    hist_key = f"{agent_key}_history"
-    if hist_key not in st.session_state:
-        st.session_state[hist_key] = []
-
-    # Display Chat History (Simple)
-    if st.session_state[hist_key]:
-        with st.expander("View Discussion History", expanded=False):
-            for msg in st.session_state[hist_key]:
-                role = "👤 You" if msg['role'] == 'user' else "🤖 Agent"
-                st.markdown(f"**{role}:** {msg['content']}")
-
-    mode = st.radio("Mode", ["Discuss", "Iterate (Apply Changes)"], horizontal=True, key=f"mode_{agent_key}")
-    
-    chat_input = st.text_input("Message / Instructions", key=f"input_{agent_key}")
-    
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        if mode == "Discuss":
-            if st.button("Send Message", key=f"btn_discuss_{agent_key}"):
-                if chat_input:
-                    with st.spinner("Thinking..."):
-                        # Format history for the prompt
-                        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state[hist_key]])
-                        
-                        # Handle different result formats (JSON vs String)
-                        prev_res = st.session_state[agent_key]
-                        if not isinstance(prev_res, str):
-                            prev_res = json.dumps(prev_res)
-                            
-                        response = agent_instance.discuss(
-                            st.session_state[context_key],
-                            prev_res,
-                            chat_input,
-                            history=history_text
-                        )
-                        
-                        # Update history
-                        st.session_state[hist_key].append({"role": "user", "content": chat_input})
-                        st.session_state[hist_key].append({"role": "assistant", "content": response})
-                        st.rerun()
-        else:
-            if st.button("Apply Changes", key=f"btn_tune_{agent_key}"):
-                if chat_input:
-                    with st.spinner("Refining output..."):
-                        history_text = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state[hist_key]])
-                        
-                        prev_res = st.session_state[agent_key]
-                        if not isinstance(prev_res, str):
-                            prev_res = json.dumps(prev_res)
-
-                        new_res = agent_instance.tune(
-                            st.session_state[context_key],
-                            prev_res,
-                            chat_input,
-                            history=history_text
-                        )
-                        
-                        # Update result and clear current input
-                        st.session_state[agent_key] = new_res
-                        st.session_state[hist_key].append({"role": "user", "content": f"[ITERATE] {chat_input}"})
-                        st.session_state[hist_key].append({"role": "assistant", "content": "Revised output generated."})
-                        st.rerun()
 
 def terminate_session():
     """Stops the Streamlit server and shuts down SearXNG."""

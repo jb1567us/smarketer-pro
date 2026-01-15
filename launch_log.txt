@@ -1,0 +1,50 @@
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.1.104:8501
+
+2026-01-14 17:06:35.762 Uncaught app execution
+Traceback (most recent call last):
+  File "C:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 129, in exec_func_with_error_handling
+    result = func()
+  File "C:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 671, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\sandbox\b2b_outreach_tool\src\app.py", line 15, in <module>
+    import src.nodes
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 2, in <module>
+    from src.nodes import domain
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\__init__.py", line 1, in <module>
+    from src.nodes.domain import search
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\search.py", line 4, in <module>
+    from src.agents.researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\__init__.py", line 1, in <module>
+    from .base import BaseAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\base.py", line 3, in <module>
+    from database import save_agent_work_product
+  File "C:\sandbox\b2b_outreach_tool\src\database.py", line 2127, in <module>
+    from sqlalchemy import create_engine
+ModuleNotFoundError: No module named 'sqlalchemy'
+2026-01-14 17:47:58.552 Uncaught app execution
+Traceback (most recent call last):
+  File "C:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 129, in exec_func_with_error_handling
+    result = func()
+  File "C:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 671, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\sandbox\b2b_outreach_tool\src\app.py", line 15, in <module>
+    import src.nodes
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 2, in <module>
+    from src.nodes import domain
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\__init__.py", line 1, in <module>
+    from src.nodes.domain import search
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\search.py", line 4, in <module>
+    from src.agents.researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\__init__.py", line 1, in <module>
+    from .base import BaseAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\base.py", line 3, in <module>
+    from database import save_agent_work_product
+  File "C:\sandbox\b2b_outreach_tool\src\database.py", line 2127, in <module>
+    from sqlalchemy import create_engine
+ModuleNotFoundError: No module named 'sqlalchemy'

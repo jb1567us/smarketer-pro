@@ -1,0 +1,113 @@
+{
+    "id": "sales_post_call_followup",
+    "name": "Post-Call & Mutual Action Plan",
+    "description": "Automated meeting follow-up with transcript analysis and MAP generation.",
+    "persona": "Sales Representative",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "transcript_text",
+                "type": "string",
+                "description": "Raw text from the meeting transcript."
+            },
+            {
+                "key": "prospect_email",
+                "type": "string",
+                "description": "Who to send the follow-up to."
+            }
+        ],
+        "constraints": {
+            "speed": "Send draft within 1 hour of call upload.",
+            "accuracy": "Action items must be assigned to specific owners."
+        },
+        "metrics": [
+            "Follow-up Speed",
+            "MAP Agreement Rate"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_upload",
+            "type": "trigger.manual",
+            "name": "Upload Transcript",
+            "outputs": [
+                "transcript_text",
+                "prospect_email"
+            ]
+        },
+        {
+            "id": "extract_actions",
+            "type": "agent.meet_scribe",
+            "name": "Analyze Transcript",
+            "params": {
+                "task": "Extract Key Decisions, Action Items (Who/When), and Objections raised.",
+                "input_variable": "transcript_text"
+            }
+        },
+        {
+            "id": "gen_map",
+            "type": "agent.summarizer",
+            "name": "Generate Mutual Action Plan",
+            "params": {
+                "task": "Create a table of 'Next Steps' leading to the go-live date.",
+                "input_variable": "extracted_actions"
+            }
+        },
+        {
+            "id": "handle_objections",
+            "type": "agent.sales_analyzer",
+            "name": "Objection Killer",
+            "params": {
+                "task": "If objections found, select best case study or resource to counter them.",
+                "input_variable": "extracted_actions"
+            }
+        },
+        {
+            "id": "draft_email",
+            "type": "agent.copywriter",
+            "name": "Draft Follow-up",
+            "params": {
+                "task": "Write email: Recap, MAP table, and Resource links.",
+                "inputs": [
+                    "gen_map",
+                    "handle_objections"
+                ]
+            }
+        },
+        {
+            "id": "notify_rep",
+            "type": "notify.user",
+            "name": "Review Follow-up",
+            "params": {
+                "message": "Draft email and MAP ready for review."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_upload",
+            "target": "extract_actions"
+        },
+        {
+            "source": "extract_actions",
+            "target": "gen_map"
+        },
+        {
+            "source": "extract_actions",
+            "target": "handle_objections"
+        },
+        {
+            "source": "gen_map",
+            "target": "draft_email"
+        },
+        {
+            "source": "handle_objections",
+            "target": "draft_email"
+        },
+        {
+            "source": "draft_email",
+            "target": "notify_rep"
+        }
+    ]
+}

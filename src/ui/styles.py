@@ -152,3 +152,24 @@ def load_css():
 
         </style>
     """, unsafe_allow_html=True)
+    
+    st.markdown("""
+        <style>
+        /* Fix Chat Message Overflow */
+        .stChatMessage .stMarkdown {
+            word-wrap: break-word !important;
+            white-space: pre-wrap !important; 
+            overflow-wrap: break-word !important;
+            max-width: 100%;
+        }
+        .stChatMessage code {
+            white-space: pre-wrap !important;
+            word-break: break-all !important;
+        }
+        
+        /* Ensure dialogs/expanders don't overflow */
+        .streamlit-expanderContent {
+            overflow-x: auto;
+        }
+        </style>
+    """, unsafe_allow_html=True)

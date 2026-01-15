@@ -1,0 +1,114 @@
+{
+    "id": "recruiter_candidate_sourcing",
+    "name": "Candidate Headhunting",
+    "description": "Find and engage passive candidates for a specific requisition.",
+    "persona": "Recruiter / Staffing",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "job_description",
+                "type": "string",
+                "description": "JD of the role you are filling."
+            },
+            {
+                "key": "must_haves",
+                "type": "list",
+                "description": "Critical skills (e.g., 'React', '5y exp')."
+            }
+        ],
+        "constraints": {
+            "source": "LinkedIn, GitHub, Dribbble.",
+            "message": "Highly personalized, avoiding 'spray and pray'."
+        },
+        "metrics": [
+            "Profiles Identified",
+            "Response Rate",
+            "Candidates Submitted"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Headhunt",
+            "outputs": [
+                "job_description",
+                "must_haves"
+            ]
+        },
+        {
+            "id": "source_profiles",
+            "type": "agent.researcher",
+            "name": "Source Candidates",
+            "params": {
+                "task": "Find 50 candidates matching skills in {must_haves}.",
+                "inputs": "job_description"
+            }
+        },
+        {
+            "id": "enrich_contacts",
+            "type": "agent.researcher",
+            "name": "Find Personal Emails",
+            "params": {
+                "task": "Enrich profiles to find personal email addresses.",
+                "input_variable": "candidates"
+            }
+        },
+        {
+            "id": "draft_outreach",
+            "type": "control.loop.list",
+            "name": "Outreach Loop",
+            "params": {
+                "list_variable": "enriched_candidates"
+            },
+            "nodes": [
+                {
+                    "id": "analyze_profile",
+                    "type": "agent.summarizer",
+                    "name": "Profile Scan",
+                    "params": {
+                        "task": "Find one specific project or recent post to mention.",
+                        "context": "item"
+                    }
+                },
+                {
+                    "id": "write_message",
+                    "type": "agent.copywriter",
+                    "name": "Write Headhunt Msg",
+                    "params": {
+                        "template": "recruiter_candidate_cold",
+                        "hook": "{profile_scan_data}",
+                        "job_hook": "Why this role fits them specifically."
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_recruiter",
+            "type": "notify.user",
+            "name": "Headhunt Ready",
+            "params": {
+                "message": "Identified and drafted messages for {count} candidates."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "source_profiles"
+        },
+        {
+            "source": "source_profiles",
+            "target": "enrich_contacts"
+        },
+        {
+            "source": "enrich_contacts",
+            "target": "draft_outreach"
+        },
+        {
+            "source": "draft_outreach",
+            "target": "notify_recruiter"
+        }
+    ]
+}

@@ -557,6 +557,20 @@ def init_db():
         c.execute("ALTER TABLE chat_messages ADD COLUMN tool_call TEXT")
         c.execute("ALTER TABLE chat_messages ADD COLUMN tool_params TEXT")
 
+    # --- Decision Log (Brain Logic) ---
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS agent_decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_role TEXT,
+            intent TEXT,
+            user_input TEXT,
+            tool_selected TEXT,
+            tool_params TEXT, -- JSON
+            reasoning TEXT,
+            timestamp INTEGER
+        );
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -2106,3 +2120,62 @@ def delete_deals_bulk(deal_ids):
     c.execute(f'DELETE FROM deals WHERE id IN ({placeholders})', deal_ids)
     conn.commit()
     conn.close()
+
+# =========================================================================
+# SQLALCHEMY ORM SUPPORT (Added for Affiliate System & New Modules)
+# =========================================================================
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from contextlib import contextmanager
+
+# Use absolute path for SQLite to avoid CWD issues
+DB_NAME = 'leads.db'
+SQLALCHEMY_DATABASE_URL = f'sqlite:///{DB_NAME}'
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={'check_same_thread': False}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+@contextmanager
+def get_db_session():
+    '''Provides a transactional scope around a series of operations.'''
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+def create_all_tables():
+    '''Creates tables defined by SQLAlchemy models.'''
+    # This must be imported by modules defining models (e.g. src.affiliates.models) 
+    # BEFORE calling this, so they are registered with Base.metadata
+    Base.metadata.create_all(bind=engine)
+
+
+
+def log_agent_decision(agent_role, intent, user_input, tool_selected, tool_params, reasoning=''):
+    '''Logs an agent decision-making process for audit/debug.'''
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    params_str = json.dumps(tool_params) if isinstance(tool_params, (dict, list)) else str(tool_params)
+    
+    try:
+        c.execute('''
+            INSERT INTO agent_decisions (agent_role, intent, user_input, tool_selected, tool_params, reasoning, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (agent_role, intent, user_input, tool_selected, params_str, reasoning, int(time.time())))
+        conn.commit()
+    except Exception as e:
+        print(f'Error logging decision: {e}')
+    finally:
+        conn.close()
+

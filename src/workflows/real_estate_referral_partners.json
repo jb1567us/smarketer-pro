@@ -1,0 +1,104 @@
+{
+    "id": "real_estate_referral_partners",
+    "name": "Referral Partner Outreach",
+    "description": "Establish a network of local partners (Lenders, Movers, Lawyers).",
+    "persona": "Real Estate Agent",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "partner_type",
+                "type": "string",
+                "description": "Category (e.g., 'Divorce Attorney', 'Contractor')."
+            },
+            {
+                "key": "radius",
+                "type": "string",
+                "description": "Search radius (e.g., '10 miles')."
+            }
+        ],
+        "constraints": {
+            "reputation": "Only target partners with > 4.5 stars.",
+            "value_add": "Lead with 'I have clients who need you'."
+        },
+        "metrics": [
+            "Partners Joined",
+            "Inbound Referrals"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Partner Hunt",
+            "outputs": [
+                "partner_type",
+                "radius"
+            ]
+        },
+        {
+            "id": "find_partners",
+            "type": "agent.researcher",
+            "name": "Find Top Rated Pros",
+            "params": {
+                "task": "Find top rated {partner_type} in {city} via Google Maps/Yelp.",
+                "input_variable": "inputs"
+            }
+        },
+        {
+            "id": "extract_emails",
+            "type": "agent.researcher",
+            "name": "Get Contact Info",
+            "params": {
+                "task": "Find email addresses for the business owner.",
+                "input_variable": "partners"
+            }
+        },
+        {
+            "id": "draft_pitch",
+            "type": "control.loop.list",
+            "name": "Email Loop",
+            "params": {
+                "list_variable": "contacts"
+            },
+            "nodes": [
+                {
+                    "id": "write_email",
+                    "type": "agent.copywriter",
+                    "name": "Write Partner Proposal",
+                    "params": {
+                        "template": "real_estate_partner_pitch",
+                        "hook": "I have home buyers asking for a good {partner_type}...",
+                        "cta": "Coffee chat to discuss referrals?"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_agent",
+            "type": "notify.user",
+            "name": "Outreach Ready",
+            "params": {
+                "message": "Drafted proposals for {count} potential referral partners."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "find_partners"
+        },
+        {
+            "source": "find_partners",
+            "target": "extract_emails"
+        },
+        {
+            "source": "extract_emails",
+            "target": "draft_pitch"
+        },
+        {
+            "source": "draft_pitch",
+            "target": "notify_agent"
+        }
+    ]
+}

@@ -22,4 +22,5 @@ PyAudio
 openai-whisper
 torch
 static-ffmpeg
+sqlalchemy
 # force rebuild 3

@@ -197,8 +197,7 @@ def get_agent_class(agent_name):
     # Lazy imports to avoid circular dependencies
     from agents import (
         ResearcherAgent, QualifierAgent, CopywriterAgent, ReviewerAgent, 
-        GraphicsDesignerAgent, WordPressAgent, SocialMediaAgent, AdCopyAgent,
-        BrainstormerAgent, PersonaAgent, ManagerAgent, ProductManagerAgent,
+        GraphicsDesignerAgent, WordPressAgent, ManagerAgent, ProductManagerAgent,
         SyntaxAgent, UXAgent, SEOExpertAgent, InfluencerAgent, SocialListeningAgent, 
         LinkedInAgent, ContactFormAgent, VideoAgent, ImageGenAgent,
         DataCleanerAgent, SalesAnalyzerAgent, KnowledgeArchitectAgent, PromptExpertAgent,
@@ -208,6 +207,12 @@ def get_agent_class(agent_name):
     
     name_lower = agent_name.lower()
     
+    # Helper for creating specialized copywriters
+    def create_copywriter(role, goal):
+        def factory(provider=None):
+            return CopywriterAgent(provider=provider, role=role, goal=goal)
+        return factory
+    
     agent_map = {
         "researcher": ResearcherAgent,
         "qualifier": QualifierAgent,
@@ -215,10 +220,10 @@ def get_agent_class(agent_name):
         "reviewer": ReviewerAgent,
         "designer": GraphicsDesignerAgent,
         "wordpress": WordPressAgent,
-        "social_media": SocialMediaAgent,
-        "ad_copy": AdCopyAgent,
-        "brainstormer": BrainstormerAgent,
-        "persona": PersonaAgent,
+        "social_media": create_copywriter("Expert Social Media Strategist", "Generate high-engagement social media posts for various platforms."),
+        "ad_copy": create_copywriter("Direct Response Copywriter", "Write high-converting ad copy for Google, Facebook, and LinkedIn."),
+        "brainstormer": create_copywriter("Creative Campaign Director", "Brainstorm innovative campaign angles, hooks, and themes."),
+        "persona": create_copywriter("Market Research Analyst", "Create detailed Ideal Customer Personas (ICPs) based on market data."),
         "product_manager": ProductManagerAgent,
         "seo": SEOExpertAgent,
         "influencer": InfluencerAgent,

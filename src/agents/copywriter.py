@@ -1,13 +1,15 @@
 from .base import BaseAgent
 import json
+from src.prompt_engine import PromptEngine, PromptContext
 
 class CopywriterAgent(BaseAgent):
-    def __init__(self, provider=None):
+    def __init__(self, provider=None, role="B2B Email Copywriter", goal="Draft highly personalized, persuasive, and human-sounding cold emails based on verified lead data."):
         super().__init__(
-            role="B2B Email Copywriter",
-            goal="Draft highly personalized, persuasive, and human-sounding cold emails based on verified lead data.",
+            role=role,
+            goal=goal,
             provider=provider
         )
+        self.prompt_engine = PromptEngine()
 
     async def think_async(self, context, instructions=None):
         """Async entry point. Handles generic content tasks or delegates to email logic."""
@@ -18,11 +20,40 @@ class CopywriterAgent(BaseAgent):
             self.logger.info(f"  [Copywriter] Handling generic content request via think_async")
             return self.provider.generate_json(context)
         
+        # Check for Creative/Specialized Writing Triggers
+        if "social media" in prompt_lower or "tiktok" in prompt_lower or "instagram" in prompt_lower:
+            # Simple heuristic detection - in a real app, use an intent classifier
+            return self.generate_social_strategy(context, "Product/Service", "Social Media") # Default args if not parsed
+        
+        if "ad copy" in prompt_lower or "advertisement" in prompt_lower:
+            return self.generate_ad_copy("Product/Service", "General", "Conversion")
+
+        if "persona" in prompt_lower or "icp" in prompt_lower:
+            return self.generate_persona(context)
+            
+        if "brainstorm" in prompt_lower or "ideas" in prompt_lower:
+            return self.brainstorm_angles(context, "General Ideation")
+        
         # Default to existing email logic (blocking call is acceptable for now)
         return self.think(context, instructions)
 
     def think(self, context, instructions=None):
-        """Standard draft generation."""
+        """Standard draft generation with routing."""
+        # Check for Creative/Specialized Writing Triggers (Sync Version)
+        prompt_lower = (str(context) + " " + str(instructions)).lower()
+        
+        if "social media" in prompt_lower or "tiktok" in prompt_lower or "instagram" in prompt_lower:
+            return self.generate_social_strategy(context, "Product/Service", "Social Media")
+        
+        if "ad copy" in prompt_lower or "advertisement" in prompt_lower:
+            return self.generate_ad_copy("Product/Service", "General", "Conversion")
+
+        if "persona" in prompt_lower or "icp" in prompt_lower:
+            return self.generate_persona(context)
+            
+        if "brainstorm" in prompt_lower or "ideas" in prompt_lower:
+            return self.brainstorm_angles(context, "General Ideation")
+            
         return self.generate_optimized_email(context, instructions)
 
     def generate_optimized_email(self, context, instructions=None):
@@ -77,34 +108,32 @@ class CopywriterAgent(BaseAgent):
         return draft
 
     def _draft_email(self, context, instructions, personalization_level):
-        """Internal helper for initial drafting."""
-        base_instructions = ""
-        if personalization_level == 'generic':
-             base_instructions = (
-                "Draft a professional cold email for this lead.\n"
-                "Rules:\n"
-                "1. Use a clear, standard value proposition.\n"
-                "2. Keep it under 100 words.\n"
-                "3. Focus on general industry benefits rather than specific company details.\n"
-                "4. Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': 'Generic mode active'}"
-             )
-        else:
-            base_instructions = (
-                "Draft a highly personalized cold email for this lead.\n"
-                "Rules:\n"
-                "1. Use a hook relevant to their specific business.\n"
-                "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences.\n"
-                "3. Keep it under 150 words.\n"
-                "4. End with a soft call to action.\n"
-                "5. NO generic fluff.\n\n"
-                "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
-            )
+        """Internal helper for initial drafting using Prompt Engine."""
+        # 1. Construct the Kernel (Mocking inference for now as context is usually a string)
+        # In a real system, 'context' should be a dict with 'niche', 'icp', etc.
+        # We will assume 'context' might contain text clues or we treat it as generic.
         
-        full_instructions = base_instructions
-        if instructions:
-            full_instructions += f"\n\nADDITIONAL USER INSTRUCTIONS:\n{instructions}"
+        ctx = PromptContext(
+            niche="General Business", # Default if unknown
+            icp_role="Decision Maker",
+            brand_voice="Professional and Persuasive"
+        )
+        
+        # If context is a dict (advanced usage), parse it
+        # (This allows us to upgrade the caller later without breaking this)
+        if isinstance(context, dict):
+            ctx.niche = context.get('niche', ctx.niche)
+            ctx.icp_role = context.get('role', ctx.icp_role)
+        
+        # 2. Render Prompt
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/email_cold.j2", 
+            ctx, 
+            instruction_override=instructions,
+            raw_context=str(context) # Pass the original raw context string for the LLM to see specific lead details
+        )
             
-        return self.provider.generate_json(f"Context for Email:\n{context}\n\n{full_instructions}")
+        return self.provider.generate_json(f"Context for Email:\n{context}\n\n{prompt}")
 
     def generate_dsr_copy(self, context):
         """
@@ -184,38 +213,30 @@ class CopywriterAgent(BaseAgent):
         self.save_work(res, artifact_type="campaign_optimization", metadata={"problem": problem})
         return res
 
-    def generate_seo_article(self, niche, keywords, target_url, anchor_text=None, use_spintax=False):
+    def generate_seo_article(self, niche, keywords, target_url=None, anchor_text=None, use_spintax=False, affiliate_links=None):
         """
-        Generates a long-form SEO article for Web 2.0 or Article Directories.
-        Optional: can return content in Spintax format.
+        Generates a long-form SEO article using Prompt Engine.
         """
-        if not anchor_text:
-            anchor_text = keywords[0] if isinstance(keywords, list) else keywords
-
-        spintax_rule = ""
-        if use_spintax:
-            spintax_rule = (
-                "5. USE NESTED SPINTAX. Every sentence must have at least 3 variations using the {choice1|choice2|choice3} format.\n"
-                "6. Ensure the result is valid nested spintax that can be parsed by standard tools.\n"
-            )
-        else:
-            spintax_rule = (
-                "5. NO SPINTAX. Write full, natural paragraphs.\n"
-            )
-
-        instructions = (
-            f"Write a high-quality, informative SEO article about '{niche}'.\n"
-            f"Target Keywords: {keywords}\n"
-            "Rules:\n"
-            "1. Length: 500-800 words.\n"
-            "2. Structure: H1 title, intro, several sub-headings, and a conclusion.\n"
-            "3. Tone: Informative, authoritative, but readable (not robotic).\n"
-            f"4. Link Insertion: Naturally include a link to '{target_url}' using the anchor text '{anchor_text}'.\n"
-            f"{spintax_rule}"
-            "7. Ensure the content provides ACTUAL VALUE to a reader, not just keyword stuffing.\n\n"
-            "Return JSON: {'title': str, 'body_markdown': str, 'summary': str, 'tags': list}"
+        # 1. Build Kernel
+        ctx = PromptContext(
+            niche=niche,
+            icp_role="Reader searching for solution",
+            icp_pain_points=["Lack of information", "Need for expert advice"],
+            brand_voice="Authoritative and Helpful"
         )
-        res = self.provider.generate_json(f"SEO Article Request:\nNiche: {niche}\nKeywords: {keywords}\n\n{instructions}")
+        
+        # 2. Render Prompt
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/seo_article.j2",
+            ctx,
+            keywords=keywords,
+            target_url=target_url,
+            anchor_text=anchor_text,
+            use_spintax=use_spintax,
+            affiliate_links=affiliate_links
+        )
+        
+        res = self.provider.generate_json(f"Context: {niche}\n\n{prompt}")
         self.save_work(res, artifact_type="seo_article", metadata={"niche": niche, "target_url": target_url})
         return res
 
@@ -239,4 +260,66 @@ class CopywriterAgent(BaseAgent):
         """
         res = self.provider.generate_text(prompt)
         self.save_work(res, artifact_type="spintax_content", metadata={"content_preview": content[:50]})
+        return res
+    def generate_social_strategy(self, niche, product_name, platform="General"):
+        """
+        Generates a social media strategy using Prompt Engine.
+        Absorbed from SocialMediaAgent.
+        """
+        ctx = PromptContext(niche=niche, icp_role="Target Audience")
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/social_strategy.j2",
+            ctx,
+            platform=platform,
+            product_name=product_name
+        )
+        res = self.provider.generate_json(prompt)
+        self.save_work(res, artifact_type="social_strategy", metadata={"platform": platform})
+        return res
+
+    def generate_ad_copy(self, product_name, platform, goal, niche="General", persona=None):
+        """
+        Generates ad copy.
+        Absorbed from AdCopyAgent.
+        """
+        ctx = PromptContext(niche=niche, icp_role=persona)
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/ad_copy.j2",
+            ctx,
+            product_name=product_name,
+            platform=platform,
+            goal=goal
+        )
+        res = self.provider.generate_json(prompt)
+        self.save_work(res, artifact_type="ad_copy", metadata={"platform": platform})
+        return res
+
+    def brainstorm_angles(self, topic, goal, niche="General"):
+        """
+        Brainstorms creative angles.
+        Absorbed from BrainstormerAgent.
+        """
+        ctx = PromptContext(niche=niche, icp_role="Target Audience")
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/brainstorm.j2",
+            ctx,
+            topic=topic,
+            goal=goal
+        )
+        res = self.provider.generate_json(prompt)
+        self.save_work(res, artifact_type="brainstorm", metadata={"topic": topic})
+        return res
+
+    def generate_persona(self, niche, role="Decision Maker"):
+        """
+        Generates an ICP/Persona.
+        Absorbed from PersonaAgent.
+        """
+        ctx = PromptContext(niche=niche, icp_role=role)
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/persona_icp.j2",
+            ctx
+        )
+        res = self.provider.generate_json(prompt)
+        self.save_work(res, artifact_type="persona", metadata={"niche": niche})
         return res

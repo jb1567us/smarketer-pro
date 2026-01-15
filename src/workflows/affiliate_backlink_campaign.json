@@ -1,0 +1,142 @@
+{
+    "id": "affiliate_backlink_campaign",
+    "name": "Backlink Outreach Campaign",
+    "description": "Find relevant blogs and pitch guest posts or link insertions.",
+    "persona": "Affiliate Marketer",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "target_url",
+                "type": "string",
+                "description": "The URL on your site you want to build links to."
+            },
+            {
+                "key": "keywords",
+                "type": "list",
+                "description": "Keywords related to the article to find relevant prospects."
+            }
+        ],
+        "constraints": {
+            "min_dr": "Domain Rating > 30",
+            "spam_check": "Avoid link farms and PBNs."
+        },
+        "metrics": [
+            "Prospects Found",
+            "Email Deliverability Rate",
+            "Response Rate",
+            "Links Acquired"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Outreach",
+            "outputs": [
+                "target_url",
+                "keywords"
+            ]
+        },
+        {
+            "id": "prospect_search",
+            "type": "agent.researcher",
+            "name": "Find Prospects",
+            "params": {
+                "task": "Find blog posts ranking for related keywords that accept guest posts or allow link insertions.",
+                "input_variable": "keywords"
+            }
+        },
+        {
+            "id": "filter_prospects",
+            "type": "logic.filter",
+            "name": "Filter by Quality",
+            "params": {
+                "min_dr": 30,
+                "language": "en",
+                "exclude_domains": [
+                    "medium.com",
+                    "linkedin.com"
+                ]
+            }
+        },
+        {
+            "id": "find_contacts",
+            "type": "agent.researcher",
+            "name": "Find Email Addresses",
+            "params": {
+                "task": "Find editorial contacts or site owners for the filtered domains.",
+                "input_variable": "filtered_prospects"
+            }
+        },
+        {
+            "id": "draft_pitches",
+            "type": "control.loop.list",
+            "name": "Pitch Drafting Loop",
+            "params": {
+                "list_variable": "contacts"
+            },
+            "nodes": [
+                {
+                    "id": "analyze_prospect",
+                    "type": "agent.researcher",
+                    "name": "Analyze Prospect Content",
+                    "params": {
+                        "task": "Read their recent posts to find a personalization hook.",
+                        "context": "contact"
+                    }
+                },
+                {
+                    "id": "write_email",
+                    "type": "agent.copywriter",
+                    "name": "Write Personalized Pitch",
+                    "params": {
+                        "template": "guest_post_pitch",
+                        "hook": "{analysis_hook}",
+                        "target_url": "{target_url}"
+                    }
+                },
+                {
+                    "id": "send_email",
+                    "type": "agent.mailer",
+                    "name": "Send Email",
+                    "params": {
+                        "from_email": "outreach@{yourdomain.com}",
+                        "to_email": "{contact_email}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "monitor_responses",
+            "type": "system.monitor",
+            "name": "Response Monitor",
+            "params": {
+                "duration": "14d",
+                "on_reply": "notify_user"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "prospect_search"
+        },
+        {
+            "source": "prospect_search",
+            "target": "filter_prospects"
+        },
+        {
+            "source": "filter_prospects",
+            "target": "find_contacts"
+        },
+        {
+            "source": "find_contacts",
+            "target": "draft_pitches"
+        },
+        {
+            "source": "draft_pitches",
+            "target": "monitor_responses"
+        }
+    ]
+}

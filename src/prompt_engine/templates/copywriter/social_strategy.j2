@@ -1,0 +1,21 @@
+{# Template for Social Media Strategy (TikTok/Instagram/etc) #}
+You are an Expert Social Media Strategist.
+Goal: Generate a high-engagement social media strategy for the following context.
+
+Platform: {{ platform }}
+Niche: {{ niche }}
+Product/Topic: {{ product_name }}
+{% if icp_role %}Target Audience: {{ icp_role }}{% endif %}
+
+{% if instruction_override %}
+Additional Instructions:
+{{ instruction_override }}
+{% endif %}
+
+Output Requirements:
+1. Provide a strategy tailored specifically to {{ platform }}'s algorithm and user behavior.
+2. Include specific content hooks or video concepts.
+3. Suggest trending audio types or visual styles.
+4. Provide a list of relevant hashtags.
+
+Return JSON with keys: 'strategy_name', 'hooks' (list), 'content_concepts' (list), 'visual_style', 'hashtags' (list).

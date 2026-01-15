@@ -25,8 +25,40 @@ class ReviewerAgent(BaseAgent):
         full_instructions = base_instructions
         if instructions:
             full_instructions += f"\n\nADDITIONAL INSTRUCTIONS:\n{instructions}"
+            
+        # Route to image review if context implies it
+        prompt_lower = (str(context) + str(instructions)).lower()
+        if "image" in prompt_lower or "visual" in prompt_lower or "prompt" in prompt_lower:
+             return self.review_image_concept(context, instructions)
 
         return self.provider.generate_json(f"Content to Review:\n{context}\n\n{full_instructions}")
+
+    def review_content(self, content, criteria=None):
+        """
+        Evaluates copy against a profile/style guide.
+        Absorbed from QualifierAgent.critique_copy.
+        """
+        criteria_text = f"Criteria: {criteria}" if criteria else "Strictly check for: Tone, Structure, SEO best practices, and prohibited terms."
+        prompt = (
+            f"You are a Senior Editor. Review the following content.\n"
+            f"{criteria_text}\n\n"
+            f"Content:\n{content[:4000]}...\n\n"
+            "Return JSON: {'approved': bool, 'feedback': 'specific actionable changes if rejected, otherwise 'Good'', 'score': 1-10}"
+        )
+        return self.generate_json(prompt)
+
+    def review_image_concept(self, image_description, criteria=None):
+        """
+        Evaluates an image description/prompt against a style guide.
+        Absorbed from QualifierAgent.critique_visuals.
+        """
+        criteria_text = criteria if criteria else "Check for brand alignment, visual clarity, and lack of weird AI artifacts in description."
+        prompt = (
+            f"You are a Creative Director. Review this image concept/prompt against these criteria: {criteria_text}\n"
+            f"Image Concept: {image_description}\n\n"
+            "Return JSON: {'approved': bool, 'feedback': 'specific changes to the prompt if rejected', 'score': 1-10}"
+        )
+        return self.generate_json(prompt)
 
     def enhance_email_conversion(self, draft_email):
         """

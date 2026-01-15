@@ -1,0 +1,130 @@
+{
+    "id": "real_estate_area_guide",
+    "name": "Area Guide Factory",
+    "description": "Create hyper-local 'Living in X' guides with data overlays.",
+    "persona": "Real Estate Agent",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "neighborhood",
+                "type": "string",
+                "description": "Name of the area (e.g., 'Austin Heights')."
+            },
+            {
+                "key": "city",
+                "type": "string",
+                "description": "City name."
+            }
+        ],
+        "constraints": {
+            "data": "Must include School ratings and local amenities.",
+            "visuals": "Must define map pin locations."
+        },
+        "metrics": [
+            "Organic Traffic",
+            "Buyer Leads Generated"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Start Guide",
+            "outputs": [
+                "neighborhood",
+                "city"
+            ]
+        },
+        {
+            "id": "fetch_local_data",
+            "type": "control.parallel",
+            "name": "Gather Intel",
+            "nodes": [
+                {
+                    "id": "get_schools",
+                    "type": "agent.researcher",
+                    "name": "Find Schools",
+                    "params": {
+                        "task": "List top rated schools in {neighborhood}."
+                    }
+                },
+                {
+                    "id": "get_amenities",
+                    "type": "agent.researcher",
+                    "name": "Find Amenities",
+                    "params": {
+                        "task": "Find best coffee shops, parks, and gyms."
+                    }
+                },
+                {
+                    "id": "get_stats",
+                    "type": "agent.researcher",
+                    "name": "Market Stats",
+                    "params": {
+                        "task": "Find average home price and DOM for zip code."
+                    }
+                }
+            ]
+        },
+        {
+            "id": "draft_content",
+            "type": "agent.copywriter",
+            "name": "Write Guide",
+            "params": {
+                "task": "Write 'Ultimate Guide to Living in {neighborhood}'. Include sections: Lifestyle, Schools, Real Estate Market.",
+                "inputs": [
+                    "fetch_local_data"
+                ]
+            }
+        },
+        {
+            "id": "generate_map_specs",
+            "type": "agent.summarizer",
+            "name": "Map Definitions",
+            "params": {
+                "task": "Generate a list of addresses for the 'Amenities Map' embed.",
+                "input_variable": "get_amenities"
+            }
+        },
+        {
+            "id": "publish_draft",
+            "type": "agent.wordpress",
+            "name": "Save as Draft",
+            "params": {
+                "status": "draft",
+                "category": "Neighborhood Guides"
+            }
+        },
+        {
+            "id": "notify_agent",
+            "type": "notify.user",
+            "name": "Guide Drafted",
+            "params": {
+                "message": "New Area Guide for {neighborhood} is ready in WordPress."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "fetch_local_data"
+        },
+        {
+            "source": "fetch_local_data",
+            "target": "draft_content"
+        },
+        {
+            "source": "fetch_local_data",
+            "target": "generate_map_specs"
+        },
+        {
+            "source": "draft_content",
+            "target": "publish_draft"
+        },
+        {
+            "source": "publish_draft",
+            "target": "notify_agent"
+        }
+    ]
+}

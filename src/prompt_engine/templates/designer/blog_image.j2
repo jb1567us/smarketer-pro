@@ -1,0 +1,19 @@
+[CRITICAL KERNEL CONTEXT]
+Niche: {{ niche }}
+Target Audience: {{ icp_role }} -> Prefer imagery that appeals to this demographic.
+Brand Voice: {{ brand_voice }}
+
+[TASK]
+Convert the following concept into a detailed Stable Diffusion prompt.
+Concept: {{ concept }}
+
+[GUIDELINES]
+1. Style: {{ style|default('Photorealistic, professional, cinematic lighting') }}
+2. Mood: Trustworthy, High-Quality, Relevant to {{ niche }}.
+3. NO TEXT in the image.
+4. Focus on lighting and composition.
+{% if icp_pain_points %}
+5. Hint at solving: {{ icp_pain_points[0] }}
+{% endif %}
+
+Return ONLY the prompt string.

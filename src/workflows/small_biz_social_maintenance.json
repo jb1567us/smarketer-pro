@@ -1,0 +1,108 @@
+{
+    "id": "small_biz_social_maintenance",
+    "name": "Social Maintenance Mode",
+    "description": "Keep social feeds alive by repurposing existing site content and reviews.",
+    "persona": "Small Business Owner",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "website_url",
+                "type": "string",
+                "description": "Your business website."
+            },
+            {
+                "key": "gmb_url",
+                "type": "string",
+                "description": "Your Google My Business profile link."
+            }
+        ],
+        "constraints": {
+            "frequency": "7 posts per week (1 per day).",
+            "platform": "Facebook, Instagram, LinkedIn (local)."
+        },
+        "metrics": [
+            "Weekly Engagement",
+            "Time Saved"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_schedule",
+            "type": "trigger.schedule",
+            "name": "Weekly Batch Job",
+            "params": {
+                "cron": "0 8 * * 1"
+            }
+        },
+        {
+            "id": "fetch_content",
+            "type": "control.parallel",
+            "name": "Fetch Source Material",
+            "nodes": [
+                {
+                    "id": "scrape_blog",
+                    "type": "agent.researcher",
+                    "name": "Read Recent Blog/Services",
+                    "params": {
+                        "url": "{website_url}"
+                    }
+                },
+                {
+                    "id": "scrape_reviews",
+                    "type": "agent.researcher",
+                    "name": "Fetch New 5-Star Reviews",
+                    "params": {
+                        "url": "{gmb_url}"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "generate_posts",
+            "type": "agent.copywriter",
+            "name": "Generate 7 Posts",
+            "params": {
+                "task": "Create 7 social posts mix: 2 Review Highlights, 2 Service Spotlights, 2 Local Tips, 1 'Behind the Scenes'.",
+                "inputs": [
+                    "fetch_content"
+                ]
+            }
+        },
+        {
+            "id": "create_visuals",
+            "type": "agent.designer",
+            "name": "Create Graphics",
+            "params": {
+                "task": "Generate simple branded cards for the Review posts and Stock images for Service posts.",
+                "input_variable": "generated_posts"
+            }
+        },
+        {
+            "id": "notify_owner",
+            "type": "notify.user",
+            "name": "Weekly Batch Ready",
+            "params": {
+                "message": "7 posts for the week drafted. Approve to schedule."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_schedule",
+            "target": "fetch_content"
+        },
+        {
+            "source": "fetch_content",
+            "target": "generate_posts"
+        },
+        {
+            "source": "generate_posts",
+            "target": "create_visuals"
+        },
+        {
+            "source": "create_visuals",
+            "target": "notify_owner"
+        }
+    ]
+}

@@ -1,0 +1,99 @@
+{
+    "id": "content_repurposing_engine",
+    "name": "Content-to-Campaign Repurposer",
+    "description": "Turn one core asset (blog/video) into a multi-channel distribution pack.",
+    "persona": "Content Operator",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "source_url",
+                "type": "string",
+                "description": "URL of the published blog post or YouTube video."
+            }
+        ],
+        "constraints": {
+            "platforms": "Twitter (Thread), LinkedIn (Post), Email (Teaser), TikTok (Script).",
+            "voice": "Match original author's voice."
+        },
+        "metrics": [
+            "Total Impressions (Cross-Platform)",
+            "Traffic to Source"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Ingest Asset",
+            "outputs": [
+                "source_url"
+            ]
+        },
+        {
+            "id": "analyze_asset",
+            "type": "agent.summarizer",
+            "name": "Extract Core Ideas",
+            "params": {
+                "task": "Summarize the asset into: 3 Key Takeaways, 1 Controversial Opinion, and 5 Quotable Lines.",
+                "input_variable": "source_url"
+            }
+        },
+        {
+            "id": "parallel_creation",
+            "type": "control.parallel",
+            "name": "Generate Formats",
+            "nodes": [
+                {
+                    "id": "write_thread",
+                    "type": "agent.copywriter",
+                    "name": "Write Twitter Thread",
+                    "params": {
+                        "task": "Create a 10-tweet thread expanding on the Key Takeaways.",
+                        "style": "Viral/Hook-heavy"
+                    }
+                },
+                {
+                    "id": "write_linkedin",
+                    "type": "agent.copywriter",
+                    "name": "Write LinkedIn Post",
+                    "params": {
+                        "task": "Write a story-based post focusing on the 'Controversial Opinion'.",
+                        "style": "Professional/Storytelling"
+                    }
+                },
+                {
+                    "id": "write_script",
+                    "type": "agent.copywriter",
+                    "name": "Write TikTok Script",
+                    "params": {
+                        "task": "Write a 60-second script: Hook -> Value -> CTA.",
+                        "style": "Conversational"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "notify_creator",
+            "type": "notify.user",
+            "name": "Pack Ready",
+            "params": {
+                "message": "Repurposing pack generated: Thread, Post, and Script ready."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "analyze_asset"
+        },
+        {
+            "source": "analyze_asset",
+            "target": "parallel_creation"
+        },
+        {
+            "source": "parallel_creation",
+            "target": "notify_creator"
+        }
+    ]
+}

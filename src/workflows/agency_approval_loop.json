@@ -1,0 +1,113 @@
+{
+    "id": "agency_approval_loop",
+    "name": "Client Approval Loop",
+    "description": "Automated workflow to handle client feedback cycles for deliverables.",
+    "persona": "Agency / Consultant",
+    "version": "1.0.0",
+    "meta": {
+        "inputs": [
+            {
+                "key": "deliverable_url",
+                "type": "string",
+                "description": "Link to the Google Doc, Figma, or Preview URL."
+            },
+            {
+                "key": "client_email",
+                "type": "string",
+                "description": "Email of the approver."
+            }
+        ],
+        "constraints": {
+            "timeliness": "Remind client every 48 hours if no action.",
+            "versioning": "Maintain version history on modifications."
+        },
+        "metrics": [
+            "Time to Approval",
+            "Number of Revision Cycles"
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_manual",
+            "type": "trigger.manual",
+            "name": "Submit for Review",
+            "outputs": [
+                "deliverable_url",
+                "client_email"
+            ]
+        },
+        {
+            "id": "send_approval_request",
+            "type": "agent.mailer",
+            "name": "Send Review Email",
+            "params": {
+                "template": "agency_approval_request",
+                "link": "{deliverable_url}",
+                "action_buttons": [
+                    "Approve",
+                    "Request Changes"
+                ]
+            }
+        },
+        {
+            "id": "wait_for_feedback",
+            "type": "control.wait",
+            "name": "Wait for Client",
+            "params": {
+                "timeout": "7d",
+                "on_timeout": "notify_account_manager"
+            }
+        },
+        {
+            "id": "handle_feedback",
+            "type": "logic.switch",
+            "name": "Process Response",
+            "params": {
+                "variable": "client_action",
+                "cases": {
+                    "Approve": "finalize_deliverable",
+                    "Request Changes": "process_revisions"
+                }
+            }
+        },
+        {
+            "id": "process_revisions",
+            "type": "agent.updater",
+            "name": "Log Revisions",
+            "params": {
+                "task": "Extract feedback points and create tasks for the creative team.",
+                "input_variable": "client_feedback"
+            }
+        },
+        {
+            "id": "finalize_deliverable",
+            "type": "notify.user",
+            "name": "Approved & Locked",
+            "params": {
+                "message": "Client approved {deliverable_url}. Asset is ready for publishing."
+            }
+        }
+    ],
+    "edges": [
+        {
+            "source": "trigger_manual",
+            "target": "send_approval_request"
+        },
+        {
+            "source": "send_approval_request",
+            "target": "wait_for_feedback"
+        },
+        {
+            "source": "wait_for_feedback",
+            "target": "handle_feedback"
+        },
+        {
+            "source": "handle_feedback",
+            "target": "process_revisions"
+        },
+        {
+            "source": "handle_feedback",
+            "target": "finalize_deliverable"
+        }
+    ]
+}
