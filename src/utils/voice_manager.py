@@ -21,12 +21,7 @@ class VoiceManager:
         
         # Initialize STT
         self.recognizer = sr.Recognizer()
-        self.microphone = None
-        
-        try:
-            self.microphone = sr.Microphone()
-        except Exception as e:
-            print(f"[VoiceManager] Warning: No microphone found or error initializing: {e}")
+        self.microphone = sr.Microphone()
         
         # Optimize recognizer
         self.recognizer.energy_threshold = 300
@@ -37,48 +32,38 @@ class VoiceManager:
 
     def _tts_worker(self):
         """Dedicated thread for TTS to avoid run loop errors."""
-        import pythoncom
-        pythoncom.CoInitialize() # Required for Windows COM in threads
-        try:
-            # Initialize engine within the thread that uses it
-            engine = pyttsx3.init()
-            self._setup_voice_engine(engine)
-            
-            while True:
-                text = self.tts_queue.get()
-                if text is None: break # Poison pill
-                try:
-                    engine.say(text)
-                    engine.runAndWait()
-                except Exception as e:
-                    print(f"TTS Worker Error: {e}")
-                self.tts_queue.task_done()
-        except Exception as e:
-            print(f"[VoiceManager] TTS thread crashed: {e}")
-        finally:
-            pythoncom.CoUninitialize()
+        # Initialize engine within the thread that uses it
+        engine = pyttsx3.init()
+        self._setup_voice_engine(engine)
+        
+        while True:
+            text = self.tts_queue.get()
+            if text is None: break # Poison pill
+            try:
+                engine.say(text)
+                engine.runAndWait()
+            except Exception as e:
+                print(f"TTS Worker Error: {e}")
+            self.tts_queue.task_done()
 
     def _setup_voice_engine(self, engine):
         """Sets the voice to a British Male voice if available."""
-        try:
-            voices = engine.getProperty('voices')
-            selected_voice = None
+        voices = engine.getProperty('voices')
+        selected_voice = None
+        for voice in voices:
+            if "GB" in voice.id or "UK" in voice.id or "english-uk" in voice.id.lower():
+                if "male" in voice.name.lower() or "david" in voice.name.lower():
+                    selected_voice = voice.id
+                    break
+        
+        if not selected_voice:
             for voice in voices:
-                if "GB" in voice.id or "UK" in voice.id or "english-uk" in voice.id.lower():
-                    if "male" in voice.name.lower() or "david" in voice.name.lower():
-                        selected_voice = voice.id
-                        break
-            
-            if not selected_voice:
-                for voice in voices:
-                    if "male" in voice.name.lower():
-                        selected_voice = voice.id
-                        break
-            
-            if selected_voice:
-                engine.setProperty('voice', selected_voice)
-        except Exception:
-            pass # Ignore voice setup errors
+                if "male" in voice.name.lower():
+                    selected_voice = voice.id
+                    break
+        
+        if selected_voice:
+            engine.setProperty('voice', selected_voice)
 
     def setup_voice(self):
         # Deprecated: setup happens in worker now
@@ -92,30 +77,17 @@ class VoiceManager:
         """Starts the background listening using speech_recognition's built-in background thread."""
         if self.listen_stopper:
             return
-        
-        if not self.microphone:
-            print("[VoiceManager] Cannot start listening: No microphone initialized.")
-            return
             
         try:
             # Adjust for noise once before starting
             with self.microphone as source:
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
-        except AttributeError:
-             # Common PyAudio error if device is unavailable: 'NoneType' object has no attribute 'close'
-             print("[VoiceManager] Error: Microphone seems inaccessible (PyAudio check failed). Voice disabled.")
-             return
         except Exception as e:
-            print(f"[VoiceManager] Noise adjustment skipped/failed: {e}")
-            return
+            print(f"Noise adjustment skipped due to error: {e}")
 
-        try:
-            # listen_in_background returns a function to call to stop listening
-            self.listen_stopper = self.recognizer.listen_in_background(self.microphone, self._callback, phrase_time_limit=10)
-        except Exception as e:
-            print(f"[VoiceManager] Failed to start background listener: {e}")
-            self.listen_stopper = None
-
+        # listen_in_background returns a function to call to stop listening
+        self.listen_stopper = self.recognizer.listen_in_background(self.microphone, self._callback, phrase_time_limit=10)
+        
     def stop_listening(self):
         """Stops the background listening."""
         self.is_awake = False

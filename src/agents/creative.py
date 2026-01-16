@@ -51,7 +51,7 @@ class SocialMediaAgent(CreativeAgent):
     def __init__(self, provider=None):
         super().__init__(
             role="Expert Social Media Strategist",
-            goal="Generate high-engagement social media posts for various platforms.",
+            goal="Generate high-engagement social media posts for various platforms, including TikTok and Instagram.",
             provider=provider
         )
 

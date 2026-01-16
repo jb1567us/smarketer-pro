@@ -103,7 +103,7 @@ async def fetch_ollama_models(session, base_url, api_key=None):
                return (is_latest, name)
 
            model_list.sort(key=sort_key)
-           return [m['name'] for m in model_list if is_english_model(m['name'])]
+           return [m['name'] for m in model_list]
         return []
     except Exception as e:
         print(f"Error fetching Ollama models from {base_url}: {e}")
@@ -134,7 +134,7 @@ async def fetch_groq_models(session, api_key):
         ) as response:
             if response.status != 200: return []
             data = await response.json()
-        models = [m['id'] for m in data['data'] if m['id'] != 'mixtral-8x7b-32768' and is_english_model(m['id'])]
+        models = [m['id'] for m in data['data'] if m['id'] != 'mixtral-8x7b-32768']
         models.sort()
         return models
     except Exception as e:
@@ -150,7 +150,7 @@ async def fetch_mistral_models(session, api_key):
         ) as response:
             if response.status != 200: return []
             data = await response.json()
-        models = [m['id'] for m in data['data'] if is_english_model(m['id'])]
+        models = [m['id'] for m in data['data']]
         models.sort(reverse=True)
         return models
     except Exception as e:

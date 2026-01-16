@@ -1,14 +1,10 @@
 import streamlit as st
 import time
-import asyncio
-import json
-import pandas as pd
 from agents.video_agent import VideoAgent
-from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
 
 def render_video_studio():
-    st.header("🎬 Smart Video Studio")
-    st.caption("Generate cinematic AI videos using a fleet of browser-based engines.")
+    st.header("🎬 Video Studio")
+    st.caption("Generate cinematic AI videos for your campaigns using state-of-the-art models.")
 
     if 'video_agent' not in st.session_state:
         st.session_state['video_agent'] = VideoAgent()
@@ -16,148 +12,8 @@ def render_video_studio():
     agent = st.session_state['video_agent']
     
     # Tabs
-    tab_gen, tab_auth, tab_history = st.tabs(["✨ Generator", "🔐 Auth Hub", "📜 History"])
+    tab_gen, tab_history = st.tabs(["✨ Generator", "📜 History"])
     
-    with tab_auth:
-        st.subheader("Browser Session Manager")
-        st.info("Log in to these services once to enable the Smart Router to use them.")
-        
-        providers = ["kling", "luma", "leonardo"]
-        cols = st.columns(3)
-        for i, p_name in enumerate(providers):
-            p = agent.manager.get_provider(p_name)
-            if not p or p_name == "mock": continue
-            
-            with cols[i]:
-                st.markdown(f"### {p_name.title()}")
-                st.caption(f"Daily Limit: {p.daily_limit}")
-                st.caption(f"Tags: {', '.join(p.capabilities)}")
-                
-                if st.button(f"🔑 Login to {p_name.title()}", key=f"login_{p_name}"):
-                    # Async button handler
-                    with st.spinner(f"Launching {p_name} login window... Check your taskbar!"):
-                        asyncio.run(p.login_interactive())
-                    st.success("Session saved!")
-                    
-                # [NEW] Create Account Button
-                from video_gen.auth_configs import VIDEO_AUTH_CONFIGS
-                if p_name in VIDEO_AUTH_CONFIGS:
-                    if st.button(f"🆕 Register {p_name.title()}", key=f"reg_{p_name}"):
-                        st.info("Starting Auto-Registration Agent...")
-                        
-                        # Initialize Agent
-                        from agents.account_creator import AccountCreatorAgent
-                        from config import get_cpanel_config
-                        from proxy_manager import proxy_manager
-                        
-                        cp_conf = get_cpanel_config()
-                        if not cp_conf or not cp_conf.get('url'):
-                            st.error("cPanel not configured!")
-                        else:
-                            creator_agent = AccountCreatorAgent(cp_conf)
-                            
-                            # Proxy logic
-                            proxy = proxy_manager.get_proxy()
-                            if not proxy: 
-                                # Optimization: Use ensure_fresh_proxies instead of forcing a full harvest
-                                # honor the 24h freshness pull the user mentioned
-                                asyncio.run(proxy_manager.ensure_fresh_proxies())
-                                proxy = proxy_manager.get_proxy()
-                            
-                            st.write(f"Using Proxy: {proxy}")
-                            
-                            # Run
-                            reg_url = VIDEO_AUTH_CONFIGS[p_name]['registration_url']
-                            
-                            with st.status(f"Creating {p_name} account...", expanded=True):
-                                async def run_creation():
-                                    return await creator_agent.create_account(
-                                        p_name,
-                                        reg_url,
-                                        account_details={},
-                                        proxy=proxy
-                                    )
-                                try:
-                                    res = asyncio.run(run_creation())
-                                    st.write(res)
-                                    if "verified" in str(res).lower():
-                                        st.success("Account Created! You can now Login.")
-                                    else:
-                                        st.warning("Check results above.")
-                                except Exception as e:
-                                    st.error(f"Failed: {e}")
-                
-                # Manual Macro Recording Button
-                if st.button(f"🔴 Record Macro for {p_name.title()}", key=f"rec_manual_{p_name}"):
-                    from database import save_registration_macro
-                    from utils.browser_manager import BrowserManager
-                    
-                    async def record_macro_direct(platform, url):
-                        bm = BrowserManager(session_id=f"record_{platform}")
-                        await bm.launch(headless=False)
-                        await bm.page.goto(url)
-                        await bm.start_recording()
-                        st.info("🔴 **RECORDING ACTIVE**")
-                        st.write(f"Recording actions for {platform}. Close the window when done.")
-                        
-                        while True:
-                            await asyncio.sleep(0.5)
-                            if bm.page.is_closed(): break
-                            
-                        events = await bm.stop_recording()
-                        if events:
-                            save_registration_macro(platform, events)
-                            st.success(f"Macro saved for {platform}!")
-                        await bm.close()
-                    
-                    asyncio.run(record_macro_direct(p_name, VIDEO_AUTH_CONFIGS.get(p_name, {}).get('registration_url', 'https://google.com')))
-                    st.rerun()
-
-        st.divider()
-        st.subheader("⚠️ Pending Registration Tasks")
-        from database import get_registration_tasks, delete_registration_task, save_registration_macro, mark_registration_task_completed
-        from utils.browser_manager import BrowserManager
-        import json
-
-        v_tasks = get_registration_tasks(status='pending')
-        # Only show tasks related to video providers if we want, or show all. 
-        # User probably wants to see relevant ones here.
-        video_providers = ["kling", "luma", "leonardo", "runway"]
-        v_tasks = [t for t in v_tasks if t['platform'].lower() in video_providers]
-
-        if v_tasks:
-            for task in v_tasks:
-                with st.expander(f"Task: {task['platform']} - {task['url']}", expanded=True):
-                    col_t1, col_t2 = st.columns([3, 1])
-                    with col_t1:
-                        st.write(f"**URL:** {task['url']}")
-                        try:
-                            d = json.loads(task['details'])
-                            if 'error' in d: st.error(f"Error: {d['error']}")
-                        except: pass
-                    with col_t2:
-                        if st.button("🔴 Record", key=f"rec_v_{task['id']}"):
-                            async def rec_flow():
-                                bm = BrowserManager(session_id=f"record_{task['platform']}")
-                                await bm.launch(headless=False)
-                                await bm.page.goto(task['url'])
-                                await bm.start_recording()
-                                st.info("🔴 **RECORDING active**")
-                                while True:
-                                    await asyncio.sleep(0.5)
-                                    if bm.page.is_closed(): break
-                                events = await bm.stop_recording()
-                                if events:
-                                    save_registration_macro(task['platform'], events)
-                                    mark_registration_task_completed(task['id'])
-                            asyncio.run(rec_flow())
-                            st.rerun()
-                        if st.button("🗑️", key=f"del_v_{task['id']}"):
-                            delete_registration_task(task['id'])
-                            st.rerun()
-        else:
-            st.info("No pending video registration tasks.")
-
     with tab_gen:
         col_settings, col_preview = st.columns([1, 2])
         
@@ -165,17 +21,11 @@ def render_video_studio():
             st.subheader("Configuration")
             
             # Provider Selection
-            provider_list = agent.manager.list_providers()
-            # Ensure 'smart' is default
-            idx = 0
-            if "smart" in provider_list:
-                idx = provider_list.index("smart")
-
-            provider_selection = st.selectbox(
-                "Engine Selection", 
-                provider_list,
-                index=idx,
-                help="Select 'smart' to auto-route based on prompt style and daily limits."
+            provider = st.selectbox(
+                "AI Model Provider", 
+                agent.manager.list_providers(),
+                index=0,
+                help="Select the underlying video generation model."
             )
             
             # Aspect Ratio
@@ -195,7 +45,7 @@ def render_video_studio():
             # Advanced settings
             with st.expander("Advanced Settings"):
                 negative_prompt = st.text_area("Negative Prompt", placeholder="low quality, blurry, distorted...")
-                duration = st.slider("Duration (seconds)", 2, 10, 5)
+                duration = st.slider("Duration (seconds)", 2, 10, 4)
 
         with col_preview:
             st.subheader("Prompt Engineering")
@@ -210,37 +60,24 @@ def render_video_studio():
                 if not prompt_input:
                     st.warning("Please describe your video idea first.")
                 else:
-                    with st.spinner("🤖 Smart Router is selecting the best engine..."):
-                         # 1. Route Request
-                        selected_provider = agent.manager.smart_route(prompt_input, style, provider_selection)
-                        st.info(f"Routing task to: **{selected_provider.name.upper()}** (Best match for '{style}')")
-                        
-                        # 2. Execute
+                    with st.spinner("🎬 Director (Agent) is crafting the prompt and initializing render..."):
+                        # call agent
                         try:
-                            # Direct call to provider for now to bypass agent 'discuss' wrapper if needed, 
-                            # or update agent to support smart routing.
-                            # For MVP simplicity, we call the provider directly here since the logic is complex async
+                            result = agent.create_video(
+                                context=prompt_input,
+                                provider_name=provider,
+                                style=style
+                            )
                             
-                            # Log usage
-                            agent.manager.log_usage(selected_provider.name)
+                            st.success("Generation Started!")
                             
-                            result = asyncio.run(selected_provider.generate_video(
-                                prompt=prompt_input,
-                                style=style,
-                                negative_prompt=negative_prompt
-                            ))
+                            # Store result in session state to display below
+                            st.session_state['last_video_job'] = result
                             
-                            if result.get('status') == 'failed':
-                                st.error(f"Generation Failed: {result.get('error')}")
-                            else:
-                                st.success("Generation Started!")
-                                # Store result
-                                st.session_state['last_video_job'] = result
-                                
-                                # Add to history
-                                if 'video_history' not in st.session_state:
-                                    st.session_state['video_history'] = []
-                                st.session_state['video_history'].insert(0, result)
+                            # Add to history
+                            if 'video_history' not in st.session_state:
+                                st.session_state['video_history'] = []
+                            st.session_state['video_history'].insert(0, result)
                             
                         except Exception as e:
                             st.error(f"Generation failed: {str(e)}")
@@ -248,82 +85,65 @@ def render_video_studio():
             # Result Display
             if 'last_video_job' in st.session_state:
                 job = st.session_state['last_video_job']
+                job_data = job.get('job', {})
                 
                 st.divider()
-                st.markdown(f"**Job ID:** `{job.get('job_id')}` | **Provider:** `{job.get('provider')}`")
+                st.markdown(f"**Job ID:** `{job_data.get('job_id')}` | **Provider:** `{job.get('provider')}`")
+                st.markdown(f"**Optimized Prompt:**")
+                st.info(job.get('optimized_prompt'))
                 
                 # Polling/Display Logic
                 status_container = st.empty()
                 video_container = st.empty()
                 
-                status = job.get('status')
+                status = job_data.get('status')
                 
+                # Initial render
                 if status == 'completed':
                     status_container.success("Complete!")
-                    if job.get('url'):
-                        video_container.video(job.get('url'))
+                    if job_data.get('url'):
+                        video_container.video(job_data.get('url'))
                 elif status == 'failed':
-                    status_container.error(f"Failed: {job.get('error')}")
-                else: 
-                     # Simple immediate check for MVP (since Kling mock returns success)
-                    try:
-                        provider_inst = agent.manager.get_provider(job.get('provider'))
-                        current_status = asyncio.run(provider_inst.get_status(job.get('job_id')))
+                    status_container.error(f"Failed: {job_data.get('error')}")
+                else:
+                    # Poll loop if it's a fresh job or mock
+                    # In a real app, this might be better handled with a "Check Status" button or background loop
+                    # For this mock/demo, we'll do a short loop
+                    progress_bar = status_container.progress(0, text=f"Processing ({status})...")
+                    
+                    for _ in range(20): # Poll for up to 20 seconds
+                        time.sleep(1)
+                        # Re-fetch status
+                        current_status = agent.manager.get_provider(job['provider']).get_status(job_data['job_id'])
                         
-                        if current_status.get('status') == 'completed':
+                        s_txt = current_status.get('status')
+                        prog = current_status.get('progress', 0)
+                        
+                        if s_txt == 'completed':
+                            progress_bar.empty()
                             status_container.success("Render Complete!")
                             video_container.video(current_status.get('url'))
-                            # Update history
-                            job['status'] = 'completed'
-                            job['url'] = current_status.get('url')
+                            # Update the history item
+                            job_data['status'] = 'completed'
+                            job_data['url'] = current_status.get('url')
+                            break
+                        elif s_txt == 'failed':
+                            progress_bar.empty()
+                            status_container.error("Render Failed.")
+                            break
                         else:
-                            status_container.info(f"Status: {current_status.get('status')}...")
-                    except Exception as e:
-                        status_container.error(f"Poll Error: {e}")
+                            progress_bar.progress(prog, text=f"Rendering ({s_txt})... {prog}%")
 
     with tab_history:
         st.subheader("Generation History")
-        history = st.session_state.get('video_history', [])
-        if history:
-            # 1. Standard Data Management Bar
-            render_data_management_bar(history, filename_prefix="video_history")
-
-            # 2. Enhanced Table
-            hist_df = pd.DataFrame([
-                {
-                    "ID": item.get('job_id'),
-                    "Provider": item.get('provider'),
-                    "Prompt": item.get('optimized_prompt', '')[:100],
-                    "Status": item.get('status')
-                } for item in history
-            ])
-            edited_hist = render_enhanced_table(hist_df, key="video_history_table")
-            
-            selected_items = edited_hist[edited_hist['Select'] == True]
-            if not selected_items.empty:
-                if st.button(f"🗑️ Remove {len(selected_items)} from local history", type="secondary"):
-                    selected_ids = selected_items['ID'].tolist()
-                    st.session_state['video_history'] = [i for i in history if i.get('job_id') not in selected_ids]
-                    st.success("Removed!")
-                    st.rerun()
-
-            st.divider()
-            st.subheader("🖼️ Detail View")
-            for item in history:
-                with st.expander(f"[{item.get('provider').upper()}] {item.get('optimized_prompt')[:50]}...", expanded=False):
-                    if item.get('url'): # Check locally cached/updated URL
-                        st.video(item.get('url'))
-                    # Also try to check if the 'job' sub-dict has it (from old structure)
-                    elif item.get('job', {}).get('url'):
-                        st.video(item['job']['url'])
+        if 'video_history' in st.session_state and st.session_state['video_history']:
+            for item in st.session_state['video_history']:
+                with st.expander(f"{item.get('optimized_prompt')[:60]}...", expanded=False):
+                    st.text(f"Provider: {item.get('provider')}")
+                    j = item.get('job', {})
+                    if j.get('url'):
+                        st.video(j.get('url'))
                     else:
-                        st.warning("Processing or Failed.")
+                        st.warning("Video URL not available (expired or failed).")
         else:
             st.info("No videos generated yet.")
-
-    # 3. Page Level Chat
-    render_page_chat(
-        "Video Creation", 
-        agent, 
-        json.dumps(history, indent=2)
-    )

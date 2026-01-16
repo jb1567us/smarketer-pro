@@ -10,8 +10,7 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
     base_url = config["search"]["searxng_url"]
     params = {
         "q": query,
-        "format": "html",
-        "safesearch": config["search"].get("safe_search", 1) # Default to 1 (Moderate) if missing
+        "format": "html"
     }
     
     if categories:
@@ -36,21 +35,16 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
         proxy = proxy_manager.get_proxy()
         
         # FIX: Do NOT use a proxy if connecting to a local instance
+        # The proxy is for SearXNG -> Google, not App -> SearXNG
         if "localhost" in base_url or "127.0.0.1" in base_url:
             proxy = None
 
-        import time
-        start_time = time.time()
         try:
             async with session.get(base_url, params=params, headers=headers, proxy=proxy, timeout=15) as response:
-                latency = time.time() - start_time
-                if response.status == 200:
-                    if proxy:
-                        proxy_manager.report_result(proxy, success=True, latency=latency)
-                elif response.status != 200:
+                if response.status != 200:
                     print(f"SearXNG returned {response.status} on page {page} using proxy {proxy}")
-                    if proxy:
-                        proxy_manager.report_result(proxy, success=False)
+                    if response.status in [403, 429] and proxy:
+                        proxy_manager.remove_proxy(proxy)
                     break 
                 
                 html = await response.text()
@@ -62,19 +56,11 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
                     break
 
                 links_on_page = 0
-                # SearXNG results - Resilient selection (handles multiple themes)
-                results_containers = soup.select('article.result') or soup.select('.result') or soup.select('.res-container')
-                
-                for article in results_containers:
-                    # Title/Link selection
-                    a_tag = article.select_one('h3 a') or article.select_one('.result_header a') or article.find('a', href=True)
-                    
-                    if a_tag and a_tag.get('href'):
+                # SearXNG results 
+                for article in soup.select('article.result'):
+                    a_tag = article.find('a', href=True)
+                    if a_tag:
                         url = a_tag['href']
-                        # Basic cleanup of SearXNG internal redirect links if present
-                        if url.startswith('/url?q='):
-                            url = urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get('q', [url])[0]
-                        
                         title = a_tag.get_text(strip=True)
                         
                         if url.startswith('http') and url not in unique_links:
@@ -85,9 +71,7 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
                 
                 if links_on_page == 0:
                      print("Zero links extracted from this page (parsing issue or end of results).")
-                     with open("src/last_search_dump.html", "w", encoding="utf-8") as f:
-                         f.write(html)
-                     print("DEBUG: Full HTML dumped to src/last_search_dump.html")
+                     print(f"DEBUG: HTML DUMP (First 500 chars):\n{html[:500]}")
                      if "captcha" in html.lower(): print("🚫 CAPTCHA DETECTED")
                      break
 
@@ -111,36 +95,3 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
     return results[:num_results]
             
 
-
-async def get_keyword_suggestions(query, session, source="google"):
-    """
-    Fetches autocomplete suggestions from various sources.
-    Sources: google, amazon, youtube, bing
-    """
-    source = source.lower()
-    
-    urls = {
-        "google": f"http://suggestqueries.google.com/complete/search?client=firefox&q={urllib.parse.quote(query)}",
-        "youtube": f"http://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q={urllib.parse.quote(query)}",
-        "amazon": f"https://completion.amazon.com/search/complete?search-alias=aps&mkt=1&q={urllib.parse.quote(query)}",
-        "bing": f"https://api.bing.com/osjson.aspx?query={urllib.parse.quote(query)}"
-    }
-    
-    url = urls.get(source)
-    if not url:
-        return []
-        
-    try:
-        async with session.get(url, timeout=5) as resp:
-            if resp.status == 200:
-                # Force JSON even if mimetype is wrong (google returns text/javascript)
-                data = await resp.json(content_type=None)
-                # Basic json format for most suggest APIs is [query, [suggestions, ...]]
-                if isinstance(data, list) and len(data) > 1:
-                    return data[1]
-                elif isinstance(data, dict) and "suggestions" in data:
-                    return [s.get("value") for s in data["suggestions"]]
-    except Exception as e:
-        print(f"Error fetching suggestions from {source}: {e}")
-        
-    return []

@@ -10,62 +10,15 @@ class CopywriterAgent(BaseAgent):
         )
 
     def think(self, context, instructions=None):
-        """Standard draft generation."""
-        return self.generate_optimized_email(context, instructions)
-
-    def generate_optimized_email(self, context, instructions=None):
         """
-        Ralph-Style Autonomous Optimization: 
-        Generates a draft, critiques it, and iterates until high quality.
+        Context should include:
+        - Lead info (Business type, pain points, contact name)
+        - Value Proposition (what we are selling)
+        - Enrichment Data (Intent signals, social profiles, social_intel)
         """
         from config import config
         personalization_level = config.get('campaign', {}).get('personalization', 'hyper')
         
-        # 1. Initial Draft
-        self.logger.info("  [Copywriter] Generating initial draft...")
-        draft = self._draft_email(context, instructions, personalization_level)
-        
-        # 2. Ralph Loop: Critique and Iterate
-        max_iterations = 2
-        for i in range(max_iterations):
-            self.logger.info(f"  [Copywriter] Ralph Critique Loop {i+1}/{max_iterations}...")
-            
-            critique_prompt = (
-                f"You are a critical Sales Manager. Critique this cold email draft:\n\n"
-                f"SUBJECT: {draft.get('subject_line')}\n"
-                f"BODY: {draft.get('body')}\n\n"
-                "Check for:\n"
-                "1. Fluff/Generic intros (e.g. 'I hope this finds you well')\n"
-                "2. Length (too long?)\n"
-                "3. Personalization (does it actually use the context provided?)\n"
-                "4. CTA (is it soft and effective?)\n\n"
-                "Return JSON: {'score': int (1-10), 'issues': list, 'suggestions': str}"
-            )
-            
-            critique = self.provider.generate_json(critique_prompt)
-            score = critique.get('score', 0)
-            
-            if score >= 8:
-                self.logger.info(f"  ✅ Draft passed with score {score}/10.")
-                break
-            
-            self.logger.info(f"  ⚠️ Draft score {score}/10. Refining based on suggestions...")
-            
-            # 3. Refine
-            refine_prompt = (
-                f"Refine the following cold email based on this critique: {critique.get('suggestions')}\n\n"
-                f"Original Subject: {draft.get('subject_line')}\n"
-                f"Original Body: {draft.get('body')}\n\n"
-                f"Context: {context}\n\n"
-                "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
-            )
-            draft = self.provider.generate_json(refine_prompt)
-            
-        self.save_work(json.dumps(draft), artifact_type="text", metadata={"context": "optimized_email_draft", "iterations": i+1})
-        return draft
-
-    def _draft_email(self, context, instructions, personalization_level):
-        """Internal helper for initial drafting."""
         base_instructions = ""
         if personalization_level == 'generic':
              base_instructions = (
@@ -77,14 +30,15 @@ class CopywriterAgent(BaseAgent):
                 "4. Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': 'Generic mode active'}"
              )
         else:
+            # Hyper personalization (default)
             base_instructions = (
                 "Draft a highly personalized cold email for this lead.\n"
                 "Rules:\n"
                 "1. Use a hook relevant to their specific business.\n"
-                "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences.\n"
+                "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences to show deep research.\n"
                 "3. Keep it under 150 words.\n"
-                "4. End with a soft call to action.\n"
-                "5. NO generic fluff.\n\n"
+                "4. End with a soft call to action (e.g. 'Worth a chat?').\n"
+                "5. Do NOT use generic fluff like 'I hope this finds you well'.\n\n"
                 "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
             )
         
@@ -110,9 +64,7 @@ class CopywriterAgent(BaseAgent):
             "6. Call to Action: A clear next step.\n\n"
             "Return JSON: {'title': str, 'headline': str, 'sub_headline': str, 'hero_text': str, 'benefits': list, 'social_proof': str, 'cta': str}"
         )
-        res = self.provider.generate_json(f"Context for DSR:\n{context}\n\n{instructions}")
-        self.save_work(res, artifact_type="dsr_copy", metadata={"context_snippet": str(context)[:100]})
-        return res
+        return self.provider.generate_json(f"Context for DSR:\n{context}\n\n{instructions}")
 
     def generate_sequence(self, context, steps=3):
         """
@@ -135,9 +87,7 @@ class CopywriterAgent(BaseAgent):
             "  ...\n"
             "]"
         )
-        res = self.provider.generate_json(f"Context for Sequence:\n{context}\n\n{instructions}")
-        self.save_work(res, artifact_type="email_sequence", metadata={"steps": steps})
-        return res
+        return self.provider.generate_json(f"Context for Sequence:\n{context}\n\n{instructions}")
 
     def optimize_campaign(self, current_copy, performance_stats):
         """
@@ -154,7 +104,7 @@ class CopywriterAgent(BaseAgent):
             suggestion_type = "Generate 3 alternative subject lines that are more curiosity-inducing or personal."
         elif click_rate < 0.05:
             problem = f"Low Click Rate ({click_rate*100:.1f}%). The CTA is weak or the value prop isn't clear."
-            suggestion_type = "Rewrite the CTA to be lower friction (e.g. 'Worth a chat?' vs 'Book a call')."
+            suggestion_type = "Rewrite the CTA to be lower friction (e.g. 'Worth a look?' vs 'Book a call')."
         else:
             return {"status": "good", "message": "Campaign performing well."}
             
@@ -168,63 +118,4 @@ class CopywriterAgent(BaseAgent):
         
         Return JSON: {{ "diagnosis": "...", "optimized_variants": ["variant1", "variant2"] }}
         """
-        res = self.provider.generate_json(prompt)
-        self.save_work(res, artifact_type="campaign_optimization", metadata={"problem": problem})
-        return res
-
-    def generate_seo_article(self, niche, keywords, target_url, anchor_text=None, use_spintax=False):
-        """
-        Generates a long-form SEO article for Web 2.0 or Article Directories.
-        Optional: can return content in Spintax format.
-        """
-        if not anchor_text:
-            anchor_text = keywords[0] if isinstance(keywords, list) else keywords
-
-        spintax_rule = ""
-        if use_spintax:
-            spintax_rule = (
-                "5. USE NESTED SPINTAX. Every sentence must have at least 3 variations using the {choice1|choice2|choice3} format.\n"
-                "6. Ensure the result is valid nested spintax that can be parsed by standard tools.\n"
-            )
-        else:
-            spintax_rule = (
-                "5. NO SPINTAX. Write full, natural paragraphs.\n"
-            )
-
-        instructions = (
-            f"Write a high-quality, informative SEO article about '{niche}'.\n"
-            f"Target Keywords: {keywords}\n"
-            "Rules:\n"
-            "1. Length: 500-800 words.\n"
-            "2. Structure: H1 title, intro, several sub-headings, and a conclusion.\n"
-            "3. Tone: Informative, authoritative, but readable (not robotic).\n"
-            f"4. Link Insertion: Naturally include a link to '{target_url}' using the anchor text '{anchor_text}'.\n"
-            f"{spintax_rule}"
-            "7. Ensure the content provides ACTUAL VALUE to a reader, not just keyword stuffing.\n\n"
-            "Return JSON: {'title': str, 'body_markdown': str, 'summary': str, 'tags': list}"
-        )
-        res = self.provider.generate_json(f"SEO Article Request:\nNiche: {niche}\nKeywords: {keywords}\n\n{instructions}")
-        self.save_work(res, artifact_type="seo_article", metadata={"niche": niche, "target_url": target_url})
-        return res
-
-    def generate_spintax(self, content):
-        """
-        Converts an existing piece of content into nested Spintax format.
-        """
-        prompt = f"""
-        Convert the following content into HIGHLY VARIED nested spintax.
-        
-        RULES:
-        1. Every sentence must have at least 3-5 variations using {{choice1|choice2|choice3}} format.
-        2. Use synonyms and alternative phrasing.
-        3. Do NOT change the meaning or remove any links/placeholders.
-        4. The goal is >80% uniqueness between generated versions.
-        
-        Content:
-        {content}
-        
-        Return the full content in Spintax format.
-        """
-        res = self.provider.generate_text(prompt)
-        self.save_work(res, artifact_type="spintax_content", metadata={"content_preview": content[:50]})
-        return res
+        return self.provider.generate_json(prompt)

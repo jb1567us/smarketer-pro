@@ -40,20 +40,8 @@ class GeminiProvider(LLMProvider):
         return None
 
     def generate_text(self, prompt, **kwargs):
-        parts = [{"text": prompt}]
-        
-        image_data = kwargs.get('image_data')
-        if image_data:
-            # Gemini expects inline data for images
-            parts.append({
-                "inline_data": {
-                    "mime_type": "image/png", # Assuming PNG for now, or detect
-                    "data": image_data
-                }
-            })
-
         payload = {
-            "contents": [{"parts": parts}]
+            "contents": [{"parts": [{"text": prompt}]}]
         }
         result = self._call_api(payload, **kwargs)
         if result:

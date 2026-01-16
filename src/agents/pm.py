@@ -31,7 +31,7 @@ class ProductManagerAgent(BaseAgent):
             full_instructions += f"\n\nADDITIONAL INSTRUCTIONS:\n{instructions}"
             
         prompt = f"Product Idea: {product_idea}\n\n{full_instructions}"
-        return self.generate_json(prompt)
+        return self.provider.generate_json(prompt)
 
     def generate_campaign_strategy(self, product_context, niche="General", instruction_template=None):
         """
@@ -69,4 +69,4 @@ class ProductManagerAgent(BaseAgent):
                 "  'channel_mix': str\n"
                 "}"
             )
-        return self.generate_json(instructions)
+        return self.provider.generate_json(instructions)
