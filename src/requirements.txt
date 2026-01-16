@@ -17,3 +17,5 @@ SpeechRecognition
 pyttsx3
 openai-whisper
 static-ffmpeg
+playwright-stealth
+fake-useragent
