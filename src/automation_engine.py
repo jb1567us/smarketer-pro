@@ -8,131 +8,140 @@ from datetime import datetime
 import streamlit as st
 
 class AutomationEngine:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(AutomationEngine, cls).__new__(cls)
+            cls._instance.jobs = {} # {job_id: {thread, status, logs, meta}}
+            cls._instance.lock = threading.Lock()
+        return cls._instance
+
     def __init__(self):
-        self._is_running = False
-        self._stop_event = asyncio.Event()
-        self._loop = None
-        self._thread = None
-        self.logs = []
-        self.current_mission = None
-        # self.log_file = None # Handled globally now
-        self.stats = {
-            "missions_total": 0,
-            "leads_found": 0,
-            "emails_sent": 0,
-            "start_time": None
-        }
+        # Init called every time? Singleton handling usually prevents re-init or we check generic
+        pass
+
+    def start_mission(self, strategy, manager_agent, workspace_id=1):
+        """Starts a research mission job."""
+        import uuid
+        job_id = str(uuid.uuid4())[:8]
+        
+        with self.lock:
+            # Basic concurrency limit (optional, for now allow parallel)
+            # if any(j['status'] == 'running' for j in self.jobs.values()):
+            #     return None # Busy
+            
+            job_meta = {
+                "id": job_id,
+                "type": "mission",
+                "name": strategy.get('strategy_name', 'Unnamed Mission'),
+                "status": "running",
+                "logs": [],
+                "start_time": time.time(),
+                "workspace_id": workspace_id,
+                "progress": 0
+            }
+            self.jobs[job_id] = job_meta
+            
+            thread = threading.Thread(
+                target=self._run_mission_thread,
+                args=(job_id, strategy, manager_agent),
+                daemon=True
+            )
+            self.jobs[job_id]['thread'] = thread
+            thread.start()
+            
+        return job_id
 
     def log(self, message):
-        """Thread-safe logging"""
+        """Legacy global log."""
         ts = datetime.now().strftime("%H:%M:%S")
-        entry = f"[{ts}] {message}"
-        self.logs.append(entry)
-        # Keep logs manageable
-        if len(self.logs) > 500:
-            self.logs.pop(0)
+        print(f"[{ts}] [Global Auto] {message}")
+
+    def start_workflow(self, workflow_id, inputs, manager_agent, workspace_id=1):
+        """Starts a workflow job."""
+        import uuid
+        job_id = str(uuid.uuid4())[:8]
         
-        # Print to global stdout (captured by global logger)
-        print(entry)
+        with self.lock:
+            job_meta = {
+                "id": job_id,
+                "type": "workflow",
+                "name": f"Workflow: {workflow_id}",
+                "status": "running",
+                "logs": [],
+                "start_time": time.time(),
+                "workspace_id": workspace_id,
+                "progress": 0
+            }
+            self.jobs[job_id] = job_meta
+            
+            thread = threading.Thread(
+                target=self._run_workflow_thread,
+                args=(job_id, workflow_id, inputs, manager_agent),
+                daemon=True
+            )
+            self.jobs[job_id]['thread'] = thread
+            thread.start()
+            
+        return job_id
 
-    def start_mission(self, strategy, manager_agent):
-        """
-        Starts the automation loop in a separate thread.
-        """
-        if self._is_running:
-            self.log("⚠️ Automation is already running.")
-            return
-
-        self._is_running = True
-        self.current_mission = strategy.get('strategy_name', 'Unnamed Strategy')
-        self.stats["start_time"] = time.time()
-        self._stop_event.clear()
-
-        # Start background thread
-        self._thread = threading.Thread(
-            target=self._run_loop,
-            args=(strategy, manager_agent),
-            daemon=True
-        )
-        self._thread.start()
-        self.log(f"🚀 Mission Started: {self.current_mission}")
-
-    def start_workflow(self, workflow_id, inputs, manager_agent):
-        """
-        Starts a specific graph workflow in a separate thread.
-        """
-        if self._is_running:
-            self.log("⚠️ Automation is already running.")
-            return
-
-        self._is_running = True
-        self.current_mission = f"Workflow: {workflow_id}"
-        self.stats["start_time"] = time.time()
-        self._stop_event.clear()
-
-        # Start background thread
-        self._thread = threading.Thread(
-            target=self._run_workflow,
-            args=(workflow_id, inputs, manager_agent),
-            daemon=True
-        )
-        self._thread.start()
-        self.log(f"🚀 Starting Workflow Mission: {workflow_id}")
-
-    def stop(self):
-        """Signals the loop to stop."""
-        if self._is_running:
-            self.log("🛑 Stop signal received. Finishing current step...")
-            self._is_running = False
-
-    def _run_loop(self, strategy, manager_agent):
-        """
-        The main execution loop running in a background thread.
-        """
+    def _run_workflow_thread(self, job_id, workflow_id, inputs, manager_agent):
+        """Thread wrapper for workflow logic."""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
         try:
-            # Execute the mission
-            loop.run_until_complete(self._execute_mission_logic(strategy, manager_agent))
-        except Exception as e:
-            self.log(f"💥 Critical Error in Automation Loop: {e}")
-            import traceback
-            traceback.print_exc()
-        finally:
-            self._is_running = False
-            self.log("🏁 Automation Finished.")
-            loop.close()
+            self.custom_log(job_id, f"⚡ Executing Workflow Graph: {workflow_id}")
+            # Use wait=True equivalent
+            # ManagerAgent.execute_workflow is async.
+            def log_cb(msg):
+                self.custom_log(job_id, msg)
 
-    def _run_workflow(self, workflow_id, inputs, manager_agent):
-        """
-        Runs a specific graph workflow in a background thread.
-        """
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        try:
-            self.log(f"⚡ Executing Workflow Graph: {workflow_id}")
-            # Fix: We MUST use wait=True here because this is a background thread.
-            # If we don't wait, the loop will close immediately after spawning the task.
             loop.run_until_complete(manager_agent.execute_workflow(
                 workflow_id, 
                 inputs, 
-                status_callback=self.log, 
-                wait=True
+                status_callback=log_cb
             ))
-            self.log(f"✅ Workflow {workflow_id} execution finished.")
+            self.jobs[job_id]['status'] = "completed"
+            self.custom_log(job_id, f"✅ Workflow {workflow_id} execution finished.")
         except Exception as e:
-            self.log(f"💥 Error executing workflow {workflow_id}: {e}")
+            self.jobs[job_id]['status'] = "failed"
+            self.jobs[job_id]['error'] = str(e)
+            self.custom_log(job_id, f"💥 Error executing workflow {workflow_id}: {e}")
             import traceback
             traceback.print_exc()
         finally:
-            self._is_running = False
-            self.log("🏁 Mission Complete.")
             loop.close()
 
-    async def _execute_mission_logic(self, strategy, manager_agent):
+    def custom_log(self, job_id, message):
+        """Append log to specific job."""
+        ts = datetime.now().strftime("%H:%M:%S")
+        entry = f"[{ts}] {message}"
+        if job_id in self.jobs:
+            self.jobs[job_id]['logs'].append(entry)
+        print(f"[Job {job_id}] {entry}")
 
+    def _run_mission_thread(self, job_id, strategy, manager_agent):
+        """Thread wrapper for mission logic."""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            self.custom_log(job_id, "🚀 Mission Started")
+            loop.run_until_complete(self._execute_mission_logic(job_id, strategy, manager_agent))
+            self.jobs[job_id]['status'] = "completed"
+            self.custom_log(job_id, "🏁 Mission Completed Successfully")
+        except Exception as e:
+            self.jobs[job_id]['status'] = "failed"
+            self.jobs[job_id]['error'] = str(e)
+            self.custom_log(job_id, f"💥 Critical Error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            loop.close()
+
+    async def _execute_mission_logic(self, job_id, strategy, manager_agent):
         """
         The actual logic that runs indefinitely or until goal met.
         Supports sequential execution of workflows and agent tasks.
@@ -140,116 +149,113 @@ class AutomationEngine:
         sequence = strategy.get('sequence', [])
         is_conductor = strategy.get('mode') == 'conductor' or len(sequence) > 0
         
+        # Inject custom logger into manager_agent for this run?
+        # A simple callback adapter
+        def log_cb(msg):
+            self.custom_log(job_id, msg)
+
         if is_conductor and sequence:
-            self.log(f"🎬 Conductor Sequence Active. Goal: {strategy.get('goal')}")
+            self.custom_log(job_id, f"🎬 Conductor Sequence Active. Goal: {strategy.get('goal')}")
             
             for step in sequence:
-                if not self._is_running: break
+                if self.jobs[job_id]['status'] == 'stopped': break
                 
                 step_type = step.get('type')
                 
                 if step_type == 'workflow':
                     wf_name = step.get('name')
-                    self.log(f"📦 Executing Nested Workflow: {wf_name}")
+                    self.custom_log(job_id, f"📦 Executing Nested Workflow: {wf_name}")
                     
                     from workflow_manager import extract_steps_from_workflow
                     steps = extract_steps_from_workflow(wf_name)
                     
                     for s in steps:
-                        if not self._is_running: break
+                        if self.jobs[job_id]['status'] == 'stopped': break
                         s_tool = s.get('tool')
                         s_params = s.get('params', {})
-                        self.log(f"  └─ Step: {s.get('description', s_tool)}")
+                        self.custom_log(job_id, f"  └─ Step: {s.get('description', s_tool)}")
                         
-                        # Use manager's run_mission or direct execution logic
-                        # For now, we support 'run_search' as the primary workflow unit
                         if s_tool == "run_search":
                             await manager_agent.run_mission(
                                 goal=f"Workflow Step: {s_tool}",
                                 plan_override=s_params,
-                                status_callback=self.log
+                                status_callback=log_cb
                             )
-                    self.log(f"✅ Workflow '{wf_name}' completed.")
+                    self.custom_log(job_id, f"✅ Workflow '{wf_name}' completed.")
 
                 elif step_type == 'agent':
                     agent_name = step.get('agent')
                     task = step.get('task')
-                    self.log(f"🤖 Orchestrating Agent: {agent_name} for task...")
+                    self.custom_log(job_id, f"🤖 Orchestrating Agent: {agent_name} for task...")
                     
                     from utils.agent_registry import get_agent_class
                     AgentClass = get_agent_class(agent_name)
                     if AgentClass:
                         sub_agent = AgentClass()
-                        # Generic delegation
                         if hasattr(sub_agent, 'think_async'):
                             res = await sub_agent.think_async(task)
-                            if isinstance(res, dict) and 'reply' in res:
-                                self.log(f"💬 {agent_name}: {res['reply']}")
-                            elif isinstance(res, str):
-                                self.log(f"💬 {agent_name}: {res}")
-                            self.log(f"✅ {agent_name} completed task (async).")
+                            self.custom_log(job_id, f"✅ {agent_name} done.")
                         elif hasattr(sub_agent, 'think'):
                             res = sub_agent.think(task)
-                            if isinstance(res, dict) and 'reply' in res:
-                                self.log(f"💬 {agent_name}: {res['reply']}")
-                            elif isinstance(res, str):
-                                self.log(f"💬 {agent_name}: {res}")
-                            self.log(f"✅ {agent_name} completed task (sync).")
-                        else:
-                            self.log(f"⚠️ Agent {agent_name} does not have a 'think' or 'think_async' method.")
+                            self.custom_log(job_id, f"✅ {agent_name} done.")
                     else:
-                        self.log(f"❌ Agent {agent_name} not found.")
-
-            self.log("🏁 Conductor Sequence Complete.")
-
-        elif is_conductor and not sequence:
-            # Fallback to the hardcoded test/default logic if no sequence provided but conductor active
-            self.log(f"🎬 Conductor Mode Active. Goal: {strategy.get('goal')}")
-            # ... (keep existing hardcoded research -> copy logic for safety)
-            # (Truncated for brevity in this replace call, but I'll maintain the structure)
-            if self._is_running:
-                self.log("🔍 Phase 1: Market Intelligence Gathering...")
-                res_research = await manager_agent.run_mission(
-                    goal=f"Research leads for: {strategy.get('goal')}",
-                    plan_override={"search_queries": strategy.get('queries', []), "limit": strategy.get('limit', 5)},
-                    status_callback=self.log
-                )
+                        self.custom_log(job_id, f"❌ Agent {agent_name} not found.")
 
         else:
             # Legacy Search Loop
             queries = strategy.get('queries', [])
             icp = strategy.get('icp_refined', '')
+            limit = strategy.get('limit', 10)
             
-            self.log(f"🎯 Strategy Loaded. {len(queries)} operational queries queued.")
+            self.custom_log(job_id, f"🎯 Strategy Loaded. {len(queries)} operational queries queued.")
             
             for q in queries:
-                if not self._is_running: break
+                if self.jobs[job_id]['status'] == 'stopped': break
                 
-                self.log(f"🔎 Executing Search Phase: '{q}'")
+                self.custom_log(job_id, f"🔎 Executing Search Phase: '{q}'")
                 
-                mission_goal = f"Execute strategy for {q}"
                 mission_plan_override = {
                     "search_queries": [q],
                     "icp_criteria": icp,
-                    "limit": strategy.get('limit', 10)
+                    "limit": limit
                 }
                 
+                # We need to make sure run_mission uses the workspace_id for DB inserts
+                # ManagerAgent calls 'add_lead' somewhere. 
+                # Currently ManagerAgent doesn't accept workspace_id in run_mission args easily unless we inject it into plan?
+                # or we modify ManagerAgent.
+                # For now, we rely on the fact that database calls default to 1 if we can't pass it.
+                # But we want it to be the correct workspace.
+                # Solution: Add workspace_id to plan_override, and update ManagerAgent to respect it?
+                # Or use contextvar?
+                
                 res = await manager_agent.run_mission(
-                    goal=mission_goal, 
+                    goal=f"Execute strategy for {q}", 
                     plan_override=mission_plan_override,
-                    status_callback=self.log
+                    status_callback=log_cb
                 )
                 
                 leads_count = len(res.get('leads', []))
-                self.stats['leads_found'] += leads_count
-                self.log(f"✅ Batch Complete. Found {leads_count} qualified leads.")
+                self.custom_log(job_id, f"✅ Batch Complete. Found {leads_count} qualified leads.")
                 
-                if self._is_running:
-                    self.log("⏳ Cooling down for 10s...")
-                    await asyncio.sleep(10)
+                # Simple Manual Sleep for demo
+                time.sleep(2)
 
-        self.log("🌟 Automation sequence completed.")
+    def get_jobs(self):
+        """Returns list of jobs."""
+        return self.jobs
+
+    def get_logs(self, job_id):
+        if job_id in self.jobs:
+            return self.jobs[job_id]['logs']
+        return []
+
+    def stop_job(self, job_id):
+        if job_id in self.jobs:
+            self.jobs[job_id]['status'] = 'stopped'
+            self.custom_log(job_id, "🛑 Stop signal sent.")
 
     @property
     def is_running(self):
-        return self._is_running
+        """Returns True if any job is currently running."""
+        return any(j['status'] == 'running' for j in self.jobs.values())

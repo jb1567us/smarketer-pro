@@ -14,9 +14,23 @@ def init_db():
     """Initialize the database tables."""
     conn = get_connection()
     c = conn.cursor()
+    
+    # --- WORKSPACES (Multi-Tenancy) ---
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS workspaces (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE,
+            created_at INTEGER
+        );
+    ''')
+    
+    # Ensure default workspace exists
+    c.execute("INSERT OR IGNORE INTO workspaces (id, name, created_at) VALUES (1, 'Default Workspace', ?)", (int(time.time()),))
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS leads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             url TEXT,
             email TEXT UNIQUE,
             status TEXT DEFAULT 'new', -- new, contacted, error, nurtured
@@ -80,6 +94,20 @@ def init_db():
             body TEXT,
             metadata TEXT, -- JSON string for extra fields
             created_at INTEGER
+        );
+    ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS email_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            campaign_id INTEGER,
+            lead_email TEXT,
+            provider_id TEXT, -- e.g. 'mailjet', 'resend'
+            provider_msg_id TEXT,
+            status TEXT, -- sent, failed, queued
+            cost_estimate REAL DEFAULT 0.0,
+            metadata_json TEXT,
+            timestamp INTEGER
         );
     ''')
     
@@ -571,8 +599,57 @@ def init_db():
         );
     ''')
 
+    # --- WORKSPACES (Multi-Tenancy) ---
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS workspaces (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE,
+            created_at INTEGER
+        );
+    ''')
+    
+    # Ensure default workspace exists
+    c.execute("INSERT OR IGNORE INTO workspaces (id, name, created_at) VALUES (1, 'Default Workspace', ?)", (int(time.time()),))
+    
+    # Workspace Migration for existing tables
+    tables_needing_workspace = ['leads', 'campaigns', 'deals', 'tasks', 'creative_content']
+    for table in tables_needing_workspace:
+        try:
+            c.execute(f'SELECT workspace_id FROM {table} LIMIT 1')
+        except sqlite3.OperationalError:
+            print(f"Migrating {table}: Adding 'workspace_id' column...")
+            try:
+                # Default to workspace 1 (Default) for existing data
+                c.execute(f'ALTER TABLE {table} ADD COLUMN workspace_id INTEGER DEFAULT 1')
+            except Exception as e:
+                print(f"Error migrating {table}: {e}")
+
     conn.commit()
     conn.close()
+
+def get_workspaces():
+    """Retrieves all available workspaces."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM workspaces ORDER BY id ASC')
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def create_workspace(name):
+    """Creates a new workspace."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO workspaces (name, created_at) VALUES (?, ?)', (name, int(time.time())))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
 
 def create_chat_session(title="New Chat"):
     """Creates a new chat session and returns its ID."""
@@ -748,17 +825,30 @@ def get_captcha_settings():
     conn.close()
     return dict(result) if result else {"provider": "none", "api_key": "", "enabled": 0}
 
-def add_lead(url, email, source="search", category="default", industry=None, business_type=None, confidence=None, relevance_reason=None, contact_person=None, company_name=None, address=None, phone_number=None, tech_stack=None, qualification_score=None, qualification_reason=None):
+def get_current_workspace_id(passed_id=None):
+    """Helper to resolve workspace ID from args or session state."""
+    if passed_id is not None:
+        return passed_id
+    try:
+        import streamlit as st
+        if hasattr(st, 'session_state') and 'active_workspace_id' in st.session_state:
+            return st.session_state['active_workspace_id']
+    except Exception:
+        pass
+    return 1 # Default
+
+def add_lead(url, email, source="search", category="default", industry=None, business_type=None, confidence=None, relevance_reason=None, contact_person=None, company_name=None, address=None, phone_number=None, tech_stack=None, qualification_score=None, qualification_reason=None, workspace_id=None):
     """
     Adds a lead to the database. Returns ID if added, None if duplicate.
     """
     conn = get_connection()
     c = conn.cursor()
+    ws_id = get_current_workspace_id(workspace_id)
     try:
         c.execute('''
-            INSERT INTO leads (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, int(time.time())))
+            INSERT INTO leads (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, created_at, workspace_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, int(time.time()), ws_id))
         lead_id = c.lastrowid
         conn.commit()
         return lead_id
@@ -788,12 +878,13 @@ def mark_contacted(email):
     conn.commit()
     conn.close()
 
-def get_leads_by_status(status="new"):
+def get_leads_by_status(status="new", workspace_id=None):
     """Retrieves all leads with a specific status, returning full details."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row # Access columns by name
     c = conn.cursor()
-    c.execute('SELECT * FROM leads WHERE status = ?', (status,))
+    ws_id = get_current_workspace_id(workspace_id)
+    c.execute('SELECT * FROM leads WHERE status = ? AND workspace_id = ?', (status, ws_id))
     results = c.fetchall()
     conn.close()
     return [dict(r) for r in results]
@@ -1003,26 +1094,28 @@ def delete_link_wheel(lw_id):
     conn.commit()
     conn.close()
 
-def save_creative_content(agent_type, content_type, title, body, metadata=None):
+def save_creative_content(agent_type, content_type, title, body, metadata=None, workspace_id=None):
     """Saves generated creative content to the library."""
     conn = get_connection()
     c = conn.cursor()
     import json
     meta_json = json.dumps(metadata) if metadata else "{}"
+    ws_id = get_current_workspace_id(workspace_id)
     c.execute('''
-        INSERT INTO creative_content (agent_type, content_type, title, body, metadata, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (agent_type, content_type, title, body, meta_json, int(time.time())))
+        INSERT INTO creative_content (agent_type, content_type, title, body, metadata, created_at, workspace_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (agent_type, content_type, title, body, meta_json, int(time.time()), ws_id))
     conn.commit()
     conn.close()
     return True
 
-def get_creative_library():
+def get_creative_library(workspace_id=None):
     """Retrieves all saved creative content."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute('SELECT * FROM creative_content ORDER BY created_at DESC')
+    ws_id = get_current_workspace_id(workspace_id)
+    c.execute('SELECT * FROM creative_content WHERE workspace_id = ? ORDER BY created_at DESC', (ws_id,))
     results = [dict(r) for r in c.fetchall()]
     conn.close()
     return results
@@ -1158,15 +1251,16 @@ def delete_custom_agent(agent_id):
     conn.commit()
     conn.close()
 
-def create_campaign(name, niche, product_name, product_context):
+def create_campaign(name, niche, product_name, product_context, workspace_id=None):
     """Creates a new campaign and returns its ID."""
     conn = get_connection()
     c = conn.cursor()
     now = int(time.time())
+    ws_id = get_current_workspace_id(workspace_id)
     c.execute('''
-        INSERT INTO campaigns (name, niche, product_name, product_context, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (name, niche, product_name, product_context, now, now))
+        INSERT INTO campaigns (name, niche, product_name, product_context, created_at, updated_at, workspace_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (name, niche, product_name, product_context, now, now, ws_id))
     campaign_id = c.lastrowid
     conn.commit()
     conn.close()
@@ -1249,12 +1343,13 @@ def get_campaign(campaign_id):
     conn.close()
     return dict(result) if result else None
 
-def get_all_campaigns():
+def get_all_campaigns(workspace_id=None):
     """Retrieves all campaigns, ordered by most recent."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute('SELECT * FROM campaigns ORDER BY updated_at DESC')
+    ws_id = get_current_workspace_id(workspace_id)
+    c.execute('SELECT * FROM campaigns WHERE workspace_id = ? ORDER BY updated_at DESC', (ws_id,))
     results = [dict(r) for r in c.fetchall()]
     conn.close()
     return results
@@ -1435,31 +1530,34 @@ def update_enrollment_progress(enrollment_id, next_step_index, next_scheduled_at
 
 # === CRM / DEAL MANAGEMENT FUNCTIONS ===
 
-def create_deal(lead_id, title, value, stage='Discovery', probability=20, close_date=None):
+def create_deal(lead_id, title, value, stage='Discovery', probability=20, close_date=None, workspace_id=None):
     """Creates a new deal for a lead."""
     conn = get_connection()
     c = conn.cursor()
     now = int(time.time())
+    ws_id = get_current_workspace_id(workspace_id)
     c.execute('''
-        INSERT INTO deals (lead_id, title, value, stage, probability, close_date, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (lead_id, title, value, stage, probability, close_date, now))
+        INSERT INTO deals (lead_id, title, value, stage, probability, close_date, created_at, workspace_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (lead_id, title, value, stage, probability, close_date, now, ws_id))
     deal_id = c.lastrowid
     conn.commit()
     conn.close()
     return deal_id
 
-def get_deals():
+def get_deals(workspace_id=None):
     """Retrieves all deals with lead info."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
+    ws_id = get_current_workspace_id(workspace_id)
     c.execute('''
         SELECT d.*, l.company_name, l.contact_person, l.email
         FROM deals d
         JOIN leads l ON d.lead_id = l.id
+        WHERE d.workspace_id = ?
         ORDER BY d.created_at DESC
-    ''')
+    ''', (ws_id,))
     results = [dict(r) for r in c.fetchall()]
     conn.close()
     return results
@@ -1478,15 +1576,16 @@ def update_deal_stage(deal_id, stage, probability):
 
 # === TASK MANAGEMENT FUNCTIONS ===
 
-def create_task(lead_id, description, due_date, priority='Medium', task_type='Task'):
+def create_task(lead_id, description, due_date, priority='Medium', task_type='Task', workspace_id=None):
     """Creates a new task for a lead."""
     conn = get_connection()
     c = conn.cursor()
     now = int(time.time())
+    ws_id = get_current_workspace_id(workspace_id)
     c.execute('''
-        INSERT INTO tasks (lead_id, description, due_date, priority, task_type, status, created_at)
-        VALUES (?, ?, ?, ?, ?, 'pending', ?)
-    ''', (lead_id, description, due_date, priority, task_type, now))
+        INSERT INTO tasks (lead_id, description, due_date, priority, task_type, status, created_at, workspace_id)
+        VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)
+    ''', (lead_id, description, due_date, priority, task_type, now, ws_id))
     task_id = c.lastrowid
     conn.commit()
     conn.close()
@@ -1519,19 +1618,21 @@ def delete_task(task_id):
     conn.commit()
     conn.close()
 
-def get_tasks(status=None):
+def get_tasks(status=None, workspace_id=None):
     """Retrieves tasks, optionally filtered by status."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
+    ws_id = get_current_workspace_id(workspace_id)
     query = '''
         SELECT t.*, l.company_name, l.contact_person
         FROM tasks t
         LEFT JOIN leads l ON t.lead_id = l.id
+        WHERE t.workspace_id = ?
     '''
-    params = []
+    params = [ws_id]
     if status:
-        query += ' WHERE t.status = ?'
+        query += ' AND t.status = ?'
         params.append(status)
     query += ' ORDER BY t.due_date ASC'
     

@@ -1,7 +1,7 @@
 from typing import Any, Dict
-from src.nodes.base import BaseNode, NodeContext
-from src.nodes.registry import register_node
-from src.agents.researcher import ResearcherAgent
+from nodes.base import BaseNode, NodeContext
+from nodes.registry import register_node
+from agents.researcher import ResearcherAgent
 from src.llm import LLMFactory
 
 class EnrichNode(BaseNode):

@@ -50,27 +50,44 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
 
         for attempt_url in current_candidates:
             # Don't use proxy for localhost
-            use_proxy = proxy if "localhost" not in attempt_url and "127.0.0.1" not in attempt_url else None
+            initial_proxy = proxy if "localhost" not in attempt_url and "127.0.0.1" not in attempt_url else None
             
-            try:
-                async with session.get(attempt_url, params=params, headers=headers, proxy=use_proxy, timeout=15) as response:
-                    if response.status == 200:
-                        html_content = await response.text()
-                        success_url = attempt_url
-                        current_base_url = attempt_url # Lock on
-                        search_router.report_success(attempt_url)
-                        if use_proxy: proxy_manager.report_result(proxy, success=True)
-                        break # Success!
-                    elif response.status == 429:
-                        print(f"SearXNG {attempt_url} Rate Limit (429).")
-                        search_router.report_failure(attempt_url, 429)
-                    else:
-                         print(f"SearXNG {attempt_url} returned {response.status}")
-                         # search_router.report_failure(attempt_url, response.status) # Optional: penalize non-200s
-            except Exception as e:
-                print(f"Connection failed to {attempt_url}: {e}")
-                search_router.report_failure(attempt_url, "ConnectionError")
-                continue # Try next URL
+            # Try with proxy first (if applicable), then direct as fallback
+            connection_modes = [(initial_proxy, "proxy")]
+            if initial_proxy:
+                connection_modes.append((None, "direct"))
+            
+            url_success = False
+            
+            for current_proxy, mode in connection_modes:
+                try:
+                    async with session.get(attempt_url, params=params, headers=headers, proxy=current_proxy, timeout=15) as response:
+                        if response.status == 200:
+                            html_content = await response.text()
+                            success_url = attempt_url
+                            current_base_url = attempt_url # Lock on
+                            search_router.report_success(attempt_url)
+                            if current_proxy: proxy_manager.report_result(proxy, success=True)
+                            url_success = True
+                            break # Success!
+                        elif response.status == 429:
+                            print(f"SearXNG {attempt_url} [{mode}] Rate Limit (429).")
+                            # If direct failed with 429, maybe don't report failure to router immediately, but we can't do much.
+                            # If proxy failed, we'll try direct next loop.
+                        else:
+                             print(f"SearXNG {attempt_url} [{mode}] returned {response.status}")
+                except Exception as e:
+                    print(f"Connection failed to {attempt_url} [{mode}]: {e}")
+                    # Only report failure to router if ALL modes fail for this URL? 
+                    # Simpler to report failure if the *primary* attempt fails, or maybe just log it.
+                    # For now, we just continue to 'direct' mode or next URL.
+            
+            if url_success:
+                break
+            
+            # If we are here, both proxy and direct failed for this attempt_url
+            search_router.report_failure(attempt_url, "FailedAllModes")
+            continue # Try next URL
         
         if not html_content:
             print(f"CRITICAL: Could not fetch results from any SearXNG instance for page {page}.")

@@ -13,6 +13,12 @@ class DiscoveryEngine:
             "Growth hacking case studies"
         ]
 
+    async def plan_structured_discovery(self, icp, offering, constraints=None):
+        """
+        Generates high-precision queries for a target ICP and offering.
+        """
+        return self.researcher.generate_discovery_queries(icp, offering, constraints or {})
+
     async def get_serendipitous_finding(self, current_niche=None):
         """
         Returns a 'Did you know?' or 'Opportunity Alert' item.

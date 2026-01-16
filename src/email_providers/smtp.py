@@ -29,7 +29,17 @@ class SMTPProvider(EmailProvider):
             server.sendmail(self.from_email, to_email, msg.as_string())
             server.quit()
             print(f"  [SMTP] Email sent to {to_email}")
-            return True
+            return {
+                "success": True,
+                "provider": "smtp",
+                "message_id": "smtp-sent",
+                "metadata": {"host": self.smtp_server}
+            }
         except Exception as e:
             print(f"  [SMTP] Failed to send to {to_email}: {e}")
-            return False
+            return {
+                "success": False,
+                "provider": "smtp",
+                "message_id": None,
+                "metadata": {"error": str(e)}
+            }

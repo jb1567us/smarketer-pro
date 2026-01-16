@@ -1,0 +1,65 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "PipelineRun",
+    "type": "object",
+    "required": [
+        "version",
+        "run_id",
+        "icp",
+        "candidate",
+        "inputs",
+        "outputs"
+    ],
+    "properties": {
+        "version": {
+            "type": "string"
+        },
+        "run_id": {
+            "type": "string"
+        },
+        "icp": {
+            "type": "object"
+        },
+        "candidate": {
+            "type": "object"
+        },
+        "inputs": {
+            "type": "object",
+            "properties": {
+                "pages": {
+                    "type": "array"
+                },
+                "offering": {
+                    "type": "object"
+                }
+            }
+        },
+        "outputs": {
+            "type": "object",
+            "required": [
+                "discovery_queries",
+                "page_targets",
+                "extracted_signals",
+                "qualification",
+                "outreach"
+            ],
+            "properties": {
+                "discovery_queries": {
+                    "type": "object"
+                },
+                "page_targets": {
+                    "type": "object"
+                },
+                "extracted_signals": {
+                    "type": "object"
+                },
+                "qualification": {
+                    "type": "object"
+                },
+                "outreach": {
+                    "type": "object"
+                }
+            }
+        }
+    }
+}

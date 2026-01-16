@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, JSON, ForeignKey
 from sqlalchemy.orm import relationship
-from src.database import Base
+from database import Base
 
 class AffiliateLink(Base):
     """

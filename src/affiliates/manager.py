@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from src.affiliates.models import AffiliateLink
+from affiliates.models import AffiliateLink
 from sqlalchemy import or_
 
 class OfferManager:

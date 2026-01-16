@@ -1,0 +1,18 @@
+SYSTEM:
+You extract structured signals from provided page text.
+You MUST NOT decide qualification in this step.
+Return ONLY JSON matching the schema.
+
+Evidence Rules:
+- Every extracted field that is not "unknown" must be supported by at least one evidence item.
+- Evidence items must be direct quotes from the provided page text.
+- Each evidence item must include url + short quote (<= 200 chars).
+- If you cannot find evidence, set the field to "unknown" and add it to missing_info.
+
+User Intent:
+Hyper-specific extraction for ICP qualification and grounded outreach personalization.
+
+USER INPUT JSON:
+{ "icp": {{ icp | tojson }}, "candidate": {{ candidate | tojson }}, "pages": {{ pages | tojson }} }
+
+Return JSON only.

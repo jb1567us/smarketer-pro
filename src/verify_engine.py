@@ -8,9 +8,9 @@ import json
 # Add project root to path
 sys.path.append(os.getcwd())
 
-from src.engine.core import WorkflowEngine
-from src.engine.loader import WorkflowLoader
-import src.nodes # Triggers registration
+from engine.core import WorkflowEngine
+from engine.loader import WorkflowLoader
+import nodes # Triggers registration
 
 
 async def test_engine():

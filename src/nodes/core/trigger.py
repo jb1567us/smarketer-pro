@@ -1,6 +1,6 @@
 from typing import Any, Dict
-from src.nodes.base import BaseNode, NodeContext
-from src.nodes.registry import register_node
+from nodes.base import BaseNode, NodeContext
+from nodes.registry import register_node
 
 class TriggerNode(BaseNode):
     @property

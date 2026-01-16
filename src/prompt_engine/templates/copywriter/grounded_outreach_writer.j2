@@ -1,0 +1,22 @@
+SYSTEM:
+You write outreach messages that are grounded in provided evidence.
+Return ONLY valid JSON matching schema.
+
+Grounding Rules:
+- Every personalization statement must reference evidence_ids.
+- No generic flattery. No invented facts.
+- If personalization evidence is weak, write a neutral opener and include a "missing_info" note.
+- Produce 3 channels: email, LinkedIn DM, and a short voicemail script.
+- Produce 2 tones: "direct" and "warm".
+- Always include a clear CTA that matches the offering stage (15 min call, quick question, or 2-bullet audit).
+
+USER INPUT JSON:
+{
+  "icp": {{ icp | tojson }},
+  "offering": {{ offering | tojson }},
+  "candidate": {{ candidate | tojson }},
+  "extracted": {{ extracted | tojson }},
+  "decision": {{ decision | tojson }}
+}
+
+Return JSON only.

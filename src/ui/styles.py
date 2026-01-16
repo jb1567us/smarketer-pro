@@ -22,16 +22,16 @@ def load_css():
         .block-container {
             padding-top: 2rem;
             padding-bottom: 5rem;
-            max_width: 1200px;
+            max-width: 1400px;
         }
 
         /* CARD UI COMPONENT */
         .css-card {
-            background-color: #ffffff;
+            background-color: var(--secondary-background-color);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: 1px solid #f0f2f6;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid rgba(128, 128, 128, 0.2);
             margin-bottom: 20px;
         }
         
@@ -47,7 +47,7 @@ def load_css():
         div[data-testid="stMetric"]:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-color: rgba(128, 128, 128, 0.4);
+            border-color: var(--primary-color);
         }
         div[data-testid="stMetricLabel"] {
             font-size: 0.85rem;
@@ -63,8 +63,7 @@ def load_css():
 
         /* SIDEBAR STYLING */
         section[data-testid="stSidebar"] {
-            /* background-color: #f8f9fa; REMOVED to allow default dark theme */
-            border-right: 1px solid #374151;
+            border-right: 1px solid rgba(128, 128, 128, 0.2);
         }
         section[data-testid="stSidebar"] .block-container {
             padding-top: 3rem;
@@ -72,39 +71,39 @@ def load_css():
 
         /* BUTTONS */
         button[kind="primary"] {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
             border: none;
             border-radius: 8px;
             padding: 0.5rem 1rem;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             transition: all 0.2s;
         }
         button[kind="primary"]:hover {
-            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             transform: translateY(-1px);
         }
         button[kind="secondary"] {
-            background-color: white;
-            border: 1px solid #d1d5db;
-            color: #374151;
+            background-color: transparent;
+            border: 1px solid rgba(128, 128, 128, 0.4);
+            color: var(--text-color);
             border-radius: 8px;
         }
 
         /* INPUT FIELDS */
         .stTextInput input, .stSelectbox div[data-baseweb="select"] {
             border-radius: 8px;
-            border-color: #d1d5db;
+            border-color: rgba(128, 128, 128, 0.2);
         }
         .stTextInput input:focus, .stSelectbox div[data-baseweb="select"]:focus-within {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 1px #2563eb;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 1px var(--primary-color);
         }
 
         /* TABS */
         .stTabs [data-baseweb="tab-list"] {
             gap: 24px;
-            border-bottom: 2px solid #e5e7eb;
+            border-bottom: 2px solid rgba(128, 128, 128, 0.2);
             padding-bottom: 0px;
         }
         .stTabs [data-baseweb="tab"] {
@@ -112,42 +111,40 @@ def load_css():
             white-space: pre-wrap;
             background-color: transparent;
             border-radius: 4px 4px 0 0;
-            color: #4b5563;
+            color: var(--text-color);
+            opacity: 0.7;
             font-weight: 500;
             padding-bottom: 10px;
         }
         .stTabs [aria-selected="true"] {
             background-color: transparent;
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
             margin-bottom: -2px; 
             font-weight: 700;
+            opacity: 1;
         }
 
         /* HEADERS */
-        h1 {
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            color: #111827;
-        }
-        h2, h3 {
-            font-weight: 700;
+        h1, h2, h3 {
+            color: var(--text-color);
             letter-spacing: -0.01em;
-            color: #1f2937;
         }
+        h1 { font-weight: 800; }
+        h2, h3 { font-weight: 700; }
         
         /* EXPANDERS */
         .streamlit-expanderHeader {
-            background-color: #f9fafb;
+            background-color: var(--secondary-background-color);
             border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            color: #111827;
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            color: var(--text-color);
             font-weight: 600;
         }
         
         /* PROGRESS BAR */
         .stProgress > div > div > div > div {
-            background-image: linear-gradient(90deg, #2563eb, #60a5fa);
+            background-image: linear-gradient(90deg, var(--primary-color), #60a5fa);
         }
 
         </style>
@@ -173,3 +170,4 @@ def load_css():
         }
         </style>
     """, unsafe_allow_html=True)
+

@@ -1,7 +1,7 @@
 import random
 import string
 from sqlalchemy.orm import Session
-from src.affiliates.models import Partner, TrackingEvent, Program
+from affiliates.models import Partner, TrackingEvent, Program
 from datetime import datetime
 
 class ProgramManager:

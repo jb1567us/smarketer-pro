@@ -87,6 +87,36 @@ class QualifierAgent(BaseAgent):
         return self.generate_json(f"Lead Evaluation Context:\n{context}\n\n{full_instructions}")
 
 
+    def decide_qualification(self, icp, extracted_signals):
+        """
+        Hyper-specific qualification decision based on extracted signals and evidence.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "qualifier/icp_qualification_decider.j2",
+            self.kernel,
+            icp=icp,
+            extracted=extracted_signals
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"qualified": False, "error": prompt}
+        return self.generate_json(prompt)
+
+    async def decide_qualification_async(self, icp, extracted_signals):
+        """
+        Async version of decide_qualification.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "qualifier/icp_qualification_decider.j2",
+            self.kernel,
+            icp=icp,
+            extracted=extracted_signals
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"qualified": False, "error": prompt}
+        return await self.generate_json_async(prompt)
+
     def ask_researcher(self, missing_info):
         """
         Helper to formulate a query for the Researcher.

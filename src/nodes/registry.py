@@ -1,5 +1,5 @@
 from typing import Dict
-from src.nodes.base import BaseNode
+from nodes.base import BaseNode
 
 NODE_REGISTRY: Dict[str, BaseNode] = {}
 

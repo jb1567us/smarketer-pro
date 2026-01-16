@@ -1,0 +1,95 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "GroundedOutreach",
+    "type": "object",
+    "required": [
+        "version",
+        "personalization_anchors",
+        "messages",
+        "missing_info"
+    ],
+    "properties": {
+        "version": {
+            "type": "string"
+        },
+        "personalization_anchors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "observed_detail",
+                    "why_relevant",
+                    "evidence_ids"
+                ],
+                "properties": {
+                    "observed_detail": {
+                        "type": "string"
+                    },
+                    "why_relevant": {
+                        "type": "string"
+                    },
+                    "evidence_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "messages": {
+            "type": "array",
+            "minItems": 6,
+            "items": {
+                "type": "object",
+                "required": [
+                    "channel",
+                    "tone",
+                    "subject",
+                    "body",
+                    "cta",
+                    "evidence_ids_used"
+                ],
+                "properties": {
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "email",
+                            "linkedin_dm",
+                            "voicemail"
+                        ]
+                    },
+                    "tone": {
+                        "type": "string",
+                        "enum": [
+                            "direct",
+                            "warm"
+                        ]
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "cta": {
+                        "type": "string"
+                    },
+                    "evidence_ids_used": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "missing_info": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
-from src.database import get_db_session
-from src.affiliates.manager import OfferManager
-from src.affiliates.merchant import ProgramManager
-from src.affiliates.models import AffiliateLink, Partner, TrackingEvent
+from database import get_db_session
+from affiliates.manager import OfferManager
+from affiliates.merchant import ProgramManager
+from affiliates.models import AffiliateLink, Partner, TrackingEvent
 
 def render_affiliate_ui():
     st.title("Affiliate Command Center")

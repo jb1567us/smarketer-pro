@@ -12,7 +12,12 @@ class SendGridProvider(EmailProvider):
     def send_html_email(self, to_email, subject, html_content):
         if not self.api_key:
             print("  [SendGrid] Error: SENDGRID_API_KEY not found.")
-            return False
+            return {
+                "success": False,
+                "provider": "sendgrid",
+                "message_id": None,
+                "metadata": {"error": "API Key Missing"}
+            }
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -30,10 +35,28 @@ class SendGridProvider(EmailProvider):
             response = requests.post(self.api_url, headers=headers, json=payload)
             if response.status_code not in [200, 201, 202]:
                  print(f"  [SendGrid] Error {response.status_code}: {response.text}")
-                 return False
+                 return {
+                    "success": False,
+                    "provider": "sendgrid",
+                    "message_id": None,
+                    "metadata": {"status": response.status_code, "error": response.text}
+                 }
+            
+            # SendGrid generic response often lacks message ID in body, check headers or assume queue success
+            msg_id = response.headers.get("X-Message-Id", "queued")
             
             print(f"  [SendGrid] Email sent to {to_email}")
-            return True
+            return {
+                "success": True,
+                "provider": "sendgrid",
+                "message_id": msg_id,
+                "metadata": {"status": response.status_code}
+            }
         except Exception as e:
             print(f"  [SendGrid] Failed to send to {to_email}: {e}")
-            return False
+            return {
+                "success": False,
+                "provider": "sendgrid",
+                "message_id": None,
+                "metadata": {"error": str(e)}
+            }

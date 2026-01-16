@@ -1,0 +1,46 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "PageTargets",
+    "type": "object",
+    "required": [
+        "version",
+        "targets"
+    ],
+    "properties": {
+        "version": {
+            "type": "string"
+        },
+        "targets": {
+            "type": "array",
+            "minItems": 5,
+            "items": {
+                "type": "object",
+                "required": [
+                    "suggested_url",
+                    "reason",
+                    "priority",
+                    "what_to_extract"
+                ],
+                "properties": {
+                    "suggested_url": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                    },
+                    "what_to_extract": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

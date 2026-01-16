@@ -1,0 +1,150 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "QualificationDecision",
+    "type": "object",
+    "required": [
+        "version",
+        "qualified",
+        "score",
+        "confidence",
+        "gates",
+        "score_breakdown",
+        "reason",
+        "missing_info",
+        "followup_actions"
+    ],
+    "properties": {
+        "version": {
+            "type": "string"
+        },
+        "qualified": {
+            "type": "boolean"
+        },
+        "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+        },
+        "confidence": {
+            "type": "string",
+            "enum": [
+                "high",
+                "medium",
+                "low"
+            ]
+        },
+        "gates": {
+            "type": "object",
+            "required": [
+                "must_have_passed",
+                "must_not_triggered",
+                "details"
+            ],
+            "properties": {
+                "must_have_passed": {
+                    "type": "boolean"
+                },
+                "must_not_triggered": {
+                    "type": "boolean"
+                },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "gate",
+                            "status",
+                            "why",
+                            "evidence_ids"
+                        ],
+                        "properties": {
+                            "gate": {
+                                "type": "string"
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "pass",
+                                    "fail",
+                                    "unknown"
+                                ]
+                            },
+                            "why": {
+                                "type": "string"
+                            },
+                            "evidence_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "score_breakdown": {
+            "type": "array",
+            "minItems": 3,
+            "items": {
+                "type": "object",
+                "required": [
+                    "factor",
+                    "points_awarded",
+                    "max_points",
+                    "why",
+                    "evidence_ids"
+                ],
+                "properties": {
+                    "factor": {
+                        "type": "string"
+                    },
+                    "points_awarded": {
+                        "type": "integer"
+                    },
+                    "max_points": {
+                        "type": "integer"
+                    },
+                    "why": {
+                        "type": "string"
+                    },
+                    "evidence_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "reason": {
+            "type": "string"
+        },
+        "missing_info": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "followup_actions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "action",
+                    "priority"
+                ],
+                "properties": {
+                    "action": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                    }
+                }
+            }
+        }
+    }
+}

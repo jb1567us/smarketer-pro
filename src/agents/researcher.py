@@ -5,6 +5,7 @@ from social_scraper import SocialScraper
 import json
 import asyncio
 import aiohttp
+from prompt_engine import PromptEngine, PromptContext
 
 class ResearcherAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -21,6 +22,71 @@ class ResearcherAgent(BaseAgent):
         )
         self.social_scraper = SocialScraper()
         self.captcha_queue = []
+        self.prompt_engine = PromptEngine()
+
+    def generate_discovery_queries(self, icp, offering, constraints):
+        """
+        Generates high-precision search queries based on ICP.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "researcher/discovery_query_generator.j2",
+            self.kernel if hasattr(self, 'kernel') else PromptContext(niche="General", icp_role="Researcher"),
+            icp=icp,
+            offering=offering,
+            constraints=constraints
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"query_groups": [], "error": prompt}
+        return self.generate_json(prompt)
+
+    async def generate_discovery_queries_async(self, icp, offering, constraints):
+        """
+        Async version of generate_discovery_queries.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "researcher/discovery_query_generator.j2",
+            self.kernel if hasattr(self, 'kernel') else PromptContext(niche="General", icp_role="Researcher"),
+            icp=icp,
+            offering=offering,
+            constraints=constraints
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"query_groups": [], "error": prompt}
+        return await self.generate_json_async(prompt)
+
+    def plan_page_targeting(self, icp, candidate, pages_seen):
+        """
+        Recommends which URLs to fetch next from the same domain.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "researcher/page_targeting_planner.j2",
+            self.kernel if hasattr(self, 'kernel') else PromptContext(niche="General", icp_role="Researcher"),
+            icp=icp,
+            candidate=candidate,
+            pages_seen=pages_seen
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"targets": [], "error": prompt}
+        return self.generate_json(prompt)
+
+    async def extract_lead_signals(self, icp, candidate, pages):
+        """
+        Extracts structured signals from provided page text.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "researcher/lead_signal_extractor.j2",
+            self.kernel if hasattr(self, 'kernel') else PromptContext(niche="General", icp_role="Researcher"),
+            icp=icp,
+            candidate=candidate,
+            pages=pages
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"signals": {}, "error": prompt}
+        return await self.generate_json_async(prompt)
 
     def _load_footprints(self):
         """Loads Hrefer-style footprints from JSON."""

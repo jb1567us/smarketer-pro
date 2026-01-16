@@ -1,3 +1,3 @@
-from src.nodes import core
-from src.nodes import domain
-from src.nodes import affiliate_nodes
+from nodes import core
+from nodes import domain
+from nodes import affiliate_nodes

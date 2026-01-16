@@ -446,7 +446,7 @@ volumes:
         """
         # Lazy import to avoid circular dependency
         try:
-            from src.config import config
+            from config import config
         except ImportError:
             from config import config
 
@@ -539,7 +539,7 @@ volumes:
 
                 # Initialize Optimizer
                 try:
-                    from src.utils.image_optimizer import ImageOptimizer
+                    from utils.image_optimizer import ImageOptimizer
                     optimizer = ImageOptimizer(target_size_kb=150, quality=85)
                 except ImportError:
                     self.logger.warning("ImageOptimizer not found. Skipping optimization.")

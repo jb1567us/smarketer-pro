@@ -1,12 +1,8 @@
 import traceback
 import asyncio
 from typing import Dict, Any, List, Optional
-try:
-    from src.agents.base import BaseAgent
-    from src.utils.agent_registry import get_agent_class
-except ImportError:
-    from agents.base import BaseAgent
-    from utils.agent_registry import get_agent_class
+from agents.base import BaseAgent
+from utils.agent_registry import get_agent_class
 
 class FlowNode:
     def __init__(self, id, type, data, position=None):

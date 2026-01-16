@@ -23,4 +23,5 @@ openai-whisper
 torch
 static-ffmpeg
 sqlalchemy
+boto3
 # force rebuild 3

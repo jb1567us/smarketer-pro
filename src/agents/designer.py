@@ -5,7 +5,7 @@ import requests
 import os
 import hashlib
 import json
-from src.prompt_engine import PromptEngine, PromptContext
+from prompt_engine import PromptEngine, PromptContext
 
 class GraphicsDesignerAgent(BaseAgent):
     def __init__(self, provider=None):

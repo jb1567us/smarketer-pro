@@ -1,0 +1,69 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "DiscoveryQueries",
+    "type": "object",
+    "required": [
+        "version",
+        "query_groups"
+    ],
+    "properties": {
+        "version": {
+            "type": "string"
+        },
+        "query_groups": {
+            "type": "array",
+            "minItems": 3,
+            "items": {
+                "type": "object",
+                "required": [
+                    "group",
+                    "queries"
+                ],
+                "properties": {
+                    "group": {
+                        "type": "string",
+                        "enum": [
+                            "broad_discovery",
+                            "verification",
+                            "contact_finding",
+                            "optional_competitor",
+                            "optional_tech_stack"
+                        ]
+                    },
+                    "queries": {
+                        "type": "array",
+                        "minItems": 4,
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "q",
+                                "intent",
+                                "expected_results",
+                                "priority"
+                            ],
+                            "properties": {
+                                "q": {
+                                    "type": "string",
+                                    "minLength": 5
+                                },
+                                "intent": {
+                                    "type": "string",
+                                    "minLength": 5
+                                },
+                                "expected_results": {
+                                    "type": "string",
+                                    "minLength": 5
+                                },
+                                "priority": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 5
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

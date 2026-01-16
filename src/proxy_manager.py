@@ -304,27 +304,26 @@ class ProxyManager:
             return True, "Proxies disabled and removed from configuration."
         return False, f"Failed to disable proxies: {msg}"
 
-    async def ensure_fresh_proxies(self, min_count=10, max_age_hours=24):
+    async def ensure_fresh_proxies(self, min_count=10, max_age_hours=24, force=False):
         """
         Ensures we have enough fresh proxies in the pool.
         Reloads from DB first. Only harvests if DB results are insufficient or too old.
+        :param force: If True, bypasses checks and forces a new harvest + restart.
         """
         self._ensure_initialized()
-        if not self.enabled:
+        if not self.enabled and not force:
              return
 
-        print(f"[{self.__class__.__name__}] Checking proxy freshness (Min: {min_count}, Max Age: {max_age_hours}h)...")
+        print(f"[{self.__class__.__name__}] Checking proxy freshness (Min: {min_count}, Max Age: {max_age_hours}h, Force: {force})...")
         
         # 1. Reload from DB to see current state
         self._load_from_db()
         
-        # 2. Check if we meet the criteria
-        # We need to know the age of the proxies. Let's add a quick check to database.py or just use the current pool if loaded
-        # Actually, let's just check if we have enough proxies for now. 
-        # For a more robust check, we'd query the DB for proxies checked within the last max_age_hours.
-        
         needs_harvest = False
-        if len(self.proxies) < min_count:
+        if force:
+            print(f"[{self.__class__.__name__}] 🚨 FORCE HARVEST TRIGGERED. Marking current pool as stale.")
+            needs_harvest = True
+        elif len(self.proxies) < min_count:
             print(f"[{self.__class__.__name__}] Low proxy count: {len(self.proxies)}/{min_count}. Needs harvest.")
             needs_harvest = True
         
@@ -338,6 +337,8 @@ class ProxyManager:
                 success, msg = await self.update_searxng_config()
                 if not success:
                     print(f"[{self.__class__.__name__}] Warning: Failed to update SearXNG: {msg}")
+                else:
+                    print(f"[{self.__class__.__name__}] ✅ SearXNG config updated and service restarted.")
             else:
                 print(f"[{self.__class__.__name__}] Critical: Harvest yielded no proxies after validation.")
         else:

@@ -1,6 +1,6 @@
 from .base import BaseAgent
 import json
-from src.prompt_engine import PromptEngine, PromptContext
+from prompt_engine import PromptEngine, PromptContext
 
 class CopywriterAgent(BaseAgent):
     def __init__(self, provider=None, role="B2B Email Copywriter", goal="Draft highly personalized, persuasive, and human-sounding cold emails based on verified lead data."):
@@ -134,6 +134,42 @@ class CopywriterAgent(BaseAgent):
         )
             
         return self.provider.generate_json(f"Context for Email:\n{context}\n\n{prompt}")
+
+    def write_grounded_outreach(self, icp, offering, candidate, extracted_signals, decision):
+        """
+        Hyper-specific outreach messages grounded in provided evidence.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/grounded_outreach_writer.j2",
+            PromptContext(niche=icp.get('icp_name', 'B2B'), icp_role='Copywriter'), # Minimal kernel, vars passed in kwargs
+            icp=icp,
+            offering=offering,
+            candidate=candidate,
+            extracted=extracted_signals,
+            decision=decision
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"messages": [], "error": prompt}
+        return self.generate_json(prompt)
+
+    async def write_grounded_outreach_async(self, icp, offering, candidate, extracted_signals, decision):
+        """
+        Async version of write_grounded_outreach.
+        """
+        prompt = self.prompt_engine.get_prompt(
+            "copywriter/grounded_outreach_writer.j2",
+            PromptContext(niche=icp.get('icp_name', 'B2B'), icp_role='Copywriter'),
+            icp=icp,
+            offering=offering,
+            candidate=candidate,
+            extracted=extracted_signals,
+            decision=decision
+        )
+        if prompt.startswith("ERROR"):
+            self.logger.error(f"Render Error: {prompt}")
+            return {"messages": [], "error": prompt}
+        return await self.generate_json_async(prompt)
 
     def generate_dsr_copy(self, context):
         """

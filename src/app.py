@@ -204,9 +204,28 @@ def main():
     if "app_mode" not in st.session_state:
         st.session_state["app_mode"] = app_mode
 
-    # Initialize Automation Engine
-    if 'automation_engine' not in st.session_state:
-        st.session_state['automation_engine'] = AutomationEngine()
+    # Initialize Automation Engine (Singleton Service)
+    @st.cache_resource
+    def get_auto_engine():
+        return AutomationEngine()
+    
+    # Store in session state for easy access by other components
+    st.session_state['automation_engine'] = get_auto_engine()
+
+    # --- JOB MONITOR (Sidebar) ---
+    with st.sidebar:
+        jobs = st.session_state['automation_engine'].get_jobs()
+        active_jobs = [j for j in jobs.values() if j['status'] == 'running']
+        if active_jobs:
+             with st.expander(f"🔄 Active Jobs ({len(active_jobs)})", expanded=True):
+                 for j_id, j in jobs.items():
+                     if j['status'] == 'running':
+                         st.markdown(f"**{j['name']}**")
+                         st.caption(f"ID: {j_id} | Workspace: {j.get('workspace_id', 'Unknown')}")
+                         if st.button("Stop", key=f"stop_{j_id}"):
+                             st.session_state['automation_engine'].stop_job(j_id)
+                             st.rerun()
+                         st.divider()
 
     # --- UNIFIED NAVIGATION ---
     # --- URL STATE MANAGEMENT ---
@@ -231,24 +250,65 @@ def main():
     with st.sidebar:
         st.header("Navigation")
         
+        # --- WORKSPACE SELECTOR ---
+        from database import get_workspaces, create_workspace
+        workspaces = get_workspaces()
+        if not workspaces:
+            create_workspace("Default Workspace")
+            workspaces = get_workspaces()
+            
+        ws_map = {w['name']: w['id'] for w in workspaces}
+        
+        # Initialize session state for workspace
+        if 'active_workspace_id' not in st.session_state:
+            # Default to the first one found if 'Default Workspace' is missing for some reason
+            first_id = list(ws_map.values())[0] if ws_map else 1
+            st.session_state['active_workspace_id'] = ws_map.get('Default Workspace', first_id)
+            
+        # Determine current index
+        curr_ws_id = st.session_state['active_workspace_id']
+        try:
+            curr_index = list(ws_map.values()).index(curr_ws_id)
+        except ValueError:
+            curr_index = 0
+            
+        selected_ws_name = st.selectbox(
+            "🏢 Workspace", 
+            options=list(ws_map.keys()),
+            index=curr_index
+        )
+        
+        # If changed, update state
+        if ws_map[selected_ws_name] != st.session_state['active_workspace_id']:
+             st.session_state['active_workspace_id'] = ws_map[selected_ws_name]
+             st.rerun()
+
+        st.divider()
+        
+        # Advanced Toggle
+        show_labs = st.toggle("🧪 Show Advanced Tools", value=st.session_state.get("show_labs", False))
+        st.session_state["show_labs"] = show_labs
+
         # Unified Search/Jump
         if app_mode == "B2B":
-            menu_unified = [
-                "Dashboard",
-                "--- SALES CRM ---", "CRM Dashboard", "Pipeline (Deals)", "Tasks", "DSR Manager",
-                "--- MARKETING ---", "Campaigns", "Social Scheduler", "Creative Library", "Video Studio", "Strategy Laboratory", "Affiliate Command", "Reports",
-                "--- LEAD GEN ---", "Lead Discovery", "Mass Tools", "Account Creator",
-                "--- INNOVATION ---", "Product Lab",
-                "--- SEO ---", "SEO Audit", "Keyword Research", "Link Wheel Builder",
-                "--- SYSTEM ---", "Agency Orchestrator", "Automation Hub", "Workflow Builder", "Agent Factory", "Hosting Dashboard", "Analytics", "Proxy Lab", "Settings"
-            ]
+            menu_unified = ["Dashboard", "CRM Dashboard", "Campaigns", "Pipeline (Deals)", "Tasks", "Reports", "Settings"]
+            if show_labs:
+                menu_unified += [
+                    "--- LABS ---", 
+                    "Lead Discovery", "Social Scheduler", "Creative Library", "Video Studio", 
+                    "Strategy Laboratory", "Affiliate Command", "DSR Manager", "Mass Tools", 
+                    "Account Creator", "Product Lab", "SEO Audit", "Keyword Research", 
+                    "Link Wheel Builder", "Agency Orchestrator", "Automation Hub", 
+                    "Workflow Builder", "Agent Factory", "Hosting Dashboard", "Analytics", "Proxy Lab"
+                ]
         else: # B2C Mode
-            menu_unified = [
-                "--- AUDIENCE & GROWTH ---", "Influencer Scout", "Social Pulse", "Viral Engine",
-                "--- CONTENT ---", "Video Studio", "Social Scheduler", "Creative Library", "Reports",
-                "--- PARTNERS ---", "Affiliate Command",
-                "--- SYSTEM ---", "Automation Hub", "Agent Lab", "Agent Factory", "Analytics", "Settings"
-            ]
+            menu_unified = ["Dashboard", "Influencer Scout", "Social Pulse", "Video Studio", "Reports", "Settings"]
+            if show_labs:
+                menu_unified += [
+                    "--- LABS ---",
+                    "Viral Engine", "Social Scheduler", "Creative Library", "Affiliate Command", 
+                    "Automation Hub", "Agent Lab", "Agent Factory", "Analytics"
+                ]
         
         # 1. Update current_view if the selectbox was changed by the user
         if 'nav_select' in st.session_state and st.session_state['nav_select'] != st.session_state['last_view']:
@@ -261,147 +321,6 @@ def main():
         
         choice = st.selectbox("Jump to Section", menu_unified, key="nav_select")
 
-        st.divider()
-        
-        # Secondary Navigation (Categorized Expanders)
-        if app_mode == "B2B":
-            with st.expander("💼 Sales CRM", expanded=st.session_state['current_view'] in ["CRM Dashboard", "Pipeline (Deals)", "Tasks"]):
-                if st.button("CRM Dashboard", use_container_width=True): 
-                    st.session_state['current_view'] = "CRM Dashboard"
-                    st.rerun()
-                    
-                if st.button("Pipeline (Deals)", use_container_width=True): 
-                    st.session_state['current_view'] = "Pipeline (Deals)"
-                    st.rerun()
-                    
-                if st.button("Tasks", use_container_width=True): 
-                    st.session_state['current_view'] = "Tasks"
-                    st.rerun()
-                if st.button("DSR Manager", use_container_width=True): 
-                    st.session_state['current_view'] = "DSR Manager"
-                    st.rerun()
-
-
-            with st.expander("📣 Marketing Hub", expanded=st.session_state['current_view'] in ["Campaigns", "Social Scheduler", "Creative Library", "Strategy Laboratory", "Affiliate Command", "Reports"]):
-                if st.button("Campaigns", use_container_width=True): 
-                    st.session_state['current_view'] = "Campaigns"
-                    st.rerun()
-                if st.button("Social Scheduler", use_container_width=True): 
-                    st.session_state['current_view'] = "Social Scheduler"
-                    st.rerun()
-                if st.button("Creative Library", use_container_width=True): 
-                    st.session_state['current_view'] = "Creative Library"
-                    st.rerun()
-                if st.button("Strategy Laboratory", use_container_width=True): 
-                    st.session_state['current_view'] = "Strategy Laboratory"
-                    st.rerun()
-                if st.button("Social Pulse", use_container_width=True): 
-                    st.session_state['current_view'] = "Social Pulse"
-                    st.rerun()
-
-                if st.button("Reports", use_container_width=True): 
-                    st.session_state['current_view'] = "Reports"
-                    st.rerun()
-
-                if st.button("Video Studio", use_container_width=True):
-                    st.session_state['current_view'] = "Video Studio"
-                    st.rerun()
-
-                if st.button("Affiliate Command", use_container_width=True):
-                    st.session_state['current_view'] = "Affiliate Command"
-                    st.rerun()
-
-            with st.expander("🚀 Innovation Lab", expanded=st.session_state['current_view'] in ["Product Lab"]):
-                if st.button("Product Lab", use_container_width=True): 
-                    st.session_state['current_view'] = "Product Lab"
-                    st.rerun()
-
-            with st.expander("📈 SEO & Growth", expanded=st.session_state['current_view'] in ["SEO Audit", "Keyword Research", "Link Wheel Builder"]):
-                if st.button("SEO Audit", use_container_width=True): 
-                    st.session_state['current_view'] = "SEO Audit"
-                    st.rerun()
-                if st.button("Keyword Research", use_container_width=True): 
-                    st.session_state['current_view'] = "Keyword Research"
-                    st.rerun()
-                if st.button("Link Wheel Builder", use_container_width=True): 
-                    st.session_state['current_view'] = "Link Wheel Builder"
-                    st.rerun()
-
-            with st.expander("🕵️ Lead Gen", expanded=st.session_state['current_view'] in ["Lead Discovery", "Mass Tools", "Account Creator"]):
-                if st.button("Lead Discovery", use_container_width=True): 
-                    st.session_state['current_view'] = "Lead Discovery"
-                    st.rerun()
-                if st.button("Mass Tools", use_container_width=True): 
-                    st.session_state['current_view'] = "Mass Tools"
-                    st.rerun()
-                if st.button("Account Creator", use_container_width=True): 
-                    st.session_state['current_view'] = "Account Creator"
-                    st.rerun()
-
-            with st.expander("⚙️ Systems", expanded=st.session_state['current_view'] in ["Agency Orchestrator", "Automation Hub", "Agent Factory", "Analytics", "Proxy Lab", "Settings"]):
-                if st.button("Agency Orchestrator", use_container_width=True): 
-                    st.session_state['current_view'] = "Agency Orchestrator"
-                    st.rerun()
-                if st.button("Hosting Dashboard", use_container_width=True): 
-                    st.session_state['current_view'] = "Hosting Dashboard"
-                    st.rerun()
-                if st.button("Automation Hub", use_container_width=True): 
-                    st.session_state['current_view'] = "Automation Hub"
-                    st.rerun()
-                if st.button("Agent Factory", use_container_width=True): 
-                    st.session_state['current_view'] = "Agent Factory"
-                    st.rerun()
-                if st.button("Analytics", use_container_width=True): 
-                    st.session_state['current_view'] = "Analytics"
-                    st.rerun()
-                if st.button("Proxy Lab", use_container_width=True): 
-                    st.session_state['current_view'] = "Proxy Lab"
-                    st.rerun()
-                if st.button("Settings", use_container_width=True): 
-                    st.session_state['current_view'] = "Settings"
-                    st.rerun()
-
-            with st.expander("🛠️ Engineering", expanded=st.session_state['current_view'] in ["Workflow Builder"]):
-                if st.button("Workflow Builder", use_container_width=True): 
-                    st.session_state['current_view'] = "Workflow Builder"
-                    st.rerun()
-
-        else: # B2C Sidebar
-            with st.expander("🔥 Audience & Growth", expanded=st.session_state['current_view'] in ["Influencer Scout", "Social Pulse", "Viral Engine"]):
-                 if st.button("Influencer Scout", use_container_width=True):
-                    st.session_state['current_view'] = "Influencer Scout"
-                    st.rerun()
-                 if st.button("Viral Engine", use_container_width=True):
-                    st.session_state['current_view'] = "Viral Engine"
-                    st.rerun()
-                 if st.button("Social Pulse", use_container_width=True):
-                    st.session_state['current_view'] = "Social Pulse"
-                    st.rerun()
-            
-            with st.expander("🎬 Content Studio", expanded=st.session_state['current_view'] in ["Video Studio", "Social Scheduler", "Creative Library"]):
-                 if st.button("Video Studio", use_container_width=True):
-                    st.session_state['current_view'] = "Video Studio"
-                    st.rerun()
-                 if st.button("Reports", use_container_width=True):
-                    st.session_state['current_view'] = "Reports"
-                    st.rerun()
-                 if st.button("Social Scheduler", use_container_width=True):
-                    st.session_state['current_view'] = "Social Scheduler"
-                    st.rerun()
-                 if st.button("Creative Library", use_container_width=True):
-                    st.session_state['current_view'] = "Creative Library"
-                    st.rerun()
-            
-            with st.expander("⚙️ Systems", expanded=st.session_state['current_view'] in ["Automation Hub", "Agent Lab", "Settings"]):
-                if st.button("Automation Hub", use_container_width=True):
-                    st.session_state['current_view'] = "Automation Hub"
-                    st.rerun()
-                if st.button("Agent Lab", use_container_width=True):
-                    st.session_state['current_view'] = "Agent Lab"
-                    st.rerun()
-                if st.button("Settings", use_container_width=True):
-                    st.session_state['current_view'] = "Settings"
-                    st.rerun()
 
     choice = st.session_state['current_view']
     
@@ -1395,6 +1314,79 @@ def main():
 
             # 2. Enhanced Table
             edited_df = render_enhanced_table(df_res, key="lead_discovery_table")
+            
+            # --- NEW: Lead Drill-Down Panel ---
+            selected_indices = edited_df[edited_df['Select'] == True].index.tolist()
+            if selected_indices:
+                st.divider()
+                st.subheader("🔎 Lead Inspector")
+                
+                # If multiple selected, showing the first one as "Deep Dive Focus"
+                # but bulk actions still apply to all.
+                focus_idx = selected_indices[0]
+                focus_lead = results_data[focus_idx]
+                
+                with st.container(border=True):
+                    d_col1, d_col2 = st.columns([2, 1])
+                    with d_col1:
+                        st.markdown(f"### {focus_lead.get('details', {}).get('business_name') or focus_lead.get('url')}")
+                        st.caption(f"🌐 {focus_lead.get('url')}")
+                        
+                        st.markdown("#### 📧 Contact Info")
+                        emails = focus_lead.get('emails', [])
+                        if emails:
+                            for e in emails:
+                                st.code(e, language="text")
+                        else:
+                            st.warning("No emails found yet.")
+                        
+                        st.markdown("#### 🧠 AI Analysis")
+                        st.write(focus_lead.get('analysis', {}).get('reasoning', 'No deep analysis available.'))
+                        
+                    with d_col2:
+                        st.metric("Match Score", f"{focus_lead.get('analysis', {}).get('score', 0)}/100")
+                        
+                        st.markdown("#### Socials")
+                        socials = focus_lead.get('social_links', {})
+                        if socials:
+                            for plat, link in socials.items():
+                                st.markdown(f"[{plat.capitalize()}]({link})")
+                        else:
+                            st.caption("No socials found.")
+                            
+                        st.divider()
+                        if st.button("✨ Enrich This Lead", key=f"enrich_{focus_lead.get('id')}"):
+                            with st.spinner("Enriching..."):
+                                # Dummy placeholder for enrichment hook
+                                time.sleep(1) 
+                                st.toast("Enrichment Request Queued (Demo)")
+            
+            # --- NEW: Bulk Action: Add to Campaign ---
+            st.divider()
+            st.subheader("⚡ Bulk Actions")
+            col_bulk1, col_bulk2 = st.columns([2, 1])
+            
+            with col_bulk1:
+                campaigns = get_all_campaigns()
+                if campaigns:
+                    camp_options = {c['name']: c['id'] for c in campaigns}
+                    target_camp = st.selectbox("Select Target Campaign", list(camp_options.keys()))
+                else:
+                    st.warning("No active campaigns found. Create one first.")
+                    target_camp = None
+            
+            with col_bulk2:
+                selected_leads = edited_df[edited_df['Select'] == True]
+                if st.button(f"📥 Add {len(selected_leads)} to Campaign", type="primary", disabled=not target_camp or selected_leads.empty):
+                    camp_id = camp_options[target_camp]
+                    added_count = 0
+                    for _, row in selected_leads.iterrows():
+                        if add_lead_to_campaign(camp_id, row['ID']):
+                            added_count += 1
+                    st.success(f"Successfully added {added_count} leads to '{target_camp}'!")
+                    time.sleep(1)
+            
+            st.divider()
             
             # 3. Page Level Chat
             render_page_chat(

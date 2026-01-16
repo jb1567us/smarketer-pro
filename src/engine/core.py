@@ -7,8 +7,8 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from dataclasses import asdict
 
-from src.nodes.base import BaseNode, NodeContext
-from src.nodes.registry import NODE_REGISTRY
+from nodes.base import BaseNode, NodeContext
+from nodes.registry import NODE_REGISTRY
 
 class WorkflowEngine:
     """

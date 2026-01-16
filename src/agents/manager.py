@@ -3,7 +3,7 @@ import json
 from utils.agent_registry import list_available_agents
 from memory import Memory
 try:
-    from src.flow.flow_engine import flow_engine
+    from flow.flow_engine import flow_engine
 except ImportError:
     from flow.flow_engine import flow_engine
 import os
@@ -61,7 +61,7 @@ class ManagerAgent(BaseAgent):
         """
         from utils.agent_registry import AGENT_METADATA
         from workflow_manager import list_workflows
-        from src.database import log_agent_decision
+        from database import log_agent_decision
         
         # 1. Classify Intent
         classification = self._classify_intent(user_input)
@@ -221,8 +221,8 @@ class ManagerAgent(BaseAgent):
         """
         Returns a list of all registered nodes in the engine's registry.
         """
-        import src.nodes # Trigger auto-registration
-        from src.nodes.registry import NODE_REGISTRY
+        import nodes # Trigger auto-registration
+        from nodes.registry import NODE_REGISTRY
         nodes = []
         for node_type, node_inst in NODE_REGISTRY.items():
             nodes.append({
@@ -235,9 +235,9 @@ class ManagerAgent(BaseAgent):
         """
         Trigger the new Engine to run a workflow.
         """
-        from src.engine.core import WorkflowEngine
-        from src.engine.loader import WorkflowLoader
-        import src.nodes # Register nodes
+        from engine.core import WorkflowEngine
+        from engine.loader import WorkflowLoader
+        import nodes # Register nodes
 
         if status_callback:
             status_callback(f"🚀 Triggering Workflow Engine: {workflow_name} (Wait: {wait})")

@@ -1,8 +1,8 @@
 from typing import Any, Dict
-from src.nodes.base import BaseNode, NodeContext
-from src.nodes.registry import register_node
-from src.utils.agent_registry import get_agent_class
-from src.llm import LLMFactory
+from nodes.base import BaseNode, NodeContext
+from nodes.registry import register_node
+from utils.agent_registry import get_agent_class
+from llm import LLMFactory
 import traceback
 
 class AgentNode(BaseNode):

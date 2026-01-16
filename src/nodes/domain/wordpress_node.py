@@ -1,7 +1,7 @@
 from typing import Any, Dict
-from src.nodes.base import BaseNode, NodeContext
-from src.nodes.registry import register_node
-from src.agents.wordpress import WordPressAgent
+from nodes.base import BaseNode, NodeContext
+from nodes.registry import register_node
+from agents.wordpress import WordPressAgent
 import traceback
 
 class WordPressNode(BaseNode):

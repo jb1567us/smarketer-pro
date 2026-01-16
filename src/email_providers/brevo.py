@@ -12,7 +12,12 @@ class BrevoProvider(EmailProvider):
     def send_html_email(self, to_email, subject, html_content):
         if not self.api_key:
             print("  [Brevo] Error: BREVO_API_KEY not found.")
-            return False
+            return {
+                "success": False,
+                "provider": "brevo",
+                "message_id": None,
+                "metadata": {"error": "API Key Missing"}
+            }
 
         headers = {
             "accept": "application/json",
@@ -30,8 +35,22 @@ class BrevoProvider(EmailProvider):
         try:
             response = requests.post(self.api_url, headers=headers, json=payload)
             response.raise_for_status()
-            print(f"  [Brevo] Email sent to {to_email}")
-            return True
+            
+            # Brevo returns messageId in the JSON response for v3/smtp/email
+            msg_id = response.json().get("messageId")
+            
+            print(f"  [Brevo] Email sent to {to_email} (ID: {msg_id})")
+            return {
+                "success": True,
+                "provider": "brevo",
+                "message_id": msg_id,
+                "metadata": {"status": response.status_code}
+            }
         except Exception as e:
             print(f"  [Brevo] Failed to send to {to_email}: {e}")
-            return False
+            return {
+                "success": False,
+                "provider": "brevo",
+                "message_id": None,
+                "metadata": {"error": str(e)}
+            }

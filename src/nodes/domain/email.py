@@ -2,8 +2,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Any, Dict
-from src.nodes.base import BaseNode, NodeContext
-from src.nodes.registry import register_node
+from nodes.base import BaseNode, NodeContext
+from nodes.registry import register_node
 
 class EmailNode(BaseNode):
     @property

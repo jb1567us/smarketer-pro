@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from sqlalchemy.orm import Session
-from src.affiliates.models import TrackingEvent, AffiliateLink, Partner
+from affiliates.models import TrackingEvent, AffiliateLink, Partner
 
 class LinkTracker:
     def __init__(self, db: Session):

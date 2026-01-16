@@ -1,0 +1,264 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "ExtractedSignals",
+    "type": "object",
+    "required": [
+        "version",
+        "candidate",
+        "evidence",
+        "signals",
+        "missing_info"
+    ],
+    "properties": {
+        "version": {
+            "type": "string"
+        },
+        "candidate": {
+            "type": "object",
+            "required": [
+                "domain",
+                "seed_url"
+            ],
+            "properties": {
+                "domain": {
+                    "type": "string"
+                },
+                "seed_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "url",
+                    "quote"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "quote": {
+                        "type": "string",
+                        "maxLength": 220
+                    }
+                }
+            }
+        },
+        "signals": {
+            "type": "object",
+            "required": [
+                "industry",
+                "offerings",
+                "audience",
+                "geo",
+                "size_signals",
+                "contact",
+                "keywords",
+                "red_flags"
+            ],
+            "properties": {
+                "industry": {
+                    "type": "object",
+                    "required": [
+                        "value",
+                        "confidence",
+                        "evidence_ids"
+                    ],
+                    "properties": {
+                        "value": {
+                            "type": "string"
+                        },
+                        "confidence": {
+                            "type": "string",
+                            "enum": [
+                                "high",
+                                "medium",
+                                "low",
+                                "unknown"
+                            ]
+                        },
+                        "evidence_ids": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "offerings": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "value",
+                            "evidence_ids"
+                        ],
+                        "properties": {
+                            "value": {
+                                "type": "string"
+                            },
+                            "evidence_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "audience": {
+                    "type": "object",
+                    "required": [
+                        "served_markets",
+                        "b2b_vs_b2c",
+                        "evidence_ids"
+                    ],
+                    "properties": {
+                        "served_markets": {
+                            "type": "string"
+                        },
+                        "b2b_vs_b2c": {
+                            "type": "string",
+                            "enum": [
+                                "b2b",
+                                "b2c",
+                                "mixed",
+                                "unknown"
+                            ]
+                        },
+                        "evidence_ids": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "geo": {
+                    "type": "object",
+                    "required": [
+                        "locations_found",
+                        "primary_geo",
+                        "evidence_ids"
+                    ],
+                    "properties": {
+                        "locations_found": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "primary_geo": {
+                            "type": "string"
+                        },
+                        "evidence_ids": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "size_signals": {
+                    "type": "object",
+                    "required": [
+                        "locations_count_claimed",
+                        "team_size_hint",
+                        "evidence_ids"
+                    ],
+                    "properties": {
+                        "locations_count_claimed": {
+                            "type": "string"
+                        },
+                        "team_size_hint": {
+                            "type": "string"
+                        },
+                        "evidence_ids": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "contact": {
+                    "type": "object",
+                    "required": [
+                        "emails",
+                        "phones",
+                        "contact_urls",
+                        "evidence_ids"
+                    ],
+                    "properties": {
+                        "emails": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "phones": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "contact_urls": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "evidence_ids": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "red_flags": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "flag",
+                            "evidence_ids"
+                        ],
+                        "properties": {
+                            "flag": {
+                                "type": "string"
+                            },
+                            "evidence_ids": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "missing_info": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

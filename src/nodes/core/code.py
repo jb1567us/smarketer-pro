@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from src.nodes.base import BaseNode, NodeContext
+from nodes.base import BaseNode, NodeContext
 from src.nodes.registry import register_node
 import traceback
 

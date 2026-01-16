@@ -6,13 +6,13 @@ import sys
 # Ensure project root is in path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from src.agents.wordpress import WordPressAgent
-from src.agents.researcher import ResearcherAgent
-from src.agents.copywriter import CopywriterAgent
-from src.agents.designer import GraphicsDesignerAgent
-from src.agents.qualifier import QualifierAgent
-from src.agents.prompt_expert import PromptExpertAgent
-from src.prompt_engine.models import PromptContext
+from agents.wordpress import WordPressAgent
+from agents.researcher import ResearcherAgent
+from agents.copywriter import CopywriterAgent
+from agents.designer import GraphicsDesignerAgent
+from agents.qualifier import QualifierAgent
+from agents.prompt_expert import PromptExpertAgent
+from prompt_engine.models import PromptContext
 
 # Configure logging
 logging.basicConfig(

@@ -275,9 +275,9 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
         # === POST-PROCESS ENGINE ===
         try:
             log("\n--- Triggering Automation Engine ---")
-            from src.engine.core import WorkflowEngine
-            from src.engine.loader import WorkflowLoader
-            import src.nodes # Register Core Nodes
+            from engine.core import WorkflowEngine
+            from engine.loader import WorkflowLoader
+            import nodes # Register Core Nodes
 
             
             # Load Test Workflow (In production this would be dynamic)

@@ -1,0 +1,89 @@
+{
+    "icp": {
+        "icp_name": "Modern SaaS Sales Teams",
+        "industry_allow": [
+            "Software",
+            "SaaS",
+            "Technology"
+        ],
+        "industry_block": [
+            "Agencies",
+            "Consulting"
+        ],
+        "geo_allow": [
+            "USA",
+            "Canada"
+        ],
+        "geo_block": [
+            "UK"
+        ],
+        "buyer_titles_allow": [
+            "VP of Sales",
+            "Sales Director",
+            "Head of Sales"
+        ],
+        "buyer_titles_block": [
+            "HR",
+            "Marketing"
+        ],
+        "must_have": {
+            "locations_min": 1,
+            "has_contact_method": true,
+            "has_b2b_signals": true
+        },
+        "must_not_have": {
+            "is_directory": true,
+            "is_job_board": true,
+            "is_news_only": true
+        },
+        "offer_fit": {
+            "problem_keywords": [
+                "burnout",
+                "quota missing",
+                "low pipeline"
+            ],
+            "solution_keywords": [
+                "automated outreach",
+                "lead generation",
+                "sales aid"
+            ],
+            "disqualifying_keywords": [
+                "freelance",
+                "low budget"
+            ]
+        },
+        "scoring": {
+            "industry_match": 200,
+            "geo_match": 100,
+            "offer_fit": 300,
+            "decision_maker_present": 200,
+            "contactability": 100,
+            "size_signal": 100
+        },
+        "thresholds": {
+            "qualified_min_score": 700,
+            "min_evidence_quotes": 2,
+            "min_pages_seen": 2
+        }
+    },
+    "offering": {
+        "name": "Smarketer Pro",
+        "value_proposition": "Automated B2B/B2C outreach with hyper-personalization grounded in real-time scraping.",
+        "ideal_customer": "B2B SaaS companies looking to scale their outbound sales.",
+        "stages": [
+            "discovery",
+            "intro_call",
+            "audit"
+        ]
+    },
+    "constraints": {
+        "max_queries": 10,
+        "avoid_sites": [
+            "yelp.com",
+            "clutch.co"
+        ],
+        "prefer_sites": [
+            "linkedin.com"
+        ]
+    }
+}
