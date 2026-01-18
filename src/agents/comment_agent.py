@@ -31,74 +31,68 @@ class CommentAgent(BaseAgent):
         """
         Attempts to post a comment to the target URL.
         """
-        result = {}
         # 1. Fetch page to find form
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(target_url, timeout=10) as response:
                     if response.status != 200:
-                        result = {"status": "failed", "reason": f"HTTP {response.status}"}
+                        return {"status": "failed", "reason": f"HTTP {response.status}"}
+                    html = await response.text()
+                    
+                # 2. Parse form
+                soup = BeautifulSoup(html, 'html.parser')
+                form = self.find_comment_form(soup)
+                
+                if not form:
+                    return {"status": "failed", "reason": "No comment form found"}
+                
+                # 3. Prepare data
+                action = form.get('action')
+                if not action:
+                    action = target_url # Post to self if no action
+                elif not action.startswith('http'):
+                    action = urllib.parse.urljoin(target_url, action)
+                    
+                data = {}
+                inputs = form.find_all('input')
+                textareas = form.find_all('textarea')
+                
+                # Intelligent field mapping
+                for inp in inputs:
+                    if not inp.get('name'): continue
+                    name_attr = inp.get('name').lower()
+                    
+                    if 'name' in name_attr or 'author' in name_attr:
+                        data[inp['name']] = name
+                    elif 'email' in name_attr:
+                        data[inp['name']] = email
+                    elif 'url' in name_attr or 'website' in name_attr:
+                        data[inp['name']] = website
+                    elif 'submit' in name_attr:
+                        data[inp['name']] = inp.get('value', 'Submit')
                     else:
-                        html = await response.text()
-                        
-                        # 2. Parse form
-                        soup = BeautifulSoup(html, 'html.parser')
-                        form = self.find_comment_form(soup)
-                        
-                        if not form:
-                            result = {"status": "failed", "reason": "No comment form found"}
-                        else:
-                            # 3. Prepare data
-                            action = form.get('action')
-                            if not action:
-                                action = target_url # Post to self if no action
-                            elif not action.startswith('http'):
-                                action = urllib.parse.urljoin(target_url, action)
-                                
-                            data = {}
-                            inputs = form.find_all('input')
-                            textareas = form.find_all('textarea')
+                        # Hidden fields, nonces, etc.
+                        if inp.get('value'):
+                            data[inp['name']] = inp['value']
                             
-                            # Intelligent field mapping
-                            for inp in inputs:
-                                if not inp.get('name'): continue
-                                name_attr = inp.get('name').lower()
-                                
-                                if 'name' in name_attr or 'author' in name_attr:
-                                    data[inp['name']] = name
-                                elif 'email' in name_attr:
-                                    data[inp['name']] = email
-                                elif 'url' in name_attr or 'website' in name_attr:
-                                    data[inp['name']] = website
-                                elif 'submit' in name_attr:
-                                    data[inp['name']] = inp.get('value', 'Submit')
-                                else:
-                                    # Hidden fields, nonces, etc.
-                                    if inp.get('value'):
-                                        data[inp['name']] = inp['value']
-                                        
-                            for ta in textareas:
-                                name_attr = ta.get('name', '').lower()
-                                if 'comment' in name_attr or 'message' in name_attr:
-                                    data[ta['name']] = comment_body
-            
-                            # 4. Submit
-                            async with session.post(action, data=data, timeout=15) as post_response:
-                                if post_response.status == 200:
-                                    # Check for success indicators
-                                    res_text = await post_response.text()
-                                    if "moderation" in res_text.lower() or "awaiting" in res_text.lower():
-                                         result = {"status": "success", "detail": "Comment awaiting moderation"}
-                                    else:
-                                         result = {"status": "success", "detail": f"Posted to {action}"}
-                                else:
-                                    result = {"status": "failed", "reason": f"Post failed {post_response.status}"}
-                                    
+                for ta in textareas:
+                    name_attr = ta.get('name', '').lower()
+                    if 'comment' in name_attr or 'message' in name_attr:
+                        data[ta['name']] = comment_body
+
+                # 4. Submit
+                async with session.post(action, data=data, timeout=15) as post_response:
+                    if post_response.status == 200:
+                        # Check for success indicators
+                        res_text = await post_response.text()
+                        if "moderation" in res_text.lower() or "awaiting" in res_text.lower():
+                             return {"status": "success", "detail": "Comment awaiting moderation"}
+                        return {"status": "success", "detail": f"Posted to {action}"}
+                    else:
+                        return {"status": "failed", "reason": f"Post failed {post_response.status}"}
+                        
         except Exception as e:
-            result = {"status": "error", "reason": str(e)}
-            
-        self.save_work_product(str(result), task_instruction=f"Post comment to {target_url}", tags=["comment", "outreach"])
-        return result
+            return {"status": "error", "reason": str(e)}
 
     def find_comment_form(self, soup):
         """

@@ -56,14 +56,6 @@ def _inject_env_config():
     if os.getenv('FTP_PASS'): config['ftp']['pass'] = os.getenv('FTP_PASS')
     if os.getenv('FTP_PORT'): config['ftp']['port'] = os.getenv('FTP_PORT')
 
-    # SearXNG Config: Env > Auto-Fallback > Default
-    if 'search' not in config:
-        config['search'] = {}
-
-    env_url = os.getenv('SEARXNG_URL')
-    if env_url:
-         config['search']['searxng_url'] = env_url
-
 # Initial injection
 _inject_env_config()
 
@@ -85,13 +77,3 @@ def get_smtp_config():
         password = os.getenv(var_name, "")
         
     return c["smtp_server"], c["smtp_port"], user, password
-
-def get_cpanel_config():
-    """Helper to get cPanel config."""
-    c = config.get("cpanel", {})
-    return {
-        'url': os.getenv('CPANEL_URL', config.get('cpanel', {}).get('url')),
-        'user': os.getenv('CPANEL_USER', config.get('cpanel', {}).get('user')),
-        'token': os.getenv('CPANEL_TOKEN', config.get('cpanel', {}).get('token')),
-        'domain': os.getenv('CPANEL_DOMAIN', config.get('cpanel', {}).get('domain'))
-    }

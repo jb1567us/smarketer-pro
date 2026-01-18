@@ -1,121 +1,22 @@
 from llm import LLMFactory
 from utils.memory import memory_manager
-from database import save_agent_work_product
-from utils.persona_manager import persona_manager
-from services.rag_service import rag_service
-from utils.voice_manager import VoiceManager
-import json
-import asyncio
-import base64
-
-from utils.logger_service import get_logger
 
 class BaseAgent:
-    def __init__(self, role, goal, backstory=None, provider=None):
+    def __init__(self, role, goal, provider=None):
         self.role = role
         self.goal = goal
-        self.backstory = backstory
         if provider:
             self.provider = provider
         else:
             self.provider = LLMFactory.get_provider()
-        self.persona = None
-        self.voice_manager = VoiceManager() # Basic TTS
-        self.logger = get_logger(self.__class__.__name__)
 
-    def get_expertise(self):
-        """Returns the agent's expertise metadata from the registry."""
-        from utils.agent_registry import get_agent_metadata
-        # Try to find metadata by class name or role-based mapping
-        # For simplicity, we assume the agent_name in registry matches subclasses
-        name = self.__class__.__name__.lower().replace("agent", "")
-        return get_agent_metadata(name)
-
-    def set_persona(self, persona_name):
-        """Assigns a persona to the agent."""
-        self.persona = persona_manager.get_persona(persona_name)
-        if self.persona:
-            self.role = self.persona.get('role', self.role)
-            self.goal = self.persona.get('goal', self.goal)
-
-    def speak(self, text):
-        """Standardized method for agents to speak."""
-        self.voice_manager.speak(text)
-
-    def analyze_image(self, image_path, instructions=None):
-        """Standardized method for agents to analyze images (Vision)."""
-        prompt = instructions or "Describe this image in detail."
-        try:
-            with open(image_path, "rb") as image_file:
-                image_data = base64.b64encode(image_file.read()).decode("utf-8")
-                # We assume the provider supports generate_text with an image_data kwarg
-                return self.provider.generate_text(prompt, image_data=image_data)
-        except Exception as e:
-            self.logger.error(f"[BaseAgent] Error analyzing image: {e}", exc_info=True)
-            return f"Error: {e}"
-
-    def retrieve_context(self, query, top_k=3):
-        """Retrieves context from the RAG store."""
-        return rag_service.get_context(query, top_k=top_k)
-
-    def prompt(self, context, instructions, use_rag=False):
+    def prompt(self, context, instructions):
         """
         Constructs the prompt and calls the LLM.
         """
-        if use_rag:
-            rag_context = self.retrieve_context(instructions)
-            if rag_context:
-                context = f"{context}\n\nAdditional Knowledge Base Context:\n{rag_context}"
-
         system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\nCRITICAL: Do NOT hallucinate. Only use provided information or verifiable facts. if you don't know, say 'Unknown'."
-        
-        if self.persona:
-            persona_prompt = persona_manager.get_system_prompt(self.persona['name'])
-            if persona_prompt:
-                system_msg = f"{persona_prompt}\n\nCRITICAL: Do NOT hallucinate."
-
         full_prompt = f"{system_msg}\n\nContext:\n{context}\n\nInstructions:\n{instructions}"
         return self.provider.generate_text(full_prompt)
-
-    def generate_json(self, prompt, expect_list=False, **kwargs):
-        """
-        Calls the LLM to generate JSON and ensures the output matches the expected type (dict or list).
-        """
-        result = self.provider.generate_json(prompt, **kwargs)
-        
-        if expect_list:
-            if isinstance(result, list):
-                return result
-            if isinstance(result, dict):
-                return [result]
-            return []
-        else:
-            if isinstance(result, dict):
-                return result
-            if isinstance(result, list) and len(result) > 0:
-                if isinstance(result[0], dict):
-                    return result[0]
-            return {}
-
-    async def generate_json_async(self, prompt, expect_list=False, **kwargs):
-        """
-        Async version of generate_json.
-        """
-        result = await self.provider.generate_json_async(prompt, **kwargs)
-        
-        if expect_list:
-            if isinstance(result, list):
-                return result
-            if isinstance(result, dict):
-                return [result]
-            return []
-        else:
-            if isinstance(result, dict):
-                return result
-            if isinstance(result, list) and len(result) > 0:
-                if isinstance(result[0], dict):
-                    return result[0]
-            return {}
 
     async def think_async(self, context, instructions=None):
         """
@@ -169,96 +70,3 @@ class BaseAgent:
     def recall(self, key=None):
         """Recalls facts for this agent."""
         return memory_manager.recall(self.role, key)
-
-    def save_work_product(self, content, task_instruction, tags=None):
-        """Saves the agent's work product to the database."""
-        return save_agent_work_product(
-            agent_role=self.role,
-            input_task=task_instruction,
-            output_content=str(content), # Ensure string format
-            tags=tags
-        )
-
-    def export_data(self):
-        """
-        Exports the agent's state to a dictionary.
-        Can be overridden by subclasses to include specific fields.
-        """
-        data = {
-            "role": self.role,
-            "goal": self.goal,
-            "backstory": self.backstory,
-            "persona_name": self.persona.get('name') if self.persona else None,
-            "agent_type": self.__class__.__name__
-        }
-        return data
-
-    def import_data(self, data):
-        """
-        Imports the agent's state from a dictionary.
-        """
-        self.role = data.get("role", self.role)
-        self.goal = data.get("goal", self.goal)
-        self.backstory = data.get("backstory", self.backstory)
-        
-        persona_name = data.get("persona_name")
-        if persona_name:
-            self.set_persona(persona_name)
-    
-    def validate_response(self, response):
-        """
-        Validates the agent's response. 
-        Subclasses can override to implement specific validation logic.
-        """
-        if not response:
-            return False, "Empty response"
-        return True, "Valid"
-
-    def reset(self):
-        """
-        Resets the agent's memory/state.
-        """
-        # Clear memory or other transient state here if needed
-        pass
-
-    def save_work(self, content, artifact_type="text", metadata=None):
-        """
-        Saves the agent's work product to the database.
-        This is the canonical method for saving persistent agent output.
-        """
-        try:
-            from database import save_agent_work_product
-            # Ensure metadata is a dict
-            if metadata is None:
-                metadata = {}
-            
-            # Auto-include export data in metadata for potential reproducibility
-            if "agent_state" not in metadata:
-                metadata["agent_state"] = self.export_data()
-
-            return save_agent_work_product(
-                agent_role=self.role,
-                input_task=metadata.get("input_task", "Unknown Task"), # Best effort
-                output_content=content,
-                metadata=metadata,
-                artifact_type=artifact_type
-            )
-        except Exception as e:
-            self.logger.error(f"Error saving agent work: {e}", exc_info=True)
-            return None
-
-    def get_proxy(self):
-        """Standardized method for agents to retrieve a high-quality proxy."""
-        try:
-            from proxy_manager import proxy_manager
-            return proxy_manager.get_proxy()
-        except ImportError:
-            return None
-
-    def report_proxy_status(self, proxy, success, latency=None):
-        """Reports the status of a proxy used by this agent."""
-        try:
-            from proxy_manager import proxy_manager
-            proxy_manager.report_result(proxy, success, latency)
-        except ImportError:
-            pass

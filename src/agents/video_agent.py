@@ -28,9 +28,7 @@ class VideoAgent(BaseAgent):
         if instructions:
             full_instructions += f"\n\nADDITIONAL USER INSTRUCTIONS:\n{instructions}"
 
-        res = self.prompt(context, full_instructions).strip()
-        self.save_work(res, artifact_type="video_prompt", metadata={"style": style})
-        return res
+        return self.prompt(context, full_instructions).strip()
     
     def create_video(self, context, provider_name=None, style="cinematic", instructions=None):
         """
@@ -44,13 +42,6 @@ class VideoAgent(BaseAgent):
         
         # 3. Call execution
         result = provider.generate_video(optimized_prompt)
-        
-
-        self.save_work_product(str({
-            "optimized_prompt": optimized_prompt,
-            "provider": provider_name or self.manager.default_provider,
-            "job": result
-        }), task_instruction=f"Create video: {context}", tags=["video", "job"])
         
         return {
             "optimized_prompt": optimized_prompt,

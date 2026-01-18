@@ -57,19 +57,7 @@ class SocialListeningAgent(BaseAgent):
                                 
                     except Exception as e:
                         print(f"Error searching for {kw} on {platform}: {e}")
-        
-        # Anti-Hallucination: If no signals found, return explicit empty state or special signal
-        if not found_signals:
-            return [{"platform": "system", "user": "System", "content": "NO_DATA_FOUND", "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"), "url": "#", "analysis": {"is_relevant": False}}]
-        
-        # Save work product
-        if found_signals:
-            self.save_work_product(
-                content=found_signals, 
-                task_instruction=f"Listen for keywords: {keywords}", 
-                tags=["social_listening", "signals"]
-            )
-            
+                    
         return found_signals
 
     async def analyze_signal(self, content, keyword):
@@ -100,7 +88,7 @@ class SocialListeningAgent(BaseAgent):
             "suggested_reply_angle": "Draft a helpful, non-salesy insight that gently positions us as the expert/solution."
         }}
         """
-        return self.generate_json(prompt)
+        return self.provider.generate_json(prompt)
 
     def generate_reply(self, post_content, angle):
         """
@@ -114,34 +102,4 @@ class SocialListeningAgent(BaseAgent):
         
         Keep it under 280 characters.
         """
-        res = self.provider.generate_text(prompt)
-        self.save_work(res, artifact_type="social_reply_draft", metadata={"angle": angle})
-        return res
-
-    def analyze_platform_trends(self, topic, platform="twitter"):
-        """
-        Analyzes current trends around a topic to generate viral hooks, inspired by 'Twitter Topic Analyzer'.
-        """
-        prompt = (
-            f"Act as a Viral Trend Analyst for {platform}.\n"
-            f"I need to create content about '{topic}'.\n"
-            "Analyze the psychology of what makes posts about this topic go viral right now.\n"
-            "Identify:\n"
-            "1. Controversial angles (Polarization).\n"
-            "2. Counter-intuitive insights (Novelty).\n"
-            "3. High-emotion triggers (Fear/Greed/Curiosity).\n\n"
-            "Return JSON with keys: 'viral_hooks' (list of 5 hooks), 'trending_hashtags', 'content_structure_suggestion'."
-        )
-        return self.provider.generate_json(prompt)
-
-    def generate_trend_report(self, internal_data_summary):
-        """
-        Synthesizes a report on social trends based on gathered data.
-        """
-        prompt = (
-            "Generate a 'Trend Intelligence Report' based on the following social signals we've gathered.\n"
-            "Highlight the biggest opportunity for our brand to insert itself into the conversation.\n\n"
-            f"Data Summary: {internal_data_summary}\n\n"
-            "Return JSON with keys: 'primary_trend', 'opportunity_score', 'recommended_action'."
-        )
-        return self.provider.generate_json(prompt)
+        return self.provider.generate_text(prompt)

@@ -78,14 +78,9 @@ class SmartRouter(LLMProvider):
         # Non-retryable errors
         blacklist_terms = [
             "terms_required", 
-            "model_terms_required",
-            "terms acceptance",
             "400 bad request", 
-            "400 client error",
             "401 unauthorized", 
-            "401 client error",
             "403 forbidden",
-            "403 client error",
             "model_not_found",
             "not authorized"
         ]

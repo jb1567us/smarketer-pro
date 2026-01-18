@@ -3,14 +3,13 @@ import aiohttp
 import base64
 import os
 import time
-# from .local_whisper import LocalWhisperSolver
+from .local_whisper import LocalWhisperSolver
 
 class CaptchaSolver:
-    def __init__(self, provider, api_key, custom_url=None):
+    def __init__(self, provider, api_key):
         self.provider = provider.lower()
         self.api_key = api_key
-        self.custom_url = custom_url
-        self.enabled = bool((api_key or self.provider == "xevil") and self.provider != "none")
+        self.enabled = bool(api_key and self.provider != "none")
 
     async def solve_recaptcha_v2(self, site_key, page_url):
         """Solves reCAPTCHA v2 using the configured provider."""
@@ -19,7 +18,6 @@ class CaptchaSolver:
 
         providers = {
             "2captcha": self._solve_2captcha_recaptcha,
-            "xevil": self._solve_xevil_recaptcha,
             "anticaptcha": self._solve_anticaptcha_recaptcha,
             "deathbycaptcha": self._solve_deathbycaptcha_recaptcha,
             "capsolver": self._solve_capsolver_recaptcha,
@@ -35,54 +33,25 @@ class CaptchaSolver:
 
     async def _solve_2captcha_recaptcha(self, site_key, page_url):
         """Implementation for 2Captcha reCAPTCHA v2."""
-        base_url = "http://2captcha.com"
-        return await self._solve_2captcha_compatible(base_url, site_key, page_url)
-
-    async def _solve_xevil_recaptcha(self, site_key, page_url):
-        """Implementation for XEvil (emulating 2Captcha)."""
-        base_url = self.custom_url or "http://127.0.0.1"
-        return await self._solve_2captcha_compatible(base_url, site_key, page_url)
-
-    async def _solve_2captcha_compatible(self, base_url, site_key, page_url):
-        """Generic 2Captcha-compatible API solver (used by 2Captcha and XEvil)."""
         async with aiohttp.ClientSession() as session:
-            submit_url = f"{base_url}/in.php?key={self.api_key}&method=userrecaptcha&googlekey={site_key}&pageurl={page_url}&json=1"
+            submit_url = f"http://2captcha.com/in.php?key={self.api_key}&method=userrecaptcha&googlekey={site_key}&pageurl={page_url}&json=1"
             async with session.get(submit_url) as resp:
-                try:
-                    data = await resp.json()
-                except:
-                    # Fallback for plain text responses (XEvil sometimes does this)
-                    text = await resp.text()
-                    if "OK|" in text:
-                        data = {"status": 1, "request": text.split("|")[1]}
-                    else:
-                        return {"error": f"API Error: {text}"}
-
+                data = await resp.json()
                 if data.get("status") != 1:
-                    return {"error": f"API error: {data.get('request')}"}
+                    return {"error": f"2Captcha error: {data.get('request')}"}
                 request_id = data.get("request")
 
-            result_url = f"{base_url}/res.php?key={self.api_key}&action=get&id={request_id}&json=1"
+            result_url = f"http://2captcha.com/res.php?key={self.api_key}&action=get&id={request_id}&json=1"
             for _ in range(30):
                 await asyncio.sleep(5)
                 async with session.get(result_url) as resp:
-                    try:
-                        data = await resp.json()
-                    except:
-                        text = await resp.text()
-                        if "OK|" in text:
-                            data = {"status": 1, "request": text.split("|")[1]}
-                        elif text == "CAPCHA_NOT_READY":
-                            data = {"status": 0, "request": "CAPCHA_NOT_READY"}
-                        else:
-                            return {"error": f"API Error: {text}"}
-
+                    data = await resp.json()
                     if data.get("status") == 1:
                         return {"status": "success", "token": data.get("request")}
                     elif data.get("request") == "CAPCHA_NOT_READY":
                         continue
                     else:
-                        return {"error": f"API error: {data.get('request')}"}
+                        return {"error": f"2Captcha error: {data.get('request')}"}
             return {"error": "Timeout"}
 
     async def _solve_anticaptcha_recaptcha(self, site_key, page_url):
@@ -157,12 +126,8 @@ class CaptchaSolver:
         if not audio_url:
             return {"error": "Local Whisper requires audio_url. Please ensure the automation extracts the audio challenge link."}
         
-        try:
-            from .local_whisper import LocalWhisperSolver
-            solver = LocalWhisperSolver()
-            return await solver.solve_audio(audio_url)
-        except ImportError as e:
-            return {"error": f"Local Whisper dependencies missing: {e}"}
+        solver = LocalWhisperSolver()
+        return await solver.solve_audio(audio_url)
 
     async def get_balance(self):
         """Retrieves the current balance from the provider."""

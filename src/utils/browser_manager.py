@@ -2,8 +2,9 @@ import os
 import json
 import asyncio
 from playwright.async_api import async_playwright
+from playwright_stealth import Stealth
+from fake_useragent import UserAgent
 from database import get_captcha_settings
-from utils.captcha_solver import CaptchaSolver
 
 class BrowserManager:
     """
@@ -50,14 +51,29 @@ class BrowserManager:
         # Load state if exists
         state_file = self.storage_path if os.path.exists(self.storage_path) else None
         
-        # Create Context
+        # Generate Random Indentity
+        ua = UserAgent()
+        user_agent = ua.random
+        
+        # Randomize Viewport (Desktop-ish)
+        width = random.randint(1280, 1920)
+        height = random.randint(720, 1080)
+        viewport = {"width": width, "height": height}
+
+        # Create Context with Stealth Params
         self.context = await self.browser.new_context(
             storage_state=state_file,
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            locale="en-US"
+            user_agent=user_agent,
+            viewport=viewport,
+            locale="en-US",
+            permissions=["geolocation"],
+            timezone_id="America/New_York", # Ideally match proxy, but static for now
         )
         
         self.page = await self.context.new_page()
+        
+        # Apply Stealth
+        await Stealth().apply_stealth_async(self.page)
         
         # Attach captcha solver if configured
         self._attach_solver()
@@ -66,6 +82,7 @@ class BrowserManager:
 
     def _attach_solver(self):
         """Attaches captcha solver configuration to the page object."""
+        from utils.captcha_solver import CaptchaSolver
         captcha_settings = get_captcha_settings()
         if captcha_settings and captcha_settings.get('enabled'):
             self.page.captcha_solver = CaptchaSolver(

@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 from config import config
 from scraper import search_searxng
 from utils.browser_manager import BrowserManager
+from proxy_manager import proxy_manager
+import uuid
 
 VALID_PLATFORMS = ["twitter", "linkedin", "tiktok", "instagram", "reddit", "youtube", "threads"]
 
@@ -160,10 +162,21 @@ class SocialScraper:
         platform = self._detect_platform(url)
         captured_data = {}
 
+        # Use ephemeral session (Stealth: don't share cookies, use fresh ID)
+        session_id = f"scrape_{uuid.uuid4().hex[:8]}"
+        bm = BrowserManager(session_id=session_id)
+
         try:
-            page = await self._get_browser()
+            # Dynamic Proxy
+            proxy_url = proxy_manager.get_proxy()
+            proxy_cfg = {"server": proxy_url} if proxy_url else None
             
-            # Anti-detect measures
+            if proxy_url:
+                print(f"  [SocialScraper] Using Proxy: {proxy_url}")
+
+            page = await bm.launch(headless=True, proxy=proxy_cfg)
+            
+            # Anti-detect measures (Extra headers)
             await page.set_extra_http_headers({
                 "Accept-Language": "en-US,en;q=0.9"
             })
@@ -243,3 +256,5 @@ class SocialScraper:
         except Exception as e:
             print(f"  [SocialScraper] Browser failed: {e}")
             return None
+        finally:
+            await bm.close()

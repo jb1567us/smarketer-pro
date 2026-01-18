@@ -7,7 +7,6 @@ from .ollama import OllamaProvider
 from .openrouter import OpenRouterProvider
 from .openai_compatible import OpenAICompatibleProvider
 from .cohere import CohereProvider
-
 from .router import SmartRouter
 
 class LLMFactory:
@@ -32,14 +31,6 @@ class LLMFactory:
                 for candidate in candidates:
                     p_name = candidate.get('provider')
                     m_name = candidate.get('model_name')
-                    
-                    # Filter out non-English models
-                    if m_name:
-                        lower_m = m_name.lower()
-                        if any(x in lower_m for x in ['allam', 'moonshot', 'qwen', 'yi-', 'baichuan', 'chatglm']):
-                            print(f"[LLMFactory] Skipping non-English model: {m_name}")
-                            continue
-
                     if p_name:
                          try:
                              provider = cls._create_provider(p_name, m_name)
@@ -158,12 +149,10 @@ class LLMFactory:
             return OpenAICompatibleProvider(
                 api_key, f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions", model
             )
-
-
+            
         elif provider_name == 'google_cloud_vertex_ai':
              api_key = os.getenv("GEMINI_API_KEY")
              model = model_name or 'gemini-flash-latest'
              return GeminiProvider(api_key, model)
 
         raise ValueError(f"Unknown LLM provider: {provider_name}")
-# Force Update Hash

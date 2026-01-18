@@ -2,16 +2,11 @@ import os
 import asyncio
 import aiohttp
 import tempfile
-try:
-    import whisper
-    import torch
-    from static_ffmpeg import add_paths as add_ffmpeg_paths
-    MISSING_DEPS = None
-except ImportError as e:
-    MISSING_DEPS = str(e)
-    whisper = None
-    torch = None
-    add_ffmpeg_paths = lambda: None
+import whisper
+import torch
+import shutil
+import subprocess
+from static_ffmpeg import add_paths as add_ffmpeg_paths
 
 class LocalWhisperSolver:
     _instance = None
@@ -19,8 +14,6 @@ class LocalWhisperSolver:
 
     def __new__(cls, model_name="tiny"):
         if cls._instance is None:
-            if MISSING_DEPS:
-                raise ImportError(f"Cannot initialize LocalWhisperSolver. Missing dependencies: {MISSING_DEPS}. Please install openai-whisper, torch, and static-ffmpeg.")
             cls._instance = super(LocalWhisperSolver, cls).__new__(cls)
             cls._model_name = model_name
         return cls._instance
