@@ -43,14 +43,19 @@ func Untar(dst string, r io.Reader) error {
 		case tar.TypeSymlink:
 			// Remove existing symlink/file if it exists
 			os.Remove(target)
-			if err := os.Symlink(header.Linkname, target); err != nil {
-				// Ignore error if it fails on Windows/limited permissions, but log it
+			err := os.Symlink(header.Linkname, target)
+			if err != nil {
+				// On Windows, creating symlinks requires special privileges or Developer Mode.
+				// We log a warning but continue, as some symlinks might not be critical
+				// or can be handled as regular files in a more advanced implementation.
 				fmt.Printf("Warning: Failed to create symlink %s -> %s: %v\n", target, header.Linkname, err)
+                if os.Getenv("OS") == "Windows_NT" {
+                    fmt.Printf("  Tip: Try enabling Windows Developer Mode to allow symlink creation without admin rights.\n")
+                }
 			}
 		case tar.TypeLink:
 			// Handle hard links
 			os.Remove(target)
-			// The link target is relative to the root of the destination
 			linkTarget := filepath.Join(dst, header.Linkname)
 			if err := os.Link(linkTarget, target); err != nil {
 				fmt.Printf("Warning: Failed to create hard link %s -> %s: %v\n", target, linkTarget, err)

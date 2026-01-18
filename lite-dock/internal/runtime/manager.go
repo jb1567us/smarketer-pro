@@ -65,13 +65,28 @@ func (m *Manager) Run(cmdID string, imgRef string, cfg ContainerConfig) error {
 		return err
 	}
 	
-    // COPY (Naive)
+    // COPY (Naive but robust on Windows)
     if runtime.GOOS == "windows" {
-         // Windows-friendly copy
-         powershellArgs := []string{"-Command", fmt.Sprintf("Copy-Item -Path '%s\\*' -Destination '%s' -Recurse", imagePath, rootfs)}
-         cpCmd := exec.Command("powershell", powershellArgs...)
-         if out, err := cpCmd.CombinedOutput(); err != nil {
-             return fmt.Errorf("copying rootfs (windows): %v, %s", err, string(out))
+         // Robocopy is much better at handling symlinks and deep paths than Copy-Item
+         // /E - Copy subdirectories, including empty ones.
+         // /COPY:DAT - Copy Data, Attributes, Time stamps.
+         // /XJ - Exclude junction points (can cause infinite loops if they point to parents).
+         // /R:3 /W:5 - 3 retries, 5 seconds wait.
+         // /NJH /NJS /NDL /NC /NS - Less verbose output.
+         args := []string{imagePath, rootfs, "/E", "/COPY:DAT", "/R:3", "/W:5", "/NFL", "/NDL", "/NJH", "/NJS"}
+         cpCmd := exec.Command("robocopy", args...)
+         // Robocopy returns exit codes 0-7 for success (some files copied, etc)
+         err := cpCmd.Run()
+         if err != nil {
+             if exitErr, ok := err.(*exec.ExitError); ok {
+                 if exitErr.ExitCode() < 8 {
+                     // Success!
+                 } else {
+                     return fmt.Errorf("copying rootfs (robocopy exit %d): %v", exitErr.ExitCode(), err)
+                 }
+             } else {
+                 return fmt.Errorf("copying rootfs (robocopy): %v", err)
+             }
          }
     } else {
         // Use 'cp -r' for simplicity via shell on Linux/Unix
@@ -81,8 +96,41 @@ func (m *Manager) Run(cmdID string, imgRef string, cfg ContainerConfig) error {
         }
     }
 
-	// 3. Generate config.json (Spec)
+    // Helper to convert Windows path to WSL path
+    toWSLPath := func(winPath string) string {
+        if len(winPath) < 2 || winPath[1] != ':' {
+            return winPath // Already relative or unix
+        }
+        drive := winPath[0]
+        pathWithoutDrive := winPath[3:]
+        // Naive assumption: standard /mnt/[drive]/ access
+        return fmt.Sprintf("/mnt/%c/%s", drive+32, filepath.ToSlash(pathWithoutDrive))
+    }
+
+    // 3. Prepare DNS (resolv.conf)
+    // Create a local resolv.conf in the bundle to ensure connectivity inside container
+    // even if host's /etc/resolv.conf is a broken symlink or unreachable.
+    dnsPath := filepath.Join(bundleDir, "resolv.conf")
+    dnsContent := "nameserver 8.8.8.8\nnameserver 8.8.4.4\nnameserver 1.1.1.1\n"
+    if err := os.WriteFile(dnsPath, []byte(dnsContent), 0644); err != nil {
+        return fmt.Errorf("creating resolv.conf: %w", err)
+    }
+
+	// 4. Generate config.json (Spec)
 	spec := GenerateSpec(cfg)
+    
+    // Override the resolv.conf mount to use our clean one
+    for i, m := range spec.Mounts {
+        if m.Destination == "/etc/resolv.conf" {
+            // FIX: If on Windows, we must provide the WSL path, not the Win path
+            // because this config.json is consumed by runc INSIDE WSL.
+            if runtime.GOOS == "windows" {
+                spec.Mounts[i].Source = toWSLPath(dnsPath)
+            } else {
+                spec.Mounts[i].Source = dnsPath
+            }
+        }
+    }
 	
 	specFile, err := os.Create(filepath.Join(bundleDir, "config.json"))
 	if err != nil {
@@ -96,11 +144,21 @@ func (m *Manager) Run(cmdID string, imgRef string, cfg ContainerConfig) error {
 		return err
 	}
 
-	// 4. Run 'runc' or 'HCS'
+	// 4. Run 'runc' (Native on Linux, via WSL on Windows)
     if runtime.GOOS == "windows" {
-        fmt.Printf("Starting container %s via HCS (Lightweight VM)...\n", cmdID)
-        launcher := NewHCSLauncher()
-        return launcher.RunContainer(cmdID, bundleDir)
+        fmt.Printf("Starting container %s via runc (WSL)...\n", cmdID)
+        
+        wslPath := toWSLPath(bundleDir)
+
+        // On Windows, we need to run runc INSIDE WSL
+        // wsl -u root runc run -b [bundle_path] [id]
+        runcArgs := []string{"-u", "root", "runc", "run", "-b", wslPath, cmdID}
+        runcCmd := exec.Command("wsl", runcArgs...)
+        runcCmd.Stdin = os.Stdin
+        runcCmd.Stdout = os.Stdout
+        runcCmd.Stderr = os.Stderr
+        
+        return runcCmd.Run()
     }
 
 	// runc run -b bundleDir containerID
