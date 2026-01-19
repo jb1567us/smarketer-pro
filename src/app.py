@@ -191,164 +191,171 @@ def get_system_usage():
     ram = psutil.virtual_memory().percent
     return cpu, ram
 
+# Automation Engine (Singleton Service)
+@st.cache_resource
+def get_auto_engine():
+    from src.automation_engine import AutomationEngine
+    return AutomationEngine()
+
+
+def render_sidebar_chat():
+    """Persistent AI Command Center in the sidebar."""
+    with st.sidebar:
+        st.title("🤖 Assistant")
+        st.caption("AI Command Center")
+        
+        # Initialize History
+        if 'global_chat_history' not in st.session_state:
+            st.session_state['global_chat_history'] = []
+            
+        # Display History
+        for msg in st.session_state['global_chat_history']:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+                
+        # Chat Input
+        if prompt := st.chat_input("Ask me anything...", key="sidebar_chat_input"):
+            st.session_state['global_chat_history'].append({"role": "user", "content": prompt})
+            # Force refresh to show user message immediately
+            st.rerun()
+
+    # Process response in a separate block if last message is from user
+    # to avoid the "chat_input inside with st.sidebar" restriction if it exists
+    if st.session_state.get('global_chat_history') and st.session_state['global_chat_history'][-1]['role'] == 'user':
+        last_prompt = st.session_state['global_chat_history'][-1]['content']
+        with st.sidebar:
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    try:
+                        from agents import ManagerAgent
+                        manager = ManagerAgent()
+                        response = manager.think(last_prompt)
+                        st.session_state['global_chat_history'].append({"role": "assistant", "content": response})
+                        st.markdown(response)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+
+def render_top_navigation():
+    """Two-tier horizontal navigation bar."""
+    
+    # 1. Categories
+    categories = {
+        "🏠 Command": ["Dashboard", "CRM Dashboard", "Performance Reports", "Manager Console"],
+        "📣 Outreach": ["Campaigns", "Lead Discovery", "Affiliate Hub", "DSR Manager"],
+        "✨ Creative": ["Video Studio", "Social Scheduler", "Social Pulse", "WordPress Manager"],
+        "🛠️ Tools": ["Agent Lab", "Account Creator", "Hosting Dashboard", "Proxy Lab", "Product Lab"],
+        "⚙️ Admin": ["Settings"]
+    }
+
+    # Initialize current category if not set
+    if 'current_category' not in st.session_state:
+        st.session_state['current_category'] = "🏠 Command"
+
+    st.markdown("---")
+    cat_cols = st.columns(len(categories))
+    for i, cat in enumerate(categories.keys()):
+        with cat_cols[i]:
+            is_active = st.session_state['current_category'] == cat
+            btn_type = "primary" if is_active else "secondary"
+            if st.button(cat, key=f"cat_btn_{cat}", use_container_width=True, type=btn_type):
+                st.session_state['current_category'] = cat
+                # Default to first view in category when switching
+                st.session_state['current_view'] = categories[cat][0]
+                st.rerun()
+
+    # 2. Sub-Views (Functional)
+    current_cat = st.session_state['current_category']
+    sub_views = categories[current_cat]
+    
+    sub_cols = st.columns(len(sub_views))
+    for i, view in enumerate(sub_views):
+        with sub_cols[i]:
+            is_active_view = st.session_state.get('current_view') == view
+            # Use small text or different style for sub-nav
+            if st.button(view, key=f"view_btn_{view}", use_container_width=True):
+                st.session_state['current_view'] = view
+                st.rerun()
+    st.markdown("---")
+
 def main():
-    st.set_page_config(page_title="B2B Outreach Agent", layout="wide", page_icon="🚀")
+    st.set_page_config(page_title="Smarketer Pro", layout="wide", page_icon="🚀")
     init_logging()
     reload_config()
     load_css()
     init_db()
+    
+    st.session_state['automation_engine'] = get_auto_engine()
+    
+    # 1. Sidebar Intelligence (Persistent)
+    render_sidebar_chat()
+    
     st.title("🚀 Smarketer Pro: CRM & Growth OS")
     
-    # Global App Mode
-    app_mode = get_setting("app_mode", "B2B")
-    if "app_mode" not in st.session_state:
-        st.session_state["app_mode"] = app_mode
-
-    # Initialize Automation Engine (Singleton Service)
-    @st.cache_resource
-    def get_auto_engine():
-        return AutomationEngine()
+    # 2. Top Navigation
+    render_top_navigation()
     
-    # Store in session state for easy access by other components
-    st.session_state['automation_engine'] = get_auto_engine()
-
-    # --- JOB MONITOR (Sidebar) ---
-    with st.sidebar:
-        jobs = st.session_state['automation_engine'].get_jobs()
-        active_jobs = [j for j in jobs.values() if j['status'] == 'running']
-        if active_jobs:
-             with st.expander(f"🔄 Active Jobs ({len(active_jobs)})", expanded=True):
-                 for j_id, j in jobs.items():
-                     if j['status'] == 'running':
-                         st.markdown(f"**{j['name']}**")
-                         st.caption(f"ID: {j_id} | Workspace: {j.get('workspace_id', 'Unknown')}")
-                         if st.button("Stop", key=f"stop_{j_id}"):
-                             st.session_state['automation_engine'].stop_job(j_id)
-                             st.rerun()
-                         st.divider()
-
-    # --- UNIFIED NAVIGATION ---
-    # --- URL STATE MANAGEMENT ---
-    # 1. Initialize from URL if fresh session
-    if 'current_view' not in st.session_state:
-        if "view" in st.query_params:
-            st.session_state['current_view'] = st.query_params["view"]
-        else:
-            st.session_state['current_view'] = "Dashboard"
-
-    # 2. Sync URL to State (ensure URL reflects current view)
-    # This ensures that when we switch views via buttons/dropdowns, the URL updates
-    try:
-        if "view" not in st.query_params or st.query_params["view"] != st.session_state['current_view']:
-            st.query_params["view"] = st.session_state['current_view']
-    except Exception:
-        pass # Handle case where query params might be immutable in some edge contexts or test runs
-
-    if 'last_view' not in st.session_state:
-        st.session_state['last_view'] = st.session_state['current_view']
-
-    with st.sidebar:
-        st.header("Navigation")
-        
-        # --- WORKSPACE SELECTOR ---
-        from database import get_workspaces, create_workspace
-        workspaces = get_workspaces()
-        if not workspaces:
-            create_workspace("Default Workspace")
-            workspaces = get_workspaces()
-            
-        ws_map = {w['name']: w['id'] for w in workspaces}
-        
-        # Initialize session state for workspace
-        if 'active_workspace_id' not in st.session_state:
-            # Default to the first one found if 'Default Workspace' is missing for some reason
-            first_id = list(ws_map.values())[0] if ws_map else 1
-            st.session_state['active_workspace_id'] = ws_map.get('Default Workspace', first_id)
-            
-        # Determine current index
-        curr_ws_id = st.session_state['active_workspace_id']
-        try:
-            curr_index = list(ws_map.values()).index(curr_ws_id)
-        except ValueError:
-            curr_index = 0
-            
-        selected_ws_name = st.selectbox(
-            "🏢 Workspace", 
-            options=list(ws_map.keys()),
-            index=curr_index
-        )
-        
-        # If changed, update state
-        if ws_map[selected_ws_name] != st.session_state['active_workspace_id']:
-             st.session_state['active_workspace_id'] = ws_map[selected_ws_name]
-             st.rerun()
-
-        st.divider()
-        
-        # Advanced Toggle
-        show_labs = st.toggle("🧪 Show Advanced Tools", value=st.session_state.get("show_labs", False))
-        st.session_state["show_labs"] = show_labs
-
-        # Unified Search/Jump
-        if app_mode == "B2B":
-            menu_unified = ["Dashboard", "CRM Dashboard", "Campaigns", "Pipeline (Deals)", "Tasks", "Reports", "Settings"]
-            if show_labs:
-                menu_unified += [
-                    "--- LABS ---", 
-                    "Lead Discovery", "Social Scheduler", "Creative Library", "Video Studio", 
-                    "Strategy Laboratory", "Affiliate Command", "DSR Manager", "Mass Tools", 
-                    "Account Creator", "Product Lab", "SEO Audit", "Keyword Research", 
-                    "Link Wheel Builder", "Agency Orchestrator", "Automation Hub", 
-                    "Workflow Builder", "Agent Factory", "Hosting Dashboard", "Analytics", "Proxy Lab"
-                ]
-        else: # B2C Mode
-            menu_unified = ["Dashboard", "Influencer Scout", "Social Pulse", "Video Studio", "Reports", "Settings"]
-            if show_labs:
-                menu_unified += [
-                    "--- LABS ---",
-                    "Viral Engine", "Social Scheduler", "Creative Library", "Affiliate Command", 
-                    "Automation Hub", "Agent Lab", "Agent Factory", "Analytics"
-                ]
-        
-        # 1. Update current_view if the selectbox was changed by the user
-        if 'nav_select' in st.session_state and st.session_state['nav_select'] != st.session_state['last_view']:
-            if not st.session_state['nav_select'].startswith("---"):
-                st.session_state['current_view'] = st.session_state['nav_select']
-        
-        # 2. Synchronize st.session_state['nav_select'] and last_view with current_view
-        st.session_state['nav_select'] = st.session_state['current_view']
-        st.session_state['last_view'] = st.session_state['current_view']
-        
-        choice = st.selectbox("Jump to Section", menu_unified, key="nav_select")
-
-
-    choice = st.session_state['current_view']
-    
+    choice = st.session_state.get('current_view', 'Dashboard')
     if choice.startswith("---"):
         st.warning("Please select a valid functional page.")
         return
 
-    with st.sidebar:
-        st.divider()
-        if st.button("💓 Process Active Cadences"):
-            with st.spinner("Processing due touches..."):
-                cm = CadenceManager()
-                results = cm.process_all_cadences()
-                if results:
-                    st.success(f"Processed {len(results)} events.")
-                else:
-                    st.info("No due events found.")
-        
-        st.divider()
-        if st.button("🛑 Terminate Session"):
-            with st.spinner("Saving state and shutting down..."):
-                terminate_session()
+
 
     if choice == "Dashboard":
         render_dashboard()
 
+    elif choice == "CRM Dashboard":
+        render_crm_dashboard()
+
+    elif choice == "Performance Reports":
+        render_reports_page()
+
+    elif choice == "Manager Console":
+        render_manager_ui()
+
+    elif choice == "Campaigns":
+        render_campaign_page()
+
+    elif choice == "Lead Discovery":
+        render_mass_tools_page()
+
+    elif choice == "Affiliate Hub":
+        render_affiliate_ui()
+
+    elif choice == "DSR Manager":
+        render_dsr_page()
+
+    elif choice == "Video Studio":
+        render_video_studio()
+
+    elif choice == "Social Scheduler":
+        render_social_scheduler_page()
+
+    elif choice == "Social Pulse":
+        render_social_pulse_page()
+
+    elif choice == "WordPress Manager":
+        # Using hosting dashboard as it contains WP management logic
+        render_hosting_dashboard()
+
+    elif choice == "Agent Lab":
+        render_agent_lab()
+
+    elif choice == "Account Creator":
+        render_account_creator_ui()
+
     elif choice == "Hosting Dashboard":
         render_hosting_dashboard()
+
+    elif choice == "Proxy Lab":
+        render_pm_ui()
+
+    elif choice == "Product Lab":
+        render_pm_ui()
+
+    elif choice == "Settings":
+        render_settings_page()
 
     elif choice == "Analytics":
         st.header("📊 Campaign Analytics")

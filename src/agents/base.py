@@ -5,6 +5,11 @@ class BaseAgent:
     def __init__(self, role, goal, provider=None):
         self.role = role
         self.goal = goal
+        
+        # Centralized Logging
+        from utils.logger_service import get_logger
+        self.logger = get_logger(self.role.replace(" ", "_"))
+        
         if provider:
             self.provider = provider
         else:

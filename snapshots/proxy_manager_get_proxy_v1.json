@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-18T14:11:35.066658",
+  "function_name": "get_proxy_wrapper",
+  "snapshot_name": "proxy_manager_get_proxy_v1",
+  "results": [
+    {
+      "input_index": 0,
+      "input_args": {},
+      "status": "success",
+      "output": "http://1.2.3.4:8080"
+    }
+  ]
+}

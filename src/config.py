@@ -77,3 +77,18 @@ def get_smtp_config():
         password = os.getenv(var_name, "")
         
     return c["smtp_server"], c["smtp_port"], user, password
+
+def get_cpanel_config():
+    """Returns cPanel configuration from environment or config."""
+    cp = config.get("cpanel", {})
+    url = os.getenv("CPANEL_URL") or cp.get("url", "")
+    user = os.getenv("CPANEL_USER") or cp.get("user", "")
+    token = os.getenv("CPANEL_TOKEN") or os.getenv("CPANEL_PASS") or cp.get("token", "")
+    domain = os.getenv("CPANEL_DOMAIN") or cp.get("domain", "")
+    
+    return {
+        "url": url,
+        "user": user,
+        "token": token,
+        "domain": domain
+    }

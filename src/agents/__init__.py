@@ -15,4 +15,13 @@ from .video_agent import VideoAgent
 from .influencer_agent import InfluencerAgent
 from .social_listener import SocialListeningAgent
 from .image_agent import ImageGenAgent
+from .account_creator import AccountCreatorAgent
+from .comment_agent import CommentAgent
+from .contact_form_agent import ContactFormAgent
+from .creative import CreativeAgent
+from .ctr_booster import CTRBoosterAgent
+from .prompt_expert import PromptExpertAgent
+from .proxy_agent import ProxyAgent
+from .summarizer import SummarizerAgent
+from .custom_agent import CustomAgent
 

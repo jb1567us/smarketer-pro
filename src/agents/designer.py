@@ -4,11 +4,8 @@ import random
 import requests
 import os
 import hashlib
-<<<<<<< HEAD
 import json
 from prompt_engine import PromptEngine, PromptContext
-=======
->>>>>>> origin/feature/pc-b-work
 
 class GraphicsDesignerAgent(BaseAgent):
     def __init__(self, provider=None):

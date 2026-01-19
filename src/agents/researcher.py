@@ -13,7 +13,6 @@ class ResearcherAgent(BaseAgent):
             goal="Find relevant leads, gather deep information, and ensure data completeness by self-correcting.",
             provider=provider
         )
-<<<<<<< HEAD
         self.social_scraper = SocialScraper()
         self.captcha_queue = []
         self.prompt_engine = PromptEngine()
@@ -92,8 +91,6 @@ class ResearcherAgent(BaseAgent):
         except Exception as e:
             self.logger.warning(f"Could not load footprints: {e}")
             return {}
-=======
->>>>>>> origin/feature/pc-b-work
 
     async def mass_harvest(self, footprint, num_results=100, status_callback=None):
         """
@@ -127,7 +124,6 @@ class ResearcherAgent(BaseAgent):
             
         return analyzed
 
-<<<<<<< HEAD
     async def keyword_discovery(self, seeds, levels=1, sources=['google'], append_variants=False):
         """
         ScrapeBox-style Keyword Harvester. 
@@ -171,9 +167,6 @@ class ResearcherAgent(BaseAgent):
         return results
 
     async def detect_platform(self, url, session=None):
-=======
-    async def detect_platform(self, url):
->>>>>>> origin/feature/pc-b-work
         """
         Identifies if a site is WordPress, Drupal, Joomla, etc. without full scrape if possible.
         """
@@ -193,7 +186,6 @@ class ResearcherAgent(BaseAgent):
         # We reuse the fetch_html from extractor but keep it light
         try:
             from extractor import fetch_html
-<<<<<<< HEAD
             
             # Use provided session or create a temp one
             if session:
@@ -212,19 +204,6 @@ class ResearcherAgent(BaseAgent):
 
         except Exception as e:
             self.logger.debug(f"Platform detection failed: {e}")
-=======
-            import aiohttp
-            async with aiohttp.ClientSession() as session:
-                 html = await fetch_html(session, url, timeout=5)
-                 if html:
-                     if "wp-content" in html or "WordPress" in html: return "WordPress"
-                     if "Drupal" in html: return "Drupal"
-                     if "Joomla" in html: return "Joomla"
-                     if "vBulletin" in html: return "vBulletin"
-                     if "xenForo" in html: return "xenForo"
-                     if "Shopify" in html: return "Shopify"
-        except:
->>>>>>> origin/feature/pc-b-work
             pass
             
         return "Unknown"
@@ -447,7 +426,6 @@ class ResearcherAgent(BaseAgent):
         return await self.gather_intel(context if isinstance(context, dict) else {"query": str(context)})
 
     def think(self, context, instructions=None):
-<<<<<<< HEAD
         """
         Processes a request. Checks for loop to allow safe async execution.
         """
@@ -466,11 +444,3 @@ class ResearcherAgent(BaseAgent):
         else:
             # No loop, safe to run sync
             return asyncio.run(self.think_async(context, instructions))
-=======
-        # The researcher thinks via async gather_intel mostly, 
-        # but if we need a synchronous 'opinion' on data, we use this.
-        prompt = f"Analyze this research data:\n{context}"
-        if instructions:
-            prompt += f"\n\nAdditional Instructions:\n{instructions}"
-        return self.provider.generate_text(prompt)
->>>>>>> origin/feature/pc-b-work

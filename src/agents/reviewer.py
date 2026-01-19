@@ -32,7 +32,6 @@ class ReviewerAgent(BaseAgent):
              return self.review_image_concept(context, instructions)
 
         return self.provider.generate_json(f"Content to Review:\n{context}\n\n{full_instructions}")
-<<<<<<< HEAD
 
     def review_content(self, content, criteria=None):
         """
@@ -92,5 +91,3 @@ class ReviewerAgent(BaseAgent):
             "Return JSON with keys: 'current_tone_description', 'tone_score_1_10', 'flagged_phrases' (list), 'suggestions'."
         )
         return self.provider.generate_json(prompt)
-=======
->>>>>>> origin/feature/pc-b-work

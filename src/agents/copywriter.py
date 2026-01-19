@@ -38,7 +38,6 @@ class CopywriterAgent(BaseAgent):
         return self.think(context, instructions)
 
     def think(self, context, instructions=None):
-<<<<<<< HEAD
         """Standard draft generation with routing."""
         # Check for Creative/Specialized Writing Triggers (Sync Version)
         prompt_lower = (str(context) + " " + str(instructions)).lower()
@@ -58,8 +57,6 @@ class CopywriterAgent(BaseAgent):
         return self.generate_optimized_email(context, instructions)
 
     def generate_optimized_email(self, context, instructions=None):
-=======
->>>>>>> origin/feature/pc-b-work
         """
         Context should include:
         - Lead info (Business type, pain points, contact name)
@@ -69,7 +66,6 @@ class CopywriterAgent(BaseAgent):
         from config import config
         personalization_level = config.get('campaign', {}).get('personalization', 'hyper')
         
-<<<<<<< HEAD
         # 1. Initial Draft
         self.logger.info("  [Copywriter] Generating initial draft...")
         draft = self._draft_email(context, instructions, personalization_level)
@@ -118,30 +114,6 @@ class CopywriterAgent(BaseAgent):
         # 1. Construct the Kernel (Mocking inference for now as context is usually a string)
         # In a real system, 'context' should be a dict with 'niche', 'icp', etc.
         # We will assume 'context' might contain text clues or we treat it as generic.
-=======
-        base_instructions = ""
-        if personalization_level == 'generic':
-             base_instructions = (
-                "Draft a professional cold email for this lead.\n"
-                "Rules:\n"
-                "1. Use a clear, standard value proposition.\n"
-                "2. Keep it under 100 words.\n"
-                "3. Focus on general industry benefits rather than specific company details.\n"
-                "4. Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': 'Generic mode active'}"
-             )
-        else:
-            # Hyper personalization (default)
-            base_instructions = (
-                "Draft a highly personalized cold email for this lead.\n"
-                "Rules:\n"
-                "1. Use a hook relevant to their specific business.\n"
-                "2. IF 'intent_signals', 'company_bio', or 'social_intel' are provided, prioritize mentioning them in the first 2 sentences to show deep research.\n"
-                "3. Keep it under 150 words.\n"
-                "4. End with a soft call to action (e.g. 'Worth a chat?').\n"
-                "5. Do NOT use generic fluff like 'I hope this finds you well'.\n\n"
-                "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
-            )
->>>>>>> origin/feature/pc-b-work
         
         ctx = PromptContext(
             niche="General Business", # Default if unknown
@@ -271,7 +243,6 @@ class CopywriterAgent(BaseAgent):
         
         Return JSON: {{ "diagnosis": "...", "optimized_variants": ["variant1", "variant2"] }}
         """
-<<<<<<< HEAD
         res = self.provider.generate_json(prompt)
         self.save_work(res, artifact_type="campaign_optimization", metadata={"problem": problem})
         return res
@@ -386,6 +357,3 @@ class CopywriterAgent(BaseAgent):
         res = self.provider.generate_json(prompt)
         self.save_work(res, artifact_type="persona", metadata={"niche": niche})
         return res
-=======
-        return self.provider.generate_json(prompt)
->>>>>>> origin/feature/pc-b-work

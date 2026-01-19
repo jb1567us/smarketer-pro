@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-01-18T14:16:31.381777",
+  "function_name": "start_copy_wrapper",
+  "snapshot_name": "campaign_manager_copy_v1",
+  "results": [
+    {
+      "input_index": 0,
+      "input_args": [
+        "Software",
+        {
+          "title": "Slow",
+          "description": "It is slow"
+        },
+        "FastApp",
+        "Makes it fast"
+      ],
+      "status": "error",
+      "output": "__main__.start_copy_wrapper() argument after ** must be a mapping, not tuple"
+    }
+  ]
+}

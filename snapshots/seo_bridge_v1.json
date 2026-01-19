@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-01-18T14:10:13.370684",
+  "function_name": "target_wrapper",
+  "snapshot_name": "seo_bridge_v1",
+  "results": [
+    {
+      "input_index": 0,
+      "input_args": {
+        "platform": "wordpress",
+        "title": "Test Post",
+        "content": "Body content",
+        "links": [
+          "http://example.com"
+        ]
+      },
+      "status": "success",
+      "output": {
+        "status": "success",
+        "platform": "mocked_platform",
+        "url": "http://mock.url/post"
+      }
+    },
+    {
+      "input_index": 1,
+      "input_args": {
+        "platform": "blogger",
+        "title": "Blogger Post",
+        "content": "Body content",
+        "links": []
+      },
+      "status": "success",
+      "output": {
+        "status": "success",
+        "platform": "mocked_platform",
+        "url": "http://mock.url/post"
+      }
+    },
+    {
+      "input_index": 2,
+      "input_args": {
+        "platform": "linkedin",
+        "title": "Linked Post",
+        "content": "Body content",
+        "links": []
+      },
+      "status": "success",
+      "output": {
+        "status": "success",
+        "platform": "mocked_platform",
+        "url": "http://mock.url/post"
+      }
+    }
+  ]
+}

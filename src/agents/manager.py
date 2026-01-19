@@ -1,6 +1,5 @@
 from .base import BaseAgent
 import json
-<<<<<<< HEAD
 from utils.agent_registry import list_available_agents
 from memory import Memory
 try:
@@ -8,9 +7,6 @@ try:
 except ImportError:
     from flow.flow_engine import flow_engine
 import os
-=======
-
->>>>>>> origin/feature/pc-b-work
 
 class ManagerAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -19,7 +15,6 @@ class ManagerAgent(BaseAgent):
             goal="Oversee the outreach process, execute tasks via tools, and manage workflows.",
             provider=provider
         )
-<<<<<<< HEAD
         self.memory = Memory()
 
     def _classify_intent(self, user_input):
@@ -53,14 +48,11 @@ class ManagerAgent(BaseAgent):
         except Exception as e:
             self.logger.warning(f"[Manager] Intent classification failed: {e}")
             return {"intent": "CHAT", "entity": "None", "reasoning": "Fallback due to error"}
-=======
->>>>>>> origin/feature/pc-b-work
 
     def think(self, user_input, intent_history=None, available_tools=None):
         """
         Decides on the next action based on user input, with strict validation and logging.
         """
-<<<<<<< HEAD
         from utils.agent_registry import AGENT_METADATA
         from workflow_manager import list_workflows
         from database import log_agent_decision
@@ -131,32 +123,8 @@ class ManagerAgent(BaseAgent):
             f"Memory: {memory}\n\n"
             "CRITICAL: Return strictly valid JSON. No markdown.\n"
             "Schema: {\"tool\": \"tool_name\", \"params\": {\"arg\": \"val\"}, \"reply\": \"user_msg\"}"
-=======
-        tools_desc = (
-            "1. run_search(query, niche, profile): Search for leads. 'profile' can be 'default' or custom.\n"
-            "2. save_workflow(name): Save the confirmed steps as a workflow.\n"
-            "3. list_workflows(): List available saved workflows.\n"
-            "4. run_workflow(name): Load and execute a saved workflow.\n"
-            "5. chat(message): Just reply to the user if no tool is needed.\n"
         )
 
-        system_prompt = (
-            "You are the Manager Agent. You control the B2B Outreach System.\n"
-            "Your job is to interpret user requests and call the appropriate tool.\n"
-            "If the user wants to do something complex, break it down or ask for details.\n"
-            "If the user asks to 'save this' or 'make a workflow', use save_workflow.\n"
-            "If the user wants to run a saved process, use run_workflow.\n\n"
-            f"Available Tools:\n{tools_desc}\n\n"
-            "Return JSON ONLY in this format:\n"
-            "{\n"
-            "  'tool': 'tool_name',\n"
-            "  'params': { ... arguments ... },\n"
-            "  'reply': 'Message to user explaining what you are doing'\n"
-            "}"
->>>>>>> origin/feature/pc-b-work
-        )
-
-<<<<<<< HEAD
         try:
             response = self.provider.generate_json(f"{system_prompt}\n\nUser Input: {user_input}")
             if isinstance(response, list): response = response[0]
@@ -338,12 +306,3 @@ class ManagerAgent(BaseAgent):
         except Exception as e:
             self.logger.error(f"Design failed: {e}")
             return {"error": str(e)}
-=======
-        full_prompt = (
-            f"{system_prompt}\n\n"
-            f"{history_str}"
-            f"User Input: {user_input}\n"
-        )
-        
-        return self.provider.generate_json(full_prompt)
->>>>>>> origin/feature/pc-b-work
