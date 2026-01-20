@@ -14,9 +14,12 @@ class UXAgent(BaseAgent):
         Context should be the data structure to visualize.
         """
         base_instructions = (
-            "Analyze the provided data structure.\n"
-            "Suggest the best Streamlit component to display it (e.g., st.dataframe, st.metric, st.bar_chart, st.markdown).\n"
-            "Explain why this visualization is best for the user.\n\n"
+            "Analyze the provided data structure according to UI/UX Pro Max intelligence rules:\n"
+            "1. CATEGORY: B2B SaaS Enterprise / Data-Dense Dashboard.\n"
+            "2. STYLE: Trust & Authority + Minimalism.\n"
+            "3. RECOMMEND: Suggest the best Streamlit component (st.dataframe, st.metric, st.bar_chart, st.markdown).\n"
+            "4. REASONING: Explain why this choice builds trust, ROI messaging, or performance efficiency.\n"
+            "5. ANTI-PATTERNS: Avoid excessive animation or unreadable color contrasts.\n\n"
             "Return a JSON object with keys: 'component_type' (string), 'configuration' (dict), 'reasoning' (string)."
         )
         

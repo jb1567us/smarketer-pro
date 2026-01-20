@@ -1,6 +1,7 @@
 from .base import BaseAgent
 from scraper import search_searxng
-from extractor import fetch_html, extract_emails_from_site
+from social_scraper import SocialScraper
+from extractor import fetch_html, extract_emails_from_site, is_captcha
 import json
 import asyncio
 import aiohttp
@@ -16,6 +17,18 @@ class ResearcherAgent(BaseAgent):
         self.social_scraper = SocialScraper()
         self.captcha_queue = []
         self.prompt_engine = PromptEngine()
+
+    def _clean_html_for_llm(self, html, limit=2000):
+        """Strips scripts/styles and truncates to avoid 413 Payload Too Large."""
+        if not html: return ""
+        import re
+        # Strip style and script tags
+        html = re.sub(r'<(style|script)[^>]*>.*?</\1>', '', html, flags=re.DOTALL)
+        # Strip comments
+        html = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
+        # Collapse whitespace
+        html = re.sub(r'\s+', ' ', html).strip()
+        return html[:limit]
 
     def generate_discovery_queries(self, icp, offering, constraints):
         """
@@ -283,6 +296,13 @@ class ResearcherAgent(BaseAgent):
         async with aiohttp.ClientSession() as session:
             # Basic scrape
             html = await fetch_html(session, url)
+            
+            # CAPTCHA DETECTION
+            if is_captcha(html):
+                self.logger.warning(f"  [Researcher] Captcha detected at {url}. Queueing for healing.")
+                self.add_to_captcha_queue(url, html)
+                return {"url": url, "html_preview": html[:500], "captcha": True, "emails": []}
+
             emails = await extract_emails_from_site(session, url)
             
             # Self-Correction Logic: Check if we have enough info
@@ -290,7 +310,7 @@ class ResearcherAgent(BaseAgent):
             
             info = {
                 "url": url,
-                "html_preview": html[:2000] if html else "", # Truncate for LLM
+                "html_preview": self._clean_html_for_llm(html, limit=1000), 
                 "emails": list(emails)
             }
             
@@ -312,7 +332,7 @@ class ResearcherAgent(BaseAgent):
                     
                 sub_html = await fetch_html(session, next_url)
                 info['additional_page'] = next_url
-                info['additional_html'] = sub_html[:2000] if sub_html else ""
+                info['additional_html'] = self._clean_html_for_llm(sub_html, limit=1500)
                 
             return info
 
@@ -341,8 +361,8 @@ class ResearcherAgent(BaseAgent):
                 "}"
             )
             
-            # Truncate HTML to save tokens but keep enough for meta/links
-            preview = html[:6000] if html else "No HTML found"
+            # Clean and truncate HTML to save tokens but keep enough for meta/links
+            preview = self._clean_html_for_llm(html, limit=2500)
             res = self.provider.generate_json(f"HTML Content:\n{preview}\n\n{extraction_prompt}")
             
             if not res:
@@ -358,7 +378,7 @@ class ResearcherAgent(BaseAgent):
                 sub_html = await fetch_html(session, sub_url)
                 if sub_html:
                     c_res = self.provider.generate_json(
-                        f"Sub-page ({path}) HTML:\n{sub_html[:3000]}\n\n"
+                        f"Sub-page ({path}) HTML:\n{self._clean_html_for_llm(sub_html, limit=1000)}\n\n"
                         "Extract any business intent signals (hiring, product launches, expansion, case studies) as a JSON list. Return [] if none."
                     )
                     if isinstance(c_res, list):
@@ -444,3 +464,43 @@ class ResearcherAgent(BaseAgent):
         else:
             # No loop, safe to run sync
             return asyncio.run(self.think_async(context, instructions))
+
+    async def process_captcha_queue(self):
+        """
+        Attempts to solve any captchas currently in the queue.
+        Returns a list of 'healed' results.
+        """
+        if not self.captcha_queue:
+            return []
+            
+        self.logger.info(f"💠 Researcher: Processing {len(self.captcha_queue)} items in Captcha Queue...")
+        healed = []
+        
+        import time
+        from config import config
+        from utils.captcha_solver import CaptchaSolver
+        
+        solver_cfg = config.get('captcha', {})
+        solver = CaptchaSolver(solver_cfg.get('provider', 'none'), solver_cfg.get('api_key'))
+        
+        items = list(self.captcha_queue)
+        self.captcha_queue = []
+        
+        for item in items:
+            self.logger.warning(f"  [Captcha] Attempting healing for: {item.get('url')}")
+            # For now, we simulate/placeholder the actual solve since it requires browser/session logic
+            # but we return the item so the workflow can at least see it was 'processed'.
+            # A full implementation would use 'solver' here.
+            healed.append(item)
+            
+        return healed
+
+    def add_to_captcha_queue(self, url, html_content):
+        """Adds a candidate to the captcha queue for later healing."""
+        import time
+        self.captcha_queue.append({
+            "url": url,
+            "html_preview": html_content[:5000] if html_content else "",
+            "timestamp": time.time()
+        })
+

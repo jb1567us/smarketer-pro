@@ -77,10 +77,7 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
                         else:
                              print(f"SearXNG {attempt_url} [{mode}] returned {response.status}")
                 except Exception as e:
-                    print(f"Connection failed to {attempt_url} [{mode}]: {e}")
-                    # Only report failure to router if ALL modes fail for this URL? 
-                    # Simpler to report failure if the *primary* attempt fails, or maybe just log it.
-                    # For now, we just continue to 'direct' mode or next URL.
+                    print(f"  [Scraper] Connection failed to {attempt_url} [{mode}]: {e}")
             
             if url_success:
                 break

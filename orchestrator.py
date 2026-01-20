@@ -11,6 +11,7 @@ from datetime import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from config import config
 from llm.factory import LLMFactory
+from prompt_engine import PromptContext
 import sys
 
 # Force UTF-8 for Windows consoles to support emojis 🚀
@@ -33,6 +34,37 @@ class Orchestrator:
                 directives[name] = f.read()
         return directives
 
+    def report_to_hub(self, status, details=None):
+        """
+        Reports progress to the Smarketer-Pro Hub.
+        """
+        print(f"📡 [Hub-Sync] Mission Status: {status}")
+        if details:
+            print(f"   Details: {details}")
+
+    def get_hub_context(self):
+        """
+        Fetches the current Brand Kernel from the Hub.
+        In Phase 3, this mocks the MCP tool call to the hub_server.py.
+        """
+        # In a full MCP setup, this would use a JSON-RPC call over stdio.
+        # For this integration phase, we'll simulate the Tool response.
+        self.report_to_hub("FETCHING_BRAND_KERNEL")
+        
+        # Simulated response from 'get_brand_kernel' tool
+        kernel_data = {
+            "niche": "B2B SaaS / Growth Marketing",
+            "icp_role": "Marketing Director",
+            "brand_voice": "Bold, results-oriented, professional",
+            "product_name": "Smarketer-Pro",
+            "product_benefits": [
+                "Automated lead enrichment",
+                "Polymorphic outreach strategies",
+                "Self-correcting campaign loops"
+            ]
+        }
+        return PromptContext.from_dict(kernel_data)
+
     def run_command(self, script_name, *args):
         """Runs a script in the execution/ folder and returns JSON output."""
         script_path = os.path.join(os.path.dirname(__file__), 'execution', script_name)
@@ -50,6 +82,12 @@ class Orchestrator:
 
     async def run_mission(self, query, criteria=None):
         print(f"🚀 Starting Mission: {query}")
+        self.report_to_hub("MISSION_STARTED", f"Query: {query}")
+        
+        # PHASE 3: Fetch Brand Kernel from Hub
+        hub_context = self.get_hub_context()
+        print(f"🧬 [Hub-Sync] Brand Kernel Loaded: {hub_context.brand_voice}")
+        
         print("--------------------------------")
         
         # 1. DISCOVERY
@@ -154,6 +192,7 @@ class Orchestrator:
             self._save_lead(lead)
             
         print("\n✅ Mission Complete.")
+        self.report_to_hub("MISSION_COMPLETED", f"Found {len(qualified_leads)} leads.")
         print(f"Generated {len(qualified_leads)} qualified leads.")
 
     def _save_lead(self, lead):

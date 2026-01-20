@@ -125,7 +125,7 @@ class LLMFactory:
 
         elif provider_name == 'groq':
             api_key = os.getenv("GROQ_API_KEY")
-            model = model_name or 'llama3-70b-8192'
+            model = model_name or 'llama-3.3-70b-versatile'
             return OpenAICompatibleProvider(
                 api_key, "https://api.groq.com/openai/v1/chat/completions", model
             )

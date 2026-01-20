@@ -20,9 +20,57 @@ def signal_handler(sig, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
+def check_preflights():
+    """Ensures lite-dock image is present and dependencies are met."""
+    print("[AutoRunner] Running pre-flight checks...")
+    
+    # 1. Check if image exists
+    # We check the directory structure expected by inject_proxies.py
+    user_profile = os.environ.get('USERPROFILE')
+    settings_path = os.path.join(user_profile, '.litedock', 'images', 'searxng_searxng_latest', 'usr', 'local', 'searxng', 'searx', 'settings.yml')
+    
+    if not os.path.exists(settings_path):
+        print(f"[AutoRunner] Image {IMAGE_NAME} not found. Attempting to pull...")
+        try:
+            # Determine platform executable
+            exe = "lite-dock.exe" if sys.platform == 'win32' else "./lite-dock"
+            subprocess.run([exe, "pull", IMAGE_NAME], check=True)
+            print("[AutoRunner] Image pulled successfully.")
+        except Exception as e:
+            print(f"[AutoRunner] ❌ Failed to pull image: {e}")
+            return False
+
+    # 2. Check for runc in WSL (Critical for Windows)
+    if sys.platform == 'win32':
+        try:
+            res = subprocess.run(["wsl", "which", "runc"], capture_output=True, text=True)
+            if res.returncode != 0:
+                print("[AutoRunner] ⚠️ 'runc' not found in default WSL distribution.")
+                print("[AutoRunner] Attempting to install 'runc' in WSL (requires sudo)...")
+                # This might fail if no apt-get, but it's our best shot at auto-healing
+                subprocess.run(["wsl", "-u", "root", "apt-get", "update"], capture_output=True)
+                subprocess.run(["wsl", "-u", "root", "apt-get", "install", "-y", "runc"], capture_output=True)
+                
+                # Re-check
+                res = subprocess.run(["wsl", "which", "runc"], capture_output=True, text=True)
+                if res.returncode != 0:
+                    print("[AutoRunner] ❌ Could not auto-install 'runc' in WSL.")
+                    print("[AutoRunner] Please run: wsl -u root apt-get install runc")
+                    return False
+            print("[AutoRunner] ✅ 'runc' is available in WSL.")
+        except Exception as e:
+            print(f"[AutoRunner] Error checking WSL dependencies: {e}")
+            return False
+            
+    return True
+
 def run_rotation_loop():
     global running_process
     
+    if not check_preflights():
+        print("[AutoRunner] ❌ Pre-flight checks failed. Aborting.")
+        return
+
     print(f"[AutoRunner] Started. Rotation Interval: {ROTATION_INTERVAL_SECONDS/60:.0f} minutes.")
     
     first_run = True
@@ -40,8 +88,9 @@ def run_rotation_loop():
         
         # 2. Start Lite-Dock
         # We construct the command manually to match run_searxng.bat
+        exe = "lite-dock.exe" if sys.platform == 'win32' else "./lite-dock"
         cmd = [
-            "lite-dock.exe", "run",
+            exe, "run",
             "--name", CONTAINER_NAME,
             "--network", "host",
             "-e", "SEARXNG_BASE_URL=http://localhost:8080",

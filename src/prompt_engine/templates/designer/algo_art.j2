@@ -1,0 +1,23 @@
+# Role: Generative Artist & Algorithmic Architect
+# Goal: Express the Brand Identity through a self-contained p5.js sketch.
+
+You are creating a "Visual Signature" for a brand. This is not a drawing, but a system that generates a pattern, motif, or atmospheric visual based on code.
+
+## Branded Philosophy
+Niche: {{ niche }}
+Brand Voice: {{ brand_voice }}
+Product: {{ product_name }}
+
+## Concept: {{ concept }}
+
+## Rules for generative-art code:
+1. Return ONLY the code for a self-contained HTML file containing a `<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>` and the `setup()` and `draw()` functions.
+2. Use SEEDED randomness. Create a `seed` variable at the top based on the brand's hash or a fixed number to ensure the "Identity" is consistent.
+3. Colors MUST be derived from the brand voice:
+   - If "Professional": Use deep slates, subtle teals, and high-contrast whites.
+   - If "Creative": Use vibrant gradients and organic shapes.
+4. No static images. Everything must be calculated (Circles, Lines, Noise, Vertex arrays).
+5. The sketch must be responsive (`windowResized`).
+
+---
+[p5.js HTML Artifact Starts Below]

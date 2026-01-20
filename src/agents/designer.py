@@ -16,11 +16,32 @@ class GraphicsDesignerAgent(BaseAgent):
         )
         self.prompt_engine = PromptEngine()
 
+    async def think_async(self, context, instructions=None):
+        """Async entry point with routing."""
+        prompt_lower = (str(context) + " " + str(instructions or "")).lower()
+        
+        # Routing to specialized sub-agents
+        if "artifact" in prompt_lower or "dashboard" in prompt_lower or "interactive" in prompt_lower:
+            from .artifact_designer import ArtifactDesignerAgent
+            sub = ArtifactDesignerAgent(provider=self.provider)
+            sub.set_context(self.context)
+            return sub.think(context, instructions)
+            
+        if "algorithmic" in prompt_lower or "generative art" in prompt_lower or "pattern" in prompt_lower:
+            from .generative_artist import GenerativeArtAgent
+            sub = GenerativeArtAgent(provider=self.provider)
+            sub.set_context(self.context)
+            return sub.think(context, instructions)
+
+        if "gif" in prompt_lower or "animated" in prompt_lower:
+            from .dynamic_gif import DynamicGifAgent
+            sub = DynamicGifAgent(provider=self.provider)
+            sub.set_context(self.context)
+            return sub.think(context, instructions)
+
+        return self.think(context, instructions)
+
     def think(self, context, instructions=None):
-        """
-        Context: The concept or description of the image needed.
-        Returns: A URL to the generated image.
-        """
         # 1. Build Context (Infer or Default)
         # Often 'context' is "editorial illustration for block post about Roofing"
         # We can try to be smart or just treat it as the 'concept'.

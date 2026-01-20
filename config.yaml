@@ -98,7 +98,7 @@ project:
 proxies:
   enabled: true
   source_url: https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt
-  max_proxies: 500
+  max_proxies: 20
   verification_url: http://httpbin.org/ip
 quality_gate:
   must_haves:
@@ -223,10 +223,13 @@ email:
   from_email: onboarding@resend.dev
   smart_routing:
     providers:
-    - resend
+    - sendpulse
     - brevo
+    - mailjet
+    - netcore
+    - smtp2go
     - sendgrid
-    - smtp
+    - mailgun
   smtp_server: smtp.gmail.com
   smtp_port: 587
   smtp_user: ${SMTP_USER}

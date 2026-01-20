@@ -14,7 +14,11 @@ class SearXNGRouter:
     Tracks health, availability, and rotates requests.
     """
     def __init__(self):
-        self.local_url = config.get("search", {}).get("searxng_url", "http://localhost:8081/search")
+        from utils.litedock_manager import litedock_manager
+        
+        # Check and ensure local infrastructure (Docker or Lite-Dock)
+        litedock_manager.ensure_searxng()
+        self.local_url = litedock_manager.get_local_url()
         
         # High-quality public instances (Subject to change, can be updated via config)
         self.public_instances = [
@@ -36,7 +40,13 @@ class SearXNGRouter:
     def get_candidates(self):
         """Returns a list of URLs to try in order."""
         # Check environment - Default to 'local' if not specified
-        env = os.getenv("ENVIRONMENT", "local").lower()
+        env = os.environ.get("ENVIRONMENT", "local").lower()
+        
+        # Ensure infrastructure is ready if using local
+        from utils.litedock_manager import litedock_manager
+        if "localhost" in self.local_url or "127.0.0.1" in self.local_url:
+             # Refresh local_url in case Docker just came up or lite-dock just started
+             self.local_url = litedock_manager.get_local_url()
         
         candidates = []
         

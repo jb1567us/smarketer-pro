@@ -9,8 +9,9 @@ def load_css():
 
         /* GLOBAL RESET & TYPOGRAPHY */
         html, body, [class*="css"]  {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-font-smoothing: antialiased;
+            background-color: #F8FAFC; /* Pro Max Background */
         }
         
         /* HIDE DEFAULT STREAMLIT ELEMENTS */
@@ -25,29 +26,37 @@ def load_css():
             max-width: 1400px;
         }
 
-        /* CARD UI COMPONENT */
+        /* CARD UI COMPONENT (Glassmorphism) */
         .css-card {
-            background-color: var(--secondary-background-color);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border: 1px solid rgba(128, 128, 128, 0.2);
-            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+        .css-card:hover {
+            box-shadow: 0 12px 48px 0 rgba(15, 23, 42, 0.1);
+            border-color: rgba(15, 23, 42, 0.1);
         }
         
-        /* CUSTOM METRIC BOXES */
+        /* CUSTOM METRIC BOXES (Pro Max Styling) */
         div[data-testid="stMetric"] {
-            background-color: var(--secondary-background-color);
-            border: 1px solid rgba(128, 128, 128, 0.2);
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(15, 23, 42, 0.1);
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(15, 23, 42, 0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         div[data-testid="stMetric"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+            border-color: #0369A1; /* CTA Trust Blue */
         }
         div[data-testid="stMetricLabel"] {
             font-size: 0.85rem;
@@ -69,19 +78,20 @@ def load_css():
             padding-top: 3rem;
         }
 
-        /* BUTTONS */
+        /* BUTTONS (Pro Max Palette) */
         button[kind="primary"] {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #0F172A 0%, #0369A1 100%);
             border: none;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            padding: 0.6rem 1.2rem;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.2);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
         button[kind="primary"]:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.3);
+            transform: translateY(-2px);
+            filter: brightness(1.1);
         }
         button[kind="secondary"] {
             background-color: transparent;
@@ -144,7 +154,8 @@ def load_css():
         
         /* PROGRESS BAR */
         .stProgress > div > div > div > div {
-            background-image: linear-gradient(90deg, var(--primary-color), #60a5fa);
+            background-image: linear-gradient(90deg, #0F172A, #0369A1);
+            border-radius: 10px;
         }
 
         </style>

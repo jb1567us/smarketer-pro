@@ -1,0 +1,35 @@
+# Smarketer-Pro ROI Engine: XLSX Structure
+
+[Sheet: ROI Projections]
+
+[Header A1-D1: Branded Metrics]
+A1: Metric
+B1: Current Value
+C1: Projected (Conservative)
+D1: Projected (Aggressive)
+
+[Row 2: Lead Flow]
+A2: Monthly Leads
+B2: 100
+C2: 500
+D2: 1200
+
+[Row 3: Conversion Rate]
+A3: Meeting Rate (%)
+B3: 2
+C3: 5
+D3: 8
+
+[Row 4: Financial Value]
+A4: Average Deal Value ($)
+B4: 5000
+
+[Row 5: Formulas]
+A5: Total Potential Pipeline ($)
+B5: =B2*(B3/100)*B4
+C5: =C2*(C3/100)*B4
+D5: =D2*(D3/100)*B4
+
+---
+Style Note: Use {{ brand_voice }} to influence the color palette of the headers.
+Project: {{ product_name }}

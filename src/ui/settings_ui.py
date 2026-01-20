@@ -73,6 +73,14 @@ def render_settings_page():
             "MAILTRAP_API_TOKEN": "https://mailtrap.io/home",
             "ZOHO_ZEPTOMAIL_TOKEN": "https://zeptomail.zoho.com/",
             "NETCORE_API_KEY": "https://netcorecloud.com/",
+            "OPENROUTER_API_KEY": "https://openrouter.ai/keys",
+            "GROQ_API_KEY": "https://console.groq.com/keys",
+            "MISTRAL_API_KEY": "https://console.mistral.ai/api-keys/",
+            "HUGGINGFACE_API_KEY": "https://huggingface.co/settings/tokens",
+            "GITHUB_TOKEN": "https://github.com/settings/tokens",
+            "CEREBRAS_API_KEY": "https://cloud.cerebras.ai/",
+            "NVIDIA_API_KEY": "https://build.nvidia.com/explore/discover",
+            "COHERE_API_KEY": "https://dashboard.cohere.com/api-keys",
         }
 
         # Email Keys
@@ -102,7 +110,12 @@ def render_settings_page():
         
         st.divider()
         st.markdown("#### 🧠 AI Models")
-        llm_keys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"]
+        llm_keys = [
+            "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", 
+            "OPENROUTER_API_KEY", "GROQ_API_KEY", "MISTRAL_API_KEY",
+            "HUGGINGFACE_API_KEY", "GITHUB_TOKEN", "CEREBRAS_API_KEY",
+            "NVIDIA_API_KEY", "COHERE_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_KEY"
+        ]
         for key in llm_keys:
             col1, col2 = st.columns([3, 1])
             with col1:

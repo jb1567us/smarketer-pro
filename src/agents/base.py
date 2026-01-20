@@ -14,6 +14,23 @@ class BaseAgent:
             self.provider = provider
         else:
             self.provider = LLMFactory.get_provider()
+            
+        self.context = None
+
+    def set_context(self, context):
+        """Sets the Hub-provided PromptContext for this agent."""
+        self.context = context
+
+    def report_to_hub(self, status, details=None):
+        """
+        Standardized hook for agents to report progress back to the Hub.
+        """
+        from src.prompt_engine.models import PromptContext
+        msg = f"📡 [Hub-Sync] {self.role}: {status}"
+        if details:
+            msg += f" - {details}"
+        self.logger.info(msg)
+        # In a full MCP implementation, this would call the report_mission_progress tool
 
     def prompt(self, context, instructions):
         """

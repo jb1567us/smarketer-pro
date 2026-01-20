@@ -81,6 +81,7 @@ from ui.mass_tools_ui import render_mass_tools_page
 from ui.social_hub_ui import render_social_scheduler_page, render_social_pulse_page
 from ui.crm_ui import render_crm_dashboard
 from ui.video_ui import render_video_studio
+from ui.designer_ui import render_designer_page
 from ui.dashboard_ui import render_dashboard
 from ui.account_creator_ui import render_account_creator_ui
 from ui.agency_ui import render_agency_ui
@@ -242,8 +243,8 @@ def render_top_navigation():
     # 1. Categories
     categories = {
         "🏠 Command": ["Dashboard", "CRM Dashboard", "Performance Reports", "Manager Console"],
-        "📣 Outreach": ["Campaigns", "Lead Discovery", "Affiliate Hub", "DSR Manager"],
-        "✨ Creative": ["Video Studio", "Social Scheduler", "Social Pulse", "WordPress Manager"],
+        "📣 Outreach": ["Campaigns", "Lead Discovery", "Social Scheduler", "Social Pulse", "Affiliate Hub", "DSR Manager"],
+        "✨ Creative": ["Designer", "Video Studio", "WordPress Manager"],
         "🛠️ Tools": ["Agent Lab", "Account Creator", "Hosting Dashboard", "Proxy Lab", "Product Lab"],
         "⚙️ Admin": ["Settings"]
     }
@@ -262,6 +263,7 @@ def render_top_navigation():
                 st.session_state['current_category'] = cat
                 # Default to first view in category when switching
                 st.session_state['current_view'] = categories[cat][0]
+                st.query_params["page"] = categories[cat][0]
                 st.rerun()
 
     # 2. Sub-Views (Functional)
@@ -275,6 +277,7 @@ def render_top_navigation():
             # Use small text or different style for sub-nav
             if st.button(view, key=f"view_btn_{view}", use_container_width=True):
                 st.session_state['current_view'] = view
+                st.query_params["page"] = view
                 st.rerun()
     st.markdown("---")
 
@@ -286,6 +289,26 @@ def main():
     init_db()
     
     st.session_state['automation_engine'] = get_auto_engine()
+    
+    # 0. Sync URL parameters with session state
+    if "page" in st.query_params:
+        requested_page = st.query_params["page"]
+        
+        # 1. Categories Mapping (Reverse lookup)
+        categories = {
+            "🏠 Command": ["Dashboard", "CRM Dashboard", "Performance Reports", "Manager Console"],
+            "📣 Outreach": ["Campaigns", "Lead Discovery", "Social Scheduler", "Social Pulse", "Affiliate Hub", "DSR Manager"],
+            "✨ Creative": ["Designer", "Video Studio", "WordPress Manager"],
+            "🛠️ Tools": ["Agent Lab", "Account Creator", "Hosting Dashboard", "Proxy Lab", "Product Lab"],
+            "⚙️ Admin": ["Settings"]
+        }
+        
+        # Check if page exists and set category
+        for cat, views in categories.items():
+            if requested_page in views:
+                st.session_state['current_category'] = cat
+                st.session_state['current_view'] = requested_page
+                break
     
     # 1. Sidebar Intelligence (Persistent)
     render_sidebar_chat()
@@ -328,6 +351,9 @@ def main():
 
     elif choice == "Video Studio":
         render_video_studio()
+
+    elif choice == "Designer":
+        render_designer_page()
 
     elif choice == "Social Scheduler":
         render_social_scheduler_page()

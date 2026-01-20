@@ -4,7 +4,10 @@ import time
 import asyncio
 import json
 from datetime import datetime
-from ui.components import render_step_progress, premium_header
+from ui.components import (
+    render_step_progress, premium_header, render_data_management_bar, 
+    render_enhanced_table, render_page_chat
+)
 from database import (
     get_all_campaigns, get_campaign, create_campaign, save_campaign_state, 
     get_campaign_state, update_campaign_step, save_lead_search_result,
@@ -23,8 +26,7 @@ from mailer import Mailer
 from config import config
 
 def render_campaign_page():
-    from ui.components import render_step_progress, premium_header
-    
+
     premium_header("Smart Nurture Campaigns", "Create personalised email sequences using AI research.")
     # --- CAMPAIGN PERSISTENCE LOGIC ---
     if 'active_campaign_id' not in st.session_state:
@@ -55,14 +57,16 @@ def render_campaign_page():
             with col_c1:
                 if not selected_camps.empty and st.button("🚀 Resume/Open Selection", type="primary"):
                     cid = selected_camps.iloc[0]['id']
-                    # ... reload logic as before
                     c_data = get_campaign(cid)
-                    st.session_state['active_campaign_id'] = cid
-                    st.session_state['campaign_step'] = c_data['current_step']
-                    st.session_state['niche_input'] = c_data['niche']
-                    st.session_state['product_name'] = c_data['product_name']
-                    st.session_state['product_context'] = c_data['product_context']
-                    st.rerun()
+                    if c_data:
+                        st.session_state['active_campaign_id'] = cid
+                        st.session_state['campaign_step'] = c_data['current_step']
+                        st.session_state['niche_input'] = c_data['niche']
+                        st.session_state['product_name'] = c_data['product_name']
+                        st.session_state['product_context'] = c_data['product_context']
+                        st.rerun()
+                    else:
+                        st.error("Could not load campaign. It may have been deleted.")
             with col_c2:
                 if not selected_camps.empty and st.button("🗑️ Delete Selection", type="secondary"):
                     for cid in selected_camps['id'].tolist():
@@ -93,6 +97,11 @@ def render_campaign_page():
     campaign_id = st.session_state['active_campaign_id']
     campaign_data = get_campaign(campaign_id)
     
+    if not campaign_data:
+        st.warning("Active campaign not found. Returning to list.")
+        del st.session_state['active_campaign_id']
+        st.rerun()
+
     st.sidebar.info(f"📍 Active Campaign: **{campaign_data['name']}**")
     if st.sidebar.button("🔌 Exit Campaign Session"):
         del st.session_state['active_campaign_id']

@@ -12,6 +12,18 @@ DEEP_CRAWL_KEYWORDS = config["extraction"]["deep_crawl_keywords"]
 
 from proxy_manager import proxy_manager
 
+def is_captcha(html):
+    """Detects if the page content indicates a captcha challenge."""
+    if not html: return False
+    lower_html = html.lower()
+    markers = [
+        'g-recaptcha', 'cf-captcha-container', 'h-captcha', 
+        'captcha-delivery', 'bot-detection', 'verify you are human',
+        'distil-captcha'
+    ]
+    return any(marker in lower_html for marker in markers)
+
+
 async def fetch_html(session, url, timeout=10):
     """Async fetch of a URL using rotated proxies."""
     retries = 3 if proxy_manager.enabled else 1

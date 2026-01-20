@@ -111,15 +111,17 @@ class CopywriterAgent(BaseAgent):
 
     def _draft_email(self, context, instructions, personalization_level):
         """Internal helper for initial drafting using Prompt Engine."""
-        # 1. Construct the Kernel (Mocking inference for now as context is usually a string)
-        # In a real system, 'context' should be a dict with 'niche', 'icp', etc.
-        # We will assume 'context' might contain text clues or we treat it as generic.
-        
-        ctx = PromptContext(
-            niche="General Business", # Default if unknown
-            icp_role="Decision Maker",
-            brand_voice="Professional and Persuasive"
-        )
+        # 1. Use existing Hub context if available, else create a default Kernel
+        if self.context:
+            ctx = self.context
+            self.report_to_hub("FETCH_CONTEXT", "Using Hub Brand Kernel for drafting.")
+        else:
+            ctx = PromptContext(
+                niche="General Business", # Default if unknown
+                icp_role="Decision Maker",
+                brand_voice="Professional and Persuasive"
+            )
+            self.report_to_hub("DEFAULT_CONTEXT", "No Hub context found, using defaults.")
         
         # If context is a dict (advanced usage), parse it
         # (This allows us to upgrade the caller later without breaking this)
