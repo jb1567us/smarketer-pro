@@ -144,21 +144,68 @@ func (m *Manager) Run(cmdID string, imgRef string, cfg ContainerConfig) error {
 		return err
 	}
 
-	// 4. Run 'runc' (Native on Linux, via WSL on Windows)
-    if runtime.GOOS == "windows" {
-        fmt.Printf("Starting container %s via runc (WSL)...\n", cmdID)
-        
-        wslPath := toWSLPath(bundleDir)
+	// 3. Prepare Config
+    // ... logic to prepare config ...
 
-        // On Windows, we need to run runc INSIDE WSL
-        // wsl -u root runc run -b [bundle_path] [id]
-        runcArgs := []string{"-u", "root", "runc", "run", "-b", wslPath, cmdID}
-        runcCmd := exec.Command("wsl", runcArgs...)
-        runcCmd.Stdin = os.Stdin
-        runcCmd.Stdout = os.Stdout
-        runcCmd.Stderr = os.Stderr
+    // [SIDECAR FIX]
+    // Windows extraction often corrupts symlinks (e.g. /bin -> /usr/bin), causing runc failures.
+    // If we are on Windows and using the Sidecar, we must re-hydrate the rootfs using WSL `tar`.
+    if runtime.GOOS == "windows" {
+        distroName := "lite-dock-host"
+        rootfsDir := filepath.Join(bundleDir, "rootfs")
         
-        return runcCmd.Run()
+        // Check if bin exists (simple heuristic for "is valid linux fs")
+        // actually, simpler to just force untar if we have the tarball, for safety.
+        
+        // Find existing tarball
+        dirName, _ := image.GetImageDirName(imgRef)
+        tarPath := filepath.Join(m.ImageStore, dirName) + ".tar"
+        
+        if _, err := os.Stat(tarPath); err == nil {
+             fmt.Printf("Hydrating rootfs via Sidecar from %s...\n", tarPath)
+             
+             // Convert paths to WSL
+             wslTarPath := toWSLPath(tarPath)
+             wslRootfsDir := toWSLPath(rootfsDir)
+             
+             // Ensure rootfs dir exists (empty)
+             os.RemoveAll(rootfsDir)
+             os.MkdirAll(rootfsDir, 0755)
+             
+             // Run tar inside sidecar
+             // tar -xf <TarPath> -C <RootfsDir>
+             cmd := exec.Command("wsl", "-d", distroName, "tar", "-xf", wslTarPath, "-C", wslRootfsDir)
+             if out, err := cmd.CombinedOutput(); err != nil {
+                  return fmt.Errorf("failed to hydrate rootfs in WSL: %v, out: %s", err, string(out))
+             }
+             fmt.Println("Rootfs hydration complete.")
+        } else {
+             fmt.Printf("Warning: Image tarball %s not found. Using Windows-extracted rootfs (may fail).\n", tarPath)
+        }
+    }
+
+	// 4. Run 'runc' (Native on Linux, via WSL on Windows)
+    // 4. Run via Sidecar WSL Distro (lite-dock-host)
+    if runtime.GOOS == "windows" {
+        distroName := "lite-dock-host"
+        
+        // Ensure bundleDir path is converted to WSL format for the runc command INSIDE wsl
+        // e.g. C:\Users\... -> /mnt/c/Users/...
+        wslBundlePath := toWSLPath(bundleDir)
+        
+        fmt.Printf("Starting container %s via Sidecar Distro '%s'...\n", cmdID, distroName)
+        
+        // Command: wsl -d lite-dock-host runc run -b <BundlePath> <ContainerID>
+        // Note: runc must be installed in the distro (handled by auto_runner setup)
+        
+        wslArgs := []string{"-d", distroName, "runc", "run", "-b", wslBundlePath, cmdID}
+        
+        runCmd := exec.Command("wsl", wslArgs...)
+        runCmd.Stdin = os.Stdin
+        runCmd.Stdout = os.Stdout
+        runCmd.Stderr = os.Stderr
+        
+        return runCmd.Run()
     }
 
 	// runc run -b bundleDir containerID

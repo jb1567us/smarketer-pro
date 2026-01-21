@@ -24,4 +24,8 @@ from .prompt_expert import PromptExpertAgent
 from .proxy_agent import ProxyAgent
 from .summarizer import SummarizerAgent
 from .custom_agent import CustomAgent
+from .data_cleaner import DataCleanerAgent
+from .sales_analyzer import SalesAnalyzerAgent
+from .knowledge_architect import KnowledgeArchitectAgent
+from .meet_scribe import MeetScribeAgent
 

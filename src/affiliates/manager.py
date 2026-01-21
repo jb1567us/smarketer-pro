@@ -44,3 +44,10 @@ class OfferManager:
     def list_offers(self):
         """Returns all active offers."""
         return self.db.query(AffiliateLink).filter(AffiliateLink.is_active == True).all()
+
+    def delete_offer(self, offer_id: int):
+        """Deletes an offer (soft delete usually, but hard here as per request)."""
+        offer = self.db.query(AffiliateLink).get(offer_id)
+        if offer:
+            self.db.delete(offer)
+            self.db.commit()

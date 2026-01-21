@@ -1,7 +1,9 @@
 import os
 import json
 import asyncio
+import random
 from playwright.async_api import async_playwright
+
 from playwright_stealth import Stealth
 from fake_useragent import UserAgent
 from database import get_captcha_settings

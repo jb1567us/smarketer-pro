@@ -166,3 +166,46 @@ def render_page_chat(context_description, agent_instance, context_data):
         ctx_key = f"page_chat_ctx_{context_description.replace(' ', '_')}"
         if ctx_key not in st.session_state:
             st.session_state[ctx_key] = context_data
+
+def confirm_action(label, prompt, on_confirm, key=None, type="secondary"):
+    """Standardized confirmation popover for destructive or important actions."""
+    with st.popover(label, use_container_width=True):
+        st.warning(prompt)
+        if st.button("Confirm ✅", key=f"conf_{key or label}", type="primary", use_container_width=True):
+            on_confirm()
+            st.rerun()
+
+def safe_action_wrapper(func, success_message="Action completed!"):
+    """Friendly error wrapper for back-end operations."""
+    try:
+        result = func()
+        if success_message:
+            st.toast(success_message, icon="✅")
+        return result
+    except Exception as e:
+        st.error(f"⚠️ Operation Failed: We encountered an issue while processing your request.")
+        with st.expander("Show Technical Details"):
+            st.code(str(e))
+        return None
+
+def render_job_controls(job_name, is_running, on_start, on_stop, progress=None, status_text=None):
+    """Standardized Start/Stop controls with progress feedback."""
+    cols = st.columns([1, 3])
+    with cols[0]:
+        if is_running:
+            if st.button(f"🛑 Stop {job_name}", key=f"stop_{job_name}", type="primary", use_container_width=True):
+                if on_stop: on_stop()
+                st.rerun()
+        else:
+            if st.button(f"▶️ Start {job_name}", key=f"start_{job_name}", type="primary", use_container_width=True):
+                if on_start: on_start()
+                st.rerun()
+    
+    with cols[1]:
+        if is_running:
+            if progress is not None:
+                st.progress(progress, text=status_text or f"{job_name} is in progress...")
+            else:
+                st.info(status_text or f"🔄 {job_name} is running...")
+        else:
+            st.write(f"Idle - Ready to start {job_name.lower()}.")

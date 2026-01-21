@@ -6,8 +6,9 @@ from agents import (
     ResearcherAgent, QualifierAgent, CopywriterAgent, ManagerAgent,
     GraphicsDesignerAgent, WordPressAgent, ProductManagerAgent, LinkedInAgent,
     ReviewerAgent, SyntaxAgent, UXAgent, SEOExpertAgent, VideoAgent,
-    ContactFormAgent
+    ContactFormAgent, InfluencerAgent
 )
+from ui.components import premium_header, safe_action_wrapper
 
 # Registry of Standard Agents
 AGENTS = {
@@ -28,12 +29,13 @@ AGENTS = {
     "UX Designer": UXAgent,
     "SEO Expert": SEOExpertAgent,
     "Video Director": VideoAgent,
-    "Contact Form Specialist": ContactFormAgent
+    "Contact Form Specialist": ContactFormAgent,
+    "Influencer Scout": InfluencerAgent
 }
 
 # Categorized Mapping
 AGENT_CATEGORIES = {
-    "Research & Leads": ["Researcher", "Qualifier", "Persona Analyst", "LinkedIn Specialist", "Contact Form Specialist"],
+    "Research & Leads": ["Researcher", "Qualifier", "Persona Analyst", "LinkedIn Specialist", "Contact Form Specialist", "Influencer Scout"],
     "Marketing & Content": ["Copywriter", "Graphics Designer", "Social Media Strategist", "Ad Copywriter", "Video Director", "Brainstormer"],
     "SEO & Growth": ["SEO Expert", "WordPress Expert", "UX Designer"],
     "System & Admin": ["Manager", "Product Manager", "Reviewer", "Syntax Validator"]
@@ -44,71 +46,50 @@ def render_agent_lab():
     Renders the Agent Lab UI for interacting with standard agents.
     Includes 'System Prompt / Instructions' tweak.
     """
-    st.header("🧪 Agent Lab")
-    st.caption("Directly interact with specialized agents organized by capability. (v2.0 Fixed)")
+    premium_header("🧪 Agent Lab", "Directly interact with specialized agents organized by capability.")
 
     # 1. Category Tabs
-    # We use tabs to split the 18+ agents into manageable chunks
     cat_names = list(AGENT_CATEGORIES.keys())
     tabs = st.tabs(cat_names)
     
-    selected_agent_name = None
-    
     # 2. Render Agent Selector inside each tab
+    # We use a session state variable to track the globally active agent
+    if 'active_lab_agent' not in st.session_state:
+        st.session_state['active_lab_agent'] = "Researcher" # Default
+
     for i, tab in enumerate(tabs):
         with tab:
             category = cat_names[i]
             agents_in_cat = AGENT_CATEGORIES[category]
             
-            # Using radio with horizontal=True acts like a sub-tab/pill selector
-            # We explicitly namespace the key to avoid collisions if we switched back and forth
-            # But since we need ONE global selection, we might need a unified state approach.
-            # However, st.radio in tabs is tricky because switching tabs hides the radio but keeps state.
+            # Find index of current active agent if it belongs to this category
+            try:
+                curr_index = agents_in_cat.index(st.session_state['active_lab_agent'])
+            except ValueError:
+                curr_index = 0
             
-            # Better Approach:
-            # We can't easily have 4 radios all binding to "selected_agent".
-            # So we let the user click a radio button, and we immediately update a session state var manually if needed,
-            # OR we just rely on visual layout.
-            
-            # Simple Fix: Just render the radio for this tab. 
-            # If the user selects something here, it becomes the 'active' agent.
-            # To avoid "None" issues, we default to the first one in the First tab if nothing set.
-            
+            # Using a unique key per tab but updating the global state
+            # We use a selectbox or pills for better visibility
             selection = st.radio(
                 f"Select {category} Agent", 
                 options=agents_in_cat, 
                 horizontal=True,
                 label_visibility="collapsed",
+                index=curr_index if st.session_state['active_lab_agent'] in agents_in_cat else 0,
                 key=f"cat_{i}_selector"
             )
             
-            # We need to know WHICH tab is active to know which selection to honor.
-            # Streamlit doesn't give "active_tab" state easily without 3rd party components.
-            # Workaround: We'll put a "Load Agent" button or similar? 
-            # No, that's clunky.
+            # If the selection here is different/clicked, update global?
+            # Streamlit logic: The radio 'key' holds the value.
+            # But we want multiple radios to sync. This is hard.
+            # INSTEAD: We will just check if this specific radio matches the global state.
             
-            # Alternative: One single sidebar selectbox is what we had, but it was too long.
-            # Let's try to infer: The user sees the tab they opened.
-            # The radio button in THAT tab is what they are interacting with.
-            # BUT, all 4 radios exist in the DOM/Backend.
+            # Simple workaround: Just a button to "Activate" if we want to be strict,
+            # OR we just accept that the user clicks the radio and we treat it as active.
+            # To simplify: We'll just render the interaction area for the LOCALLY selected agent in this tab.
             
-            # We will use a container to show the ACTIVE agent below the tabs.
-            # We need to track "last_selected_category" maybe?
-            
-            # Actually, standard Streamlit pattern for this:
-            # Use columns or just one big area below.
-            # But how to determine which of the 4 radios is "The One"?
-            # They all have values. 
-            
-            # Refined Approach:
-            # We use `st.pills` if available (st >= 1.40). If not, radio.
-            # Let's assume standard radio. 
-            
-            # To make it work: We can use a callback or check which one changed?
-            # Or simpler: Just put the "Run" UI *inside* the tab?
-            # Yes! That guarantees context.
-            
-            render_agent_interaction_area(selection)
+            if selection:
+                 render_agent_interaction_area(selection)
 
 
 def render_agent_interaction_area(agent_name):
@@ -140,6 +121,32 @@ def render_agent_interaction_area(agent_name):
         st.markdown(f"**{agent_name}**")
         st.caption(f"{agent.role} • {agent.goal[:100]}...")
 
+    # Special UI for Influencer Scout
+    platform_selection = None
+    if agent_name == "Influencer Scout":
+        platform_selection = st.selectbox(
+            "Select Target Platform",
+            ["instagram", "tiktok", "youtube", "twitter", "linkedin"],
+            key=f"platform_{agent_name}"
+        )
+        
+        limit_selection = st.slider(
+            "Max Results Goal",
+            min_value=10,
+            max_value=2000,
+            value=50,
+            step=10,
+            help="Target number of influencers to discover.",
+            key=f"limit_{agent_name}"
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            min_followers = st.text_input("Min Followers (e.g. 10k)", key=f"min_f_{agent_name}")
+        with col2:
+            max_followers = st.text_input("Max Followers", key=f"max_f_{agent_name}")
+
+
     # Input Area
     # We use a unique key for the text area based on the agent name 
     # so input is preserved per agent (which is a nice feature!)
@@ -161,19 +168,31 @@ def render_agent_interaction_area(agent_name):
             key=f"instr_{agent_name}"
         )
     
-    if st.button(f"Run {agent_name}", type="primary", key=f"run_{agent_name}"):
+    if st.button(f"Run {agent_name}", type="primary", key=f"run_{agent_name}", disabled=not context):
         if context:
+            # Prepend platform if applicable
+            final_context = context
+            if platform_selection:
+                final_context = f"Target Platform: {platform_selection}\n"
+                
+            if agent_name == "Influencer Scout" and 'limit_selection' in locals():
+                 final_context += f"Target Limit: {limit_selection}\n"
+                 if 'min_followers' in locals() and min_followers: final_context += f"Min Followers: {min_followers}\n"
+                 if 'max_followers' in locals() and max_followers: final_context += f"Max Followers: {max_followers}\n"
+            
+            final_context += f"\n{context}"
+
             with st.spinner(f"{agent.role} is thinking..."):
-                try:
-                    response = agent.think(context, instructions=user_instructions if user_instructions else None)
-                    
+                def run_thought():
+                     return agent.think(final_context, instructions=user_instructions if user_instructions else None)
+                
+                response = safe_action_wrapper(run_thought, "Agent finished thinking!")
+                if response:
                     st.session_state['last_lab_response'] = response
                     st.session_state['last_lab_agent_instance'] = agent 
                     st.session_state['last_lab_context'] = context
                     st.session_state['last_lab_agent_name'] = agent_name # Track which agent ran
                     st.rerun()
-                except Exception as e:
-                    st.error(f"Error during execution: {str(e)}")
         else:
             st.warning("Please provide context to run the agent.")
 
@@ -192,6 +211,16 @@ def render_agent_interaction_area(agent_name):
             else:
                  st.write(response)
                  
+            # Export / Persistence
+            st.markdown("#### Export")
+            res_str = json.dumps(response, indent=2) if isinstance(response, (dict, list)) else str(response)
+            st.download_button(
+                 label="📥 Download Result (JSON)",
+                 data=res_str,
+                 file_name=f"{agent_name}_result_{int(time.time())}.json",
+                 mime="application/json"
+            )
+            
             # Tuning / Discussion
             render_agent_chat('last_lab_response', st.session_state['last_lab_agent_instance'], 'last_lab_context')
         else:

@@ -5,14 +5,17 @@ import json
 from dsr_manager import DSRManager
 from agents import WordPressAgent
 from database import (
-    get_all_campaigns, get_campaign_leads, get_wp_sites, get_connection
+    get_all_campaigns, get_campaign_leads, get_wp_sites, get_connection,
+    delete_dsr, update_dsr_content
 )
-from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
+from ui.components import (
+    render_enhanced_table, render_data_management_bar, render_page_chat,
+    premium_header, confirm_action, safe_action_wrapper
+)
 from agents import ManagerAgent
 
 def render_dsr_page():
-    st.header("💼 Digital Sales Room (DSR) Manager")
-    st.caption("Create, personalize, and deploy microsites for your high-value leads.")
+    premium_header("💼 Digital Sales Room (DSR) Manager", "Create, personalize, and deploy microsites for your high-value leads.")
 
     # Initialize Manager
     dsr_manager = DSRManager()
@@ -90,51 +93,70 @@ def render_dsr_page():
             if status_filter != "All":
                 dsrs = dsrs[dsrs['status'] == status_filter]
 
-            # 1. Standard Data Management Bar
-            render_data_management_bar(dsrs, filename_prefix="dsr_list")
-
             # 2. Enhanced Table
-            edited_dsrs = render_enhanced_table(dsrs, key="dsr_manage_table")
+            edited_dsrs = render_enhanced_table(dsrs[['id', 'title', 'status', 'created_at']], key="dsr_manage_table")
             
-            selected_dsrs = edited_dsrs[edited_dsrs['Select'] == True]
-            if not selected_dsrs.empty:
-                st.warning("Bulk actions for DSRs (Delete/Republish) coming soon in this view.")
+            selected_ids = edited_dsrs[edited_dsrs['Select'] == True]['id'].tolist()
+            if selected_ids:
+                with st.container(border=True):
+                    st.write(f"Selected **{len(selected_ids)}** DSRs")
+                    def bulk_del_dsr():
+                        for did in selected_ids:
+                            delete_dsr(did)
+                    
+                    confirm_action("🗑️ Bulk Delete", f"Permanently delete {len(selected_ids)} DSR records?", bulk_del_dsr, key="bulk_del_dsr")
 
             st.divider()
-            for index, row in dsrs.iterrows():
+            st.markdown("#### 🛠️ DSR Editor & Deployment")
+            
+            # Select single for Edit
+            selected_for_edit = st.selectbox("Select DSR to Edit/Deploy", dsrs['title'].tolist())
+            if selected_for_edit:
+                row = dsrs[dsrs['title'] == selected_for_edit].iloc[0]
                 with st.container(border=True):
-                    c1, c2, c3 = st.columns([3, 1, 1.5])
+                    c1, c2, c3 = st.columns([2, 1, 1])
                     with c1:
                         st.markdown(f"**{row['title']}**")
-                        st.caption(f"Lead ID: {row['lead_id']} | Campaign ID: {row['campaign_id']}")
+                        st.caption(f"ID: {row['id']} | Status: {row['status'].upper()}")
                     with c2:
-                        color = "green" if row['status'] == 'published' else "gray"
-                        st.markdown(f":{color}[{row['status'].upper()}]")
-                    with c3:
                         if row['status'] == 'published':
-                            st.link_button("🔗 Visit Page", row['wp_url'])
+                            st.link_button("🔗 Visit Page", row['public_url'])
+                    with c3:
+                        def del_single_dsr():
+                            delete_dsr(row['id'])
+                        confirm_action("🗑️ Delete", f"Delete this DSR record?", del_single_dsr, key=f"del_dsr_{row['id']}")
+
+                    # Editing Section
+                    with st.expander("📝 Edit DSR Content", expanded=(row['status'] == 'draft')):
+                        content = json.loads(row['content_json']) if isinstance(row['content_json'], str) else row['content_json']
+                        new_content_raw = st.text_area("Content JSON", value=json.dumps(content, indent=2), height=300)
+                        if st.button("💾 Save Changes", key=f"save_dsr_{row['id']}"):
+                            try:
+                                updated_data = json.loads(new_content_raw)
+                                safe_action_wrapper(lambda: update_dsr_content(row['id'], updated_data), "DSR content updated!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Invalid JSON: {e}")
+
+                    if row['status'] == 'draft':
+                        wp_sites = get_wp_sites()
+                        if not wp_sites:
+                            st.error("No WP Sites connected.")
                         else:
-                            # Deploy Action
-                            wp_sites = get_wp_sites()
-                            if not wp_sites:
-                                st.error("No WP Sites connected.")
-                            else:
-                                site_opts = {s['url']: s for s in wp_sites}
-                                sel_site = st.selectbox("Deploy to:", list(site_opts.keys()), key=f"site_{row['id']}")
-                                
-                                if st.button("🚀 Deploy", key=f"deploy_{row['id']}"):
-                                    site_data = site_opts[sel_site]
-                                    wp_agent = WordPressAgent()
-                                    with st.spinner(f"Deploying to {sel_site}..."):
-                                        res = asyncio.run(dsr_manager.deploy_dsr(row['id'], wp_agent, site_data['id'], site_data))
-                                        
-                                        if "success" in res:
-                                            st.success(f"Published! [View Link]({res['url']})")
-                                            st.balloons()
-                                            # Refresh manually
-                                            # st.rerun() 
-                                        else:
-                                            st.error(f"Deployment Failed: {res.get('error')}")
+                            site_opts = {s['url']: s for s in wp_sites}
+                            sel_site = st.selectbox("Target WordPress Site", list(site_opts.keys()), key=f"site_{row['id']}")
+                            
+                            if st.button("🚀 Deploy to Live Site", key=f"deploy_{row['id']}", type="primary", use_container_width=True):
+                                site_data = site_opts[sel_site]
+                                wp_agent = WordPressAgent()
+                                with st.spinner(f"Deploying to {sel_site}..."):
+                                    res = asyncio.run(dsr_manager.deploy_dsr(row['id'], wp_agent, site_data['id'], site_data))
+                                    if "success" in res:
+                                        st.success(f"Published! [View Link]({res['url']})")
+                                        st.balloons()
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Deployment Failed: {res.get('error')}")
 
     with tab_sites:
         from ui.styles import load_css # Just to ensure env

@@ -27,7 +27,12 @@ class HostingBridge:
             for q in quota:
                 output += f"- {q.get('megabytes_used')}MB / {q.get('megabytes_limit')}MB\n"
             
-            return {"status": "success", "output": output}
+            return {
+                "status": "success", 
+                "output": output,
+                "domains": domains,
+                "quota": quota
+            }
         except Exception as e:
             self.logger.error(f"Failed to get hosting status: {e}")
             return {"status": "error", "error": str(e)}
@@ -42,7 +47,11 @@ class HostingBridge:
                 output += "No WordPress sites found (or WP Toolkit not active)."
             for s in sites:
                 output += f"- {s.get('domain')} ({s.get('path')})\n"
-            return {"status": "success", "output": output}
+            return {
+                "status": "success", 
+                "output": output,
+                "sites": sites
+            }
         except Exception as e:
             return {"status": "error", "error": str(e)}
 

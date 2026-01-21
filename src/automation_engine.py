@@ -14,6 +14,7 @@ class AutomationEngine:
         if cls._instance is None:
             cls._instance = super(AutomationEngine, cls).__new__(cls)
             cls._instance.jobs = {} # {job_id: {thread, status, logs, meta}}
+            cls._instance.logs = [] # Global logs for UI
             cls._instance.lock = threading.Lock()
         return cls._instance
 
@@ -56,7 +57,9 @@ class AutomationEngine:
     def log(self, message):
         """Legacy global log."""
         ts = datetime.now().strftime("%H:%M:%S")
-        print(f"[{ts}] [Global Auto] {message}")
+        entry = f"[{ts}] [Global] {message}"
+        self.logs.append(entry)
+        print(entry)
 
     def start_workflow(self, workflow_id, inputs, manager_agent, workspace_id=1):
         """Starts a workflow job."""
@@ -120,6 +123,7 @@ class AutomationEngine:
         entry = f"[{ts}] {message}"
         if job_id in self.jobs:
             self.jobs[job_id]['logs'].append(entry)
+        self.logs.append(entry) # Also add to global
         print(f"[Job {job_id}] {entry}")
 
     def _run_mission_thread(self, job_id, strategy, manager_agent):

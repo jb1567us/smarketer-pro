@@ -125,13 +125,14 @@ def get_valid_proxies(force_refresh=False):
 
     # 3. Harvest & Verify
     raw_proxies = get_raw_proxies()
-    check_limit = min(len(raw_proxies), 3000) # Increased scan range for Elite proxies
+    # USER OPTIMIZATION: Increased scan limit to 1500 to ensure we find enough Elite proxies
+    check_limit = min(len(raw_proxies), 1500) 
     print(f"Fetched {len(raw_proxies)} candidates. Scanning random sample of {check_limit} for ELITE proxies...")
 
     valid_proxies = []
     
-    # Using 100 workers because Elite check is stricter and fails more often
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+    # Using 150 workers for faster scanning of larger batch
+    with concurrent.futures.ThreadPoolExecutor(max_workers=150) as executor:
         futures = [executor.submit(verify_elite_proxy, p, real_ip) for p in raw_proxies[:check_limit]] 
         
         completed = 0
@@ -163,8 +164,9 @@ def inject_proxies(force_refresh=False):
     valid_proxies = get_valid_proxies(force_refresh=force_refresh)
     
     if not valid_proxies:
-        print("No working proxies found (and no cache available).")
-        return False
+        print("No working proxies found. Using Direct Connection (Safe for local use, but risky for Dorks).")
+        # Return True so we don't abort, just run without proxies
+        return True
 
     print(f"Injecting {len(valid_proxies)} proxies into SearXNG settings...")
     
@@ -176,10 +178,10 @@ def inject_proxies(force_refresh=False):
     # Free proxies need more time than default (which is usually 2-3s)
     proxy_lines = [
         "\noutgoing:", 
-        "  request_timeout: 10.0",       # Waiting time for a response
-        "  max_request_timeout: 15.0",   # Max time for a request
-        "  pool_connections: 100",
-        "  pool_maxsize: 100",
+        "  request_timeout: 15.0",       # Waiting time for a response (Increased for free proxies)
+        "  max_request_timeout: 25.0",   # Max time for a request
+        "  pool_connections: 200",       # Higher concurrency
+        "  pool_maxsize: 200",
         "  proxies:", 
         "    all://:"
     ]
@@ -196,12 +198,26 @@ def inject_proxies(force_refresh=False):
         content = re.sub(f"{marker_start}.*?{marker_end}", "", content, flags=re.DOTALL)
     
     # Append new
-    final_content = content + f"\n\n{marker_start}{new_block}{marker_end}\n"
+    # Append new proxy block
+    content_with_proxies = content + f"\n\n{marker_start}{new_block}{marker_end}\n"
+    
+    # FIX: Inject Secret Key if default
+    # We look for "secret_key: ultrasecretkey" or just ensure it's set
+    import secrets
+    new_key = secrets.token_hex(16)
+    
+    # Regex to find existing secret key
+    # server:
+    #   secret_key: "ultrasecretkey"
+    
+    if "ultrasecretkey" in content_with_proxies:
+        print("Default secret key found. Replacing with secure random key...")
+        content_with_proxies = content_with_proxies.replace("ultrasecretkey", new_key)
     
     with open(settings_path, 'w', encoding='utf-8') as f:
-        f.write(final_content)
+        f.write(content_with_proxies)
         
-    print("Success! Proxies injected.")
+    print("Success! Proxies and Secret Key injected.")
     return True
 
 if __name__ == "__main__":

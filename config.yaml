@@ -98,7 +98,7 @@ project:
 proxies:
   enabled: true
   source_url: https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt
-  max_proxies: 20
+  max_proxies: 1000
   verification_url: http://httpbin.org/ip
 quality_gate:
   must_haves:

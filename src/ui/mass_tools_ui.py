@@ -8,52 +8,56 @@ from agents import ResearcherAgent, SEOExpertAgent
 from agents.comment_agent import CommentAgent
 from workflow import run_outreach
 from config import config
-from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
+from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat, premium_header, confirm_action, safe_action_wrapper
+from database import delete_lead, get_connection
+import os
 
 def render_mass_tools_page():
-    st.header("🛠️ Mass Power Tools")
-    st.info("Scrapebox / SEnuke style bulk utilities.")
+    premium_header("🛠️ Mass Power Tools", "Scrapebox / SEnuke style bulk utilities for heavy lifting.")
     tool_type = st.selectbox("Select Tool", ["Mass Harvester", "Footprint Scraper", "Mass Commenter", "Backlink Hunter", "Bulk Domain Checker", "Indexing Booster"])
     
     if tool_type == "Mass Commenter":
         st.subheader("💬 Automated Blog Commenter")
         st.caption("Post comments to relevant blogs to build backlinks and traffic. Supports Spintax/LLM variation.")
         
-        with st.form("commenter_form"):
-            col_c1, col_c2 = st.columns(2)
-            with col_c1:
-                c_name = st.text_input("Name", "John Doe")
-                c_email = st.text_input("Email", "john@example.com")
-            with col_c2:
-                c_website = st.text_input("Website", "https://mysite.com")
+        c_name = st.text_input("Name", "John Doe")
+        c_email = st.text_input("Email", "john@example.com")
+        c_website = st.text_input("Website", "https://mysite.com")
+        
+        c_seed = st.text_area("Seed Comment (LLM will spin this)", height=100, placeholder="Great article! I really enjoyed the part about...")
+        c_targets = st.text_area("Target URLs (One per line)", height=150, placeholder="https://blog1.com/post\nhttps://blog2.com/article")
+        
+        def run_comments():
+            target_list = [t.strip() for t in c_targets.split("\n") if t.strip()]
+            from agents.comment_agent import CommentAgent
+            agent = CommentAgent()
             
-            c_seed = st.text_area("Seed Comment (LLM will spin this)", height=100, placeholder="Great article! I really enjoyed the part about...")
-            c_targets = st.text_area("Target URLs (One per line)", height=150, placeholder="https://blog1.com/post\nhttps://blog2.com/article")
+            results = []
+            with st.status("Running Commenter...") as status:
+                for idx, url in enumerate(target_list):
+                    status.write(f"Processing {url}...")
+                    # Spin
+                    spun_comment = asyncio.run(agent.spin_comment(c_seed, context=url))
+                    # Post
+                    res = asyncio.run(agent.post_comment(url, c_name, c_email, c_website, spun_comment))
+                    
+                    results.append({
+                        "url": url,
+                        "status": res.get("status"),
+                        "detail": res.get("detail") or res.get("reason"),
+                        "comment_used": spun_comment
+                    })
+                status.update(label="Campaign Complete!", state="complete")
+            st.session_state['comment_results'] = results
             
-            if st.form_submit_button("Start Commenting Campaign"):
-                if c_seed and c_targets:
-                    target_list = [t.strip() for t in c_targets.split("\n") if t.strip()]
-                    
-                    from agents.comment_agent import CommentAgent
-                    agent = CommentAgent()
-                    
-                    st.session_state['comment_results'] = []
-                    with st.status("Running Commenter...") as status:
-                        for idx, url in enumerate(target_list):
-                            status.write(f"Processing {url}...")
-                            # Spin
-                            spun_comment = asyncio.run(agent.spin_comment(c_seed, context=url))
-                            # Post
-                            res = asyncio.run(agent.post_comment(url, c_name, c_email, c_website, spun_comment))
-                            
-                            st.session_state['comment_results'].append({
-                                "url": url,
-                                "status": res.get("status"),
-                                "detail": res.get("detail") or res.get("reason"),
-                                "comment_used": spun_comment
-                            })
-                        status.update(label="Campaign Complete!", state="complete")
-                        
+        if c_seed and c_targets:
+            confirm_action(
+                "🚀 Start Commenting Campaign", 
+                "Launch automated commenting? Ensure you are compliant with anti-spam laws.", 
+                run_comments, 
+                key="confirm_comment_run"
+            )
+
         if 'comment_results' in st.session_state and st.session_state['comment_results']:
             st.divider()
             st.subheader("Results")
@@ -106,40 +110,61 @@ def render_mass_tools_page():
             h_keywords = st.text_area("Keywords (One per line)", height=150, placeholder="marketing agencies austin\ncommercial plumbers dallas")
             h_limit = st.slider("Max Targets per Keyword", 1, 100, 20)
             
-            if st.form_submit_button("Start Harvesting", use_container_width=True):
+            if st.form_submit_button("Start Harvesting", width="stretch"):
                 if h_keywords:
-                    keywords = [k.strip() for k in h_keywords.split("\n") if k.strip()]
-                    st.session_state['harvest_results'] = []
-                    
-                    harvester_status = st.status("Harvesting in progress...")
-                    agent = ResearcherAgent()
-                    
-                    for kw in keywords:
-                        harvester_status.write(f"Scouting for: {kw}")
-                        # Use a simplified search for speed in harvester
-                        res = asyncio.run(run_outreach(
-                            kw, 
-                            max_results=h_limit,
-                            status_callback=lambda m: harvester_status.write(f"  > {m}")
-                        ))
-                        # Results are saved to leads.db by run_outreach, 
-                        # but we want to show them here too or just fetch recent ones
-                    
-                    harvester_status.update(label="Harvesting Complete!", state="complete")
-                    st.success(f"Harvested targets for {len(keywords)} keywords. Check CRM Dashboard for new leads.")
-                    st.rerun()
-        
+                    def run_harvester():
+                        keywords = [k.strip() for k in h_keywords.split("\n") if k.strip()]
+                        harvester_status = st.status("Harvesting in progress...")
+                        agent = ResearcherAgent()
+                        
+                        for kw in keywords:
+                            harvester_status.write(f"Scouting for: {kw}")
+                            # Use a simplified search for speed in harvester
+                            asyncio.run(run_outreach(
+                                kw, 
+                                max_results=h_limit,
+                                status_callback=lambda m: harvester_status.write(f"  > {m}")
+                            ))
+                        
+                        harvester_status.update(label="Harvesting Complete!", state="complete")
+                        st.success(f"Harvested targets for {len(keywords)} keywords. Check CRM Dashboard for new leads.")
+                        time.sleep(1)
+                        st.rerun()
+
+                    confirm_action("🚀 Start Harvesting", f"Confirm harvesting for {len(h_keywords.split())} keywords?", run_harvester, key="confirm_harvest")
+
         # Show Recent Harvested (last 50 leads added via 'search')
         st.divider()
         st.subheader("Recent Harvested Targets")
+        
+        m_col1, m_col2 = st.columns([1, 4])
+        with m_col1:
+             days_back = st.number_input("Days Back", min_value=1, value=30, step=1, key="mh_days")
+
         leads = load_data("leads")
         if not leads.empty:
             # Filter by those typically harvested (source='search')
-            harvested = leads[leads['source'] == 'search'].tail(50)
+            harvested = leads[leads['source'] == 'search']
+            
             if not harvested.empty:
-                st.dataframe(harvested[['company_name', 'email', 'url', 'industry']], hide_index=True)
+                if 'created_at' in harvested.columns:
+                     harvested['created_at'] = pd.to_datetime(harvested['created_at'], errors='coerce')
+                     cutoff = pd.Timestamp.now() - pd.Timedelta(days=days_back)
+                     harvested = harvested[harvested['created_at'] > cutoff]
+            
+                # Use Enhanced Table
+                hdf = pd.DataFrame(harvested)
+                edited_h = render_enhanced_table(hdf[['id', 'company_name', 'email', 'url', 'industry', 'created_at']], key="harvest_results_table")
+                
+                selected_ids = []
+                if not edited_h.empty and 'Select' in edited_h.columns:
+                    selected_ids = edited_h[edited_h['Select'] == True]['id'].tolist()
+                
+                if selected_ids:
+                    confirm_action("🗑️ Bulk Delete", f"Delete {len(selected_ids)} harvested leads?", 
+                                   lambda: [delete_lead(lid) for lid in selected_ids], key="del_harvested")
             else:
-                st.info("No harvested leads found yet.")
+                st.info("No harvested leads found in this period.")
         else:
             st.info("Lead database is empty.")
     

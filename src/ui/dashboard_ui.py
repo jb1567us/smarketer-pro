@@ -1,50 +1,48 @@
-
-import streamlit as st
-import pandas as pd
-from datetime import datetime
 from database import get_connection, get_deals, get_tasks
 from proxy_manager import proxy_manager
+from datetime import datetime
+import streamlit as st
+from ui.components import premium_header, safe_action_wrapper
 
 def get_db_metrics():
-    """Fetch quick metrics for the dashboard."""
-    try:
+    """Fetch quick metrics for the dashboard with safety wrapping."""
+    def _fetch():
         conn = get_connection()
-        # Leads
         leads = pd.read_sql_query("SELECT count(*) as count FROM leads", conn).iloc[0]['count']
-        
-        # Campaigns
         campaigns = pd.read_sql_query("SELECT count(*) as count FROM campaigns WHERE status='running'", conn).iloc[0]['count']
-        
         conn.close()
         return leads, campaigns
-    except:
-        return 0, 0
+    
+    metrics = safe_action_wrapper(_fetch, success_message=None)
+    return metrics if metrics else (0, 0)
 
 def render_dashboard():
-    # Header
+    premium_header("🚀 Mission Control", f"System Status: ONLINE | {datetime.now().strftime('%A, %B %d, %I:%M %p')}")
+    
+    # --- Sidebar Filters ---
+    st.sidebar.markdown("### 📅 Global Filters")
+    date_filter = st.sidebar.date_input("Date Range", [datetime(2026, 1, 1), datetime.now()])
+    
     col1, col2 = st.columns([3, 1])
-    with col1:
-        st.title("🚀 Mission Control")
-        st.caption(f"System Status: ONLINE | {datetime.now().strftime('%A, %B %d, %I:%M %p')}")
     with col2:
         # Mini System Health
         status_color = "green" if proxy_manager.enabled else "orange"
         engine = st.session_state.get('automation_engine')
         is_running = engine and getattr(engine, 'is_running', False)
         
-        st.markdown(f"""
-        <div style="text-align: right; padding: 10px; border: 1px solid #333; border-radius: 5px;">
-            <b>Proxies:</b> :{status_color}[{'Active' if proxy_manager.enabled else 'Disabled'}]<br>
-            <b>Automation:</b> {'Running 🟢' if is_running else 'Idle ⚪'}
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Auto-refresh logic for Dashboard
+        # Auto-refresh logic (Non-blocking improvement)
         if is_running:
-            if st.checkbox("Auto-refresh", value=True, key="dash_refresh"):
-                import time
-                time.sleep(2)
-                st.rerun()
+            refresh = st.checkbox("Auto-refresh (30s)", value=False, key="dash_refresh")
+            if refresh:
+                # Instead of sleep(2), we only rerun if a significant interval has passed
+                # This is still a bit 'Streamlit-style' but less intrusive than 2 seconds sleep
+                last_refresh = st.session_state.get('last_dash_refresh', 0)
+                if time.time() - last_refresh > 30:
+                    st.session_state['last_dash_refresh'] = time.time()
+                    st.rerun()
+        
+        if st.button("🔄 Refresh Data", width="stretch"):
+            st.rerun()
 
     st.divider()
 
@@ -135,7 +133,14 @@ def render_dashboard():
     """, unsafe_allow_html=True)
 
     def nav_card(icon, title, subtitle, target_view):
-        if st.button(f"{icon} {title}\n\n{subtitle}", key=f"btn_{target_view}", use_container_width=True):
+        st.markdown(f"""
+        <div class="css-card" style="text-align: center; height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid rgba(3, 105, 161, 0.1);">
+            <div style="font-size: 2.2rem; margin-bottom: 5px;">{icon}</div>
+            <h4 style="margin: 5px 0; color: #0F172A;">{title}</h4>
+            <p style="opacity: 0.6; font-size: 0.85rem; margin-bottom: 10px;">{subtitle}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button(f"Open {title}", key=f"btn_nav_{target_view}", width="stretch"):
             st.session_state['current_view'] = target_view
             st.rerun()
 

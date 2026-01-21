@@ -290,6 +290,11 @@ def main():
     
     st.session_state['automation_engine'] = get_auto_engine()
     
+    # Trigger background proxy check (once per session)
+    if not st.session_state.get('proxy_startup_checked'):
+        proxy_manager.ensure_fresh_bg()
+        st.session_state['proxy_startup_checked'] = True
+    
     # 0. Sync URL parameters with session state
     if "page" in st.query_params:
         requested_page = st.query_params["page"]
@@ -314,6 +319,27 @@ def main():
     render_sidebar_chat()
     
     st.title("🚀 Smarketer Pro: CRM & Growth OS")
+
+    # === GLOBAL PROXY HARVEST PROGRESS ===
+    stats = proxy_manager.harvest_stats
+    if stats.get("is_active"):
+        with st.container(border=True):
+            st.write("🛰️ **Mass Proxy Harvest in Progress...**")
+            progress = stats['checked'] / stats['total'] if stats['total'] > 0 else 0
+            st.progress(progress)
+            
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Checked", f"{stats['checked']:,} / {stats['total']:,}")
+            c2.metric("Elite Found", stats['found'])
+            
+            etr = stats.get('etr', 0)
+            mins, secs = divmod(etr, 60)
+            st.metric("Est. Time Remaining", f"{mins}m {secs}s")
+            
+            # Auto-refresh if active to keep progress moving
+            # Use a slightly longer sleep to avoid flickering
+            time.sleep(0.5)
+            st.rerun()
     
     # 2. Top Navigation
     render_top_navigation()
@@ -374,8 +400,6 @@ def main():
     elif choice == "Hosting Dashboard":
         render_hosting_dashboard()
 
-    elif choice == "Proxy Lab":
-        render_pm_ui()
 
     elif choice == "Product Lab":
         render_pm_ui()
@@ -550,7 +574,7 @@ def main():
     elif choice == "Proxy Lab":
         st.header("🌐 Proxy Harvester Lab")
         st.caption("Advanced ScrapeBox-style proxy management and elite harvesting.")
-        
+
         # Dashboard Stats
         col1, col2, col3 = st.columns(3)
         col1.metric("Active Elite Proxies", len(proxy_manager.proxies))
@@ -597,27 +621,13 @@ def main():
             st.divider()
 
             if st.button("🚀 Trigger Mass Harvest", use_container_width=True, type="primary"):
-                # Create a placeholder for logs
-                log_placeholder = st.empty()
-                logs = []
-                
-                def ui_logger(msg):
-                    # Append logging message with timestamp
-                    import datetime
-                    ts = datetime.datetime.now().strftime("%H:%M:%S")
-                    logs.append(f"[{ts}] {msg}")
-                    # Update the placeholder with all logs in a code block
-                    # We keep the last 20 lines to avoid UI clutter if it gets huge, or show all in scrollable
-                    log_text = "\n".join(logs[-30:]) 
-                    log_placeholder.code(log_text, language="bash")
-
-                with st.status("Harvesting in progress...", expanded=True) as status:
-                    ui_logger("Initializing harvester...")
-                    asyncio.run(proxy_manager.fetch_proxies(log_callback=ui_logger))
-                    status.update(label="Harvest & Validation Complete!", state="complete", expanded=False)
-                
-                st.success(f"Loaded {len(proxy_manager.proxies)} elite proxies.")
-                st.rerun()
+                success, msg = proxy_manager.start_harvest_bg()
+                if success:
+                    st.success("🛰️ Background harvest initiated. Observe progress above.")
+                    time.sleep(1)
+                    st.rerun()
+                else: 
+                    st.error(msg)
             
             if st.button("🧹 Clear Bad Proxies", use_container_width=True):
                 proxy_manager.bad_proxies.clear()

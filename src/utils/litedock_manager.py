@@ -72,6 +72,6 @@ class LiteDockManager:
         if self.is_docker_running():
             return config.get("search", {}).get("searxng_url", "http://localhost:8081/search")
         else:
-            return "http://localhost:8080/search"
+            return "http://localhost:8081/search"
 
 litedock_manager = LiteDockManager()

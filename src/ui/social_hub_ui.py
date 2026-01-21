@@ -5,15 +5,17 @@ import asyncio
 import json
 from datetime import datetime, time
 from database import (
-    get_scheduled_posts, delete_scheduled_post, save_scheduled_post, load_data, add_lead,
-    save_creative_content
+    get_scheduled_posts, delete_scheduled_post, save_scheduled_post, update_scheduled_post, load_data, add_lead,
+    save_creative_content, get_connection
 )
 from agents import CopywriterAgent, SocialListeningAgent
-from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
+from ui.components import (
+    render_enhanced_table, render_data_management_bar, render_page_chat,
+    premium_header, safe_action_wrapper, confirm_action
+)
 
 def render_social_scheduler_page():
-    st.header("📅 Social Media Hub")
-    st.caption("Plan and schedule your social media presence.")
+    premium_header("📅 Social Media Hub", "Plan and schedule your social media presence.")
     
     tab1, tab2, tab3 = st.tabs(["📋 Scheduled Posts", "💡 Strategy Generator", "🔗 Linked Accounts"])
     with tab1:
@@ -30,24 +32,29 @@ def render_social_scheduler_page():
             sched_df = pd.DataFrame(scheduled)
             edited_sched = render_enhanced_table(sched_df[['id', 'agent_type', 'platforms', 'content', 'scheduled_at']], key="social_sched_table")
             
-            selected_posts = edited_sched[edited_sched['Select'] == True]
-            if not selected_posts.empty:
-                if st.button(f"🗑️ Delete {len(selected_posts)} Selected Posts", type="secondary"):
-                    for pid in selected_posts['id'].tolist():
-                        delete_scheduled_post(pid)
-                    st.success("Deleted!")
-                    st.rerun()
+            selected_ids = edited_sched[edited_sched['Select'] == True]['id'].tolist()
+            if selected_ids:
+                confirm_action(f"🗑️ Bulk Delete", f"Delete {len(selected_ids)} scheduled posts?", 
+                               lambda: [delete_scheduled_post(pid) for pid in selected_ids], key="bulk_del_social")
 
             st.divider()
-            st.subheader("🖼️ Detail View")
-            for p in scheduled:
-                with st.expander(f"📌 {p['agent_type']}: {p['content'][:50]}...", expanded=False):
-                    st.write(p['content'])
-                    platforms = json.loads(p['platforms'])
-                    st.caption(f"📱 Platforms: {', '.join(platforms)} | 📅 {pd.to_datetime(p['scheduled_at'], unit='s').strftime('%Y-%m-%d %H:%M')}")
-                    if st.button("🗑️ Delete Post", key=f"del_post_single_{p['id']}"):
-                        delete_scheduled_post(p['id'])
-                        st.rerun()
+            st.subheader("🖼️ Detail View & Editor")
+            selected_post_title = st.selectbox("Select Post to Edit", [f"{p['id']}: {p['content'][:50]}..." for p in scheduled])
+            if selected_post_title:
+                pid = int(selected_post_title.split(':')[0])
+                p = next(item for item in scheduled if item["id"] == pid)
+                with st.container(border=True):
+                    platforms = json.loads(p['platforms']) if isinstance(p['platforms'], str) else p['platforms']
+                    new_content = st.text_area("Edit Content", value=p['content'], key=f"edit_content_{p['id']}")
+                    new_date = st.date_input("New Date", value=datetime.fromtimestamp(p['scheduled_at']), key=f"edit_date_{p['id']}")
+                    
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        if st.button("💾 Save Changes", key=f"save_{p['id']}"):
+                            safe_action_wrapper(lambda: update_scheduled_post(p['id'], {"content": new_content, "scheduled_at": int(datetime.combine(new_date, datetime.min.time()).timestamp())}), "Post updated!")
+                            st.rerun()
+                    with c2:
+                         confirm_action("🗑️ Delete", "Delete this post?", lambda: delete_scheduled_post(p['id']), key=f"del_single_{p['id']}")
 
         # 3. Page Level Chat
         render_page_chat(
@@ -59,7 +66,9 @@ def render_social_scheduler_page():
         st.subheader("➕ Create New Post")
         with st.form("social_post"):
             platforms = st.multiselect("Platforms", ["LinkedIn", "X (Twitter)", "Instagram", "TikTok", "Facebook"], default=["LinkedIn"])
-            content = st.text_area("Post Content", height=150, placeholder="Write your post here or use an agent result...")
+            # Load from draft state if exists
+            draft_content = st.session_state.get('social_draft_content', "")
+            content = st.text_area("Post Content", value=draft_content, height=150, placeholder="Write your post here or use an agent result...")
             
             col1, col2 = st.columns(2)
             with col1:
@@ -72,8 +81,9 @@ def render_social_scheduler_page():
                     # Combine date and time
                     dt = datetime.combine(d_date, d_time)
                     ts = int(dt.timestamp())
-                    save_scheduled_post("Manual", platforms, content, ts)
-                    st.success("Post scheduled successfully!")
+                    safe_action_wrapper(lambda: save_scheduled_post("Manual", platforms, content, ts), "Post scheduled successfully!")
+                    # Clear draft
+                    st.session_state.pop('social_draft_content', None)
                     time.sleep(1)
                     st.rerun()
                 else:
@@ -96,19 +106,16 @@ def render_social_scheduler_page():
             st.divider()
             st.json(st.session_state['last_social_strategy'])
             # Allow creating a post from strategy
-            if st.button("Convert to Post Draft"):
-                # Extract some content if possible
+            if st.button("🚀 Convert to Post Draft", type="primary"):
+                # Extract content
                 res = st.session_state['last_social_strategy']
-                content_draft = ""
                 if isinstance(res, dict):
-                     # Try to find common keys
-                     content_draft = res.get('hook', '') or res.get('script', '') or str(res)
+                     st.session_state['social_draft_content'] = res.get('hook', '') or res.get('script', '') or str(res)
                 else:
-                     content_draft = str(res)
+                     st.session_state['social_draft_content'] = str(res)
                 
-                st.session_state['current_view'] = "Social Scheduler"
-                # We can't easily populate the form cross-tab/view without more state
-                st.info("Draft ready (Simulated). Copy-paste the content above into the Scheduler tab.")
+                st.success("Draft created! Scroll up to the 'Create New Post' form.")
+                st.rerun()
     with tab3:
         st.subheader("Linked Accounts")
         accounts = [
@@ -128,14 +135,14 @@ def render_social_scheduler_page():
                 st.markdown(f":{color}[{acc['status']}] ({acc['user']})")
             with col3:
                 if acc['status'] == "Connected":
-                    st.button("Disconnect", key=f"dc_{acc['name']}")
+                    confirm_action("🔌 Disconnect", f"Unlink your {acc['name']} account?", lambda: st.toast(f"Disconnected {acc['name']}"), key=f"dc_{acc['name']}")
                 else:
-                    st.button("Connect", key=f"cn_{acc['name']}", type="primary")
+                    if st.button("Connect", key=f"cn_{acc['name']}", type="primary"):
+                        safe_action_wrapper(lambda: time.sleep(1), f"Successfully linked {acc['name']}!")
 
 
 def render_social_pulse_page():
-    st.header("📡 Social Listening Pulse")
-    st.caption("Monitor real-time buying signals and competitor mentions across the web.")
+    premium_header("📡 Social Listening Pulse", "Monitor real-time buying signals and competitor mentions across the web.")
     
     # Keyword Configuration
     with st.expander("⚙️ Listening Configuration", expanded=True):

@@ -1,10 +1,15 @@
 import streamlit as st
 import time
 from agents.video_agent import VideoAgent
+from database import save_video_job, get_video_history, update_video_job_status, get_connection
+from ui.components import (
+    premium_header, safe_action_wrapper, render_job_controls, 
+    render_enhanced_table, confirm_action
+)
+import pandas as pd
 
 def render_video_studio():
-    st.header("🎬 Video Studio")
-    st.caption("Generate cinematic AI videos for your campaigns using state-of-the-art models.")
+    premium_header("🎬 Video Studio", "Generate cinematic AI videos for your campaigns using state-of-the-art models.")
 
     if 'video_agent' not in st.session_state:
         st.session_state['video_agent'] = VideoAgent()
@@ -60,90 +65,95 @@ def render_video_studio():
                 if not prompt_input:
                     st.warning("Please describe your video idea first.")
                 else:
-                    with st.spinner("🎬 Director (Agent) is crafting the prompt and initializing render..."):
-                        # call agent
-                        try:
-                            result = agent.create_video(
-                                context=prompt_input,
-                                provider_name=provider,
-                                style=style
-                            )
-                            
-                            st.success("Generation Started!")
-                            
-                            # Store result in session state to display below
-                            st.session_state['last_video_job'] = result
-                            
-                            # Add to history
-                            if 'video_history' not in st.session_state:
-                                st.session_state['video_history'] = []
-                            st.session_state['video_history'].insert(0, result)
-                            
-                        except Exception as e:
-                            st.error(f"Generation failed: {str(e)}")
+                    def start_gen():
+                        result = agent.create_video(
+                            context=prompt_input,
+                            provider_name=provider,
+                            style=style
+                        )
+                        job_data = result.get('job', {})
+                        # Save to DB
+                        save_video_job(
+                            prompt=prompt_input,
+                            optimized_prompt=result.get('optimized_prompt'),
+                            provider=result.get('provider'),
+                            status=job_data.get('status', 'pending'),
+                            job_id=job_data.get('job_id'),
+                            url=job_data.get('url')
+                        )
+                        return result
 
-            # Result Display
+                    res = safe_action_wrapper(start_gen, "Director has initialized the render!")
+                    if res:
+                        st.session_state['last_video_job'] = res
+                        st.rerun()
+
+            # --- ACTIVE RENDER MONITOR ---
             if 'last_video_job' in st.session_state:
                 job = st.session_state['last_video_job']
                 job_data = job.get('job', {})
+                jid = job_data.get('job_id')
                 
                 st.divider()
-                st.markdown(f"**Job ID:** `{job_data.get('job_id')}` | **Provider:** `{job.get('provider')}`")
-                st.markdown(f"**Optimized Prompt:**")
-                st.info(job.get('optimized_prompt'))
+                st.markdown(f"**Current Task:** `{jid}`")
                 
-                # Polling/Display Logic
-                status_container = st.empty()
-                video_container = st.empty()
+                # Polling / Status Logic Wrapper in Job Controls
+                status_info = agent.manager.get_provider(job['provider']).get_status(jid)
+                current_status = status_info.get('status')
+                prog = status_info.get('progress', 0) if isinstance(status_info.get('progress'), (int, float)) else 0
                 
-                status = job_data.get('status')
+                render_job_controls(
+                    "Video Render", 
+                    is_running=(current_status not in ['completed', 'failed']),
+                    on_start=None, # Already started
+                    on_stop=lambda: update_video_job_status(jid, 'stopped'),
+                    progress=prog / 100.0,
+                    status_text=f"🎥 Rendering ({current_status})... {prog}%"
+                )
                 
-                # Initial render
-                if status == 'completed':
-                    status_container.success("Complete!")
-                    if job_data.get('url'):
-                        video_container.video(job_data.get('url'))
-                elif status == 'failed':
-                    status_container.error(f"Failed: {job_data.get('error')}")
-                else:
-                    # Poll loop if it's a fresh job or mock
-                    # In a real app, this might be better handled with a "Check Status" button or background loop
-                    # For this mock/demo, we'll do a short loop
-                    progress_bar = status_container.progress(0, text=f"Processing ({status})...")
-                    
-                    for _ in range(20): # Poll for up to 20 seconds
-                        time.sleep(1)
-                        # Re-fetch status
-                        current_status = agent.manager.get_provider(job['provider']).get_status(job_data['job_id'])
-                        
-                        s_txt = current_status.get('status')
-                        prog = current_status.get('progress', 0)
-                        
-                        if s_txt == 'completed':
-                            progress_bar.empty()
-                            status_container.success("Render Complete!")
-                            video_container.video(current_status.get('url'))
-                            # Update the history item
-                            job_data['status'] = 'completed'
-                            job_data['url'] = current_status.get('url')
-                            break
-                        elif s_txt == 'failed':
-                            progress_bar.empty()
-                            status_container.error("Render Failed.")
-                            break
-                        else:
-                            progress_bar.progress(prog, text=f"Rendering ({s_txt})... {prog}%")
+                if current_status == 'completed':
+                    st.success("Render Complete!")
+                    st.video(status_info.get('url'))
+                    update_video_job_status(jid, 'completed', status_info.get('url'))
+                    if st.button("Clear monitor"):
+                        del st.session_state['last_video_job']
+                        st.rerun()
+                elif current_status == 'failed':
+                    st.error(f"Render Failed: {status_info.get('error')}")
+                    update_video_job_status(jid, 'failed')
+                    if st.button("Retry Generation"):
+                        del st.session_state['last_video_job']
+                        st.rerun()
 
     with tab_history:
-        st.subheader("Generation History")
-        if 'video_history' in st.session_state and st.session_state['video_history']:
-            for item in st.session_state['video_history']:
-                with st.expander(f"{item.get('optimized_prompt')[:60]}...", expanded=False):
-                    st.text(f"Provider: {item.get('provider')}")
-                    j = item.get('job', {})
-                    if j.get('url'):
-                        st.video(j.get('url'))
-                    else:
-                        st.warning("Video URL not available (expired or failed).")
+        st.subheader("🕵️ Video Archives")
+        history = get_video_history()
+        
+        if not history:
+            st.info("No videos generated yet. Launch your first cinematic render!")
         else:
-            st.info("No videos generated yet.")
+            hist_df = pd.DataFrame(history)
+            hist_df['created_at'] = pd.to_datetime(hist_df['created_at'], unit='s').dt.strftime('%m/%d %H:%M')
+            
+            # Use Enhanced Table for selection/bulk
+            edited_hist = render_enhanced_table(hist_df[['id', 'provider', 'status', 'created_at', 'job_id']], key="video_hist_table")
+            
+            selected_ids = edited_hist[edited_hist['Select'] == True]['id'].tolist()
+            if selected_ids:
+                confirm_action("🗑️ Delete Selected", f"Permanently remove {len(selected_ids)} history items?", 
+                               lambda: [get_connection().cursor().execute("DELETE FROM video_history WHERE id=?", (hid,)) for hid in selected_ids], 
+                               key="bulk_del_vid")
+
+            st.divider()
+            
+            # Detail Preview
+            selected_job = st.selectbox("Select Video to Preview", hist_df['prompt'].str[:50].tolist())
+            if selected_job:
+                row = hist_df[hist_df['prompt'].str[:50] == selected_job].iloc[0]
+                with st.container(border=True):
+                    st.markdown(f"**Source Prompt:** {row['prompt']}")
+                    st.markdown(f"**Optimized Prompt:** {row['optimized_prompt']}")
+                    if row['url'] and row['status'] == 'completed':
+                        st.video(row['url'])
+                    else:
+                        st.warning(f"Video unavailable. Status: {row['status']}")

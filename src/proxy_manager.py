@@ -15,10 +15,25 @@ class ProxyManager:
     def __init__(self):
         self.proxies = [] # Current working set
         self.bad_proxies = set()
-        self.config = config.get("proxies", {})
-        self.enabled = self.config.get("enabled", False)
+        # config is imported globally. We'll use it live to avoid stale values.
         self.verification_url = "http://httpbin.org/ip"
+        self.harvest_stats = {
+            "is_active": False,
+            "total": 0,
+            "checked": 0,
+            "found": 0,
+            "start_time": 0,
+            "etr": 0
+        }
         self._initialized = False
+
+    @property
+    def enabled(self):
+        return config.get("proxies", {}).get("enabled", False)
+
+    @property
+    def max_proxies(self):
+        return config.get("proxies", {}).get("max_proxies", 1000)
         # Enhanced source list
         self.public_sources = [
             "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt",
@@ -27,13 +42,11 @@ class ProxyManager:
             "https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/http.txt",
             "https://raw.githubusercontent.com/proxifly/free-proxy-list/main/proxies/protocols/http/data.txt",
             "https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all",
-            "https://www.proxy-list.download/api/v1/get?type=https",
             "https://www.sslproxies.org/", 
             "https://free-proxy-list.net/",
             "https://www.us-proxy.org/"
         ]
         
-        self.max_proxies = self.config.get("max_proxies", 50)
         
         # Defer DB load to first access
         # self._load_from_db()
@@ -65,16 +78,17 @@ class ProxyManager:
     def _load_from_db(self):
         try:
             from database import get_best_proxies
-            best = get_best_proxies(limit=self.max_proxies)
+            max_p = config.get("proxies", {}).get("max_proxies", 1000)
+            best = get_best_proxies(limit=max_p)
             self.proxies = [p['address'] for p in best]
-            print(f"[{self.__class__.__name__}] Loaded {len(self.proxies)} elite proxies from database.")
+            print(f"[{self.__class__.__name__}] Loaded {len(self.proxies)} elite proxies from database (Limit: {max_p}).")
         except Exception as e:
             print(f"Error loading proxies from DB: {e}")
 
     async def fetch_proxies(self, log_callback=None):
         """Fetches/Harvests proxies using multiple public sources."""
         self._ensure_initialized()
-        if not self.enabled:
+        if not config.get("proxies", {}).get("enabled", False):
             return
 
         def log(msg):
@@ -107,8 +121,11 @@ class ProxyManager:
         # prioritized check
         test_candidates = list(all_fetched)
         random.shuffle(test_candidates)
-        test_candidates = test_candidates[:300] # Cap at 300 to be fast
+        # Low yield for Instagram (0.8%), so we must test a HUGE chunk to get 200+
+        test_candidates = test_candidates[:30000] 
+        log(f"Testing {len(test_candidates)} candidates for tiered (Standard/Elite) compatibility (max 50 concurrent)...")
         
+        # working is now list of dicts: {"address": p, "tier": level}
         working = await self.verify_proxies(test_candidates)
         
         if not working:
@@ -117,11 +134,13 @@ class ProxyManager:
 
         # Save to DB
         from database import save_proxies
-        proxy_data = [{"address": p, "latency": 1.0, "anonymity": "unknown"} for p in working]
-        save_proxies(proxy_data)
+        proxy_data = [{"address": p['address'], "latency": 1.0, "anonymity": p['tier']} for p in working]
+        save_proxies(proxy_data, reset=True)
         
         self._load_from_db()
-        log(f"✅ Harvest complete. {len(self.proxies)} working proxies loaded.")
+        elite_count = sum(1 for p in working if p['tier'] == 'elite')
+        standard_count = len(working) - elite_count
+        log(f"✅ Harvest complete. Found {elite_count} Elite and {standard_count} Standard proxies.")
 
     async def _fetch_source(self, session, url, logger=None):
         try:
@@ -140,51 +159,148 @@ class ProxyManager:
             if logger: logger(f"  [!] Error fetching {url[:30]}...: {str(e)[:50]}")
         return []
 
+    def start_harvest_bg(self):
+        """Starts a massive fresh harvest in a background thread."""
+        if self.harvest_stats["is_active"]:
+            return False, "Harvest already in progress."
+
+        import threading
+        thread = threading.Thread(target=self._run_harvest_thread, daemon=True)
+        thread.start()
+        return True, "Background harvest started."
+
+    def _run_harvest_thread(self):
+        """Thread wrapper: creates and runs a new event loop for the async harvest."""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self.fetch_proxies())
+            # Ensure SearXNG is updated after harvest
+            loop.run_until_complete(self.update_searxng_config())
+        except Exception as e:
+            print(f"[ProxyManager] Background harvest error: {e}")
+        finally:
+            loop.close()
+
     async def _fallback_fetch(self):
         # Redirect to fetch_proxies since it now handles multiple sources
         await self.fetch_proxies()
 
+    def ensure_fresh_bg(self, min_count=200, max_age_hours=4, force=False):
+        """Starts a freshness check in a background thread to avoid blocking UI/Startup."""
+        import threading
+        def run():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(self.ensure_fresh_proxies(min_count, max_age_hours, force))
+            except Exception as e:
+                print(f"[ProxyManager] Background freshness check error: {e}")
+            finally:
+                loop.close()
+        
+        thread = threading.Thread(target=run, daemon=True)
+        thread.start()
+        return True
+
     async def verify_proxies(self, proxy_list):
         working_proxies = []
-        semaphore = asyncio.Semaphore(20)
-        async def check(proxy):
-            async with semaphore:
-                if await self.verify_proxy(proxy):
-                    working_proxies.append(proxy)
-        await asyncio.gather(*(check(p) for p in proxy_list))
+        # Concurrency 50 for Windows stability (prevents WinError 10054)
+        semaphore = asyncio.Semaphore(50)
+        
+        # Telemetry Init
+        self.harvest_stats["is_active"] = True
+        self.harvest_stats["total"] = len(proxy_list)
+        self.harvest_stats["checked"] = 0
+        self.harvest_stats["found"] = 0
+        self.harvest_stats["start_time"] = time.time()
+        
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        connector = aiohttp.TCPConnector(limit=None, ssl=False) # Disable SSL verify for speed + proxies often have bad certs
+        
+        async with aiohttp.ClientSession(headers=headers, connector=connector) as session:
+            async def check(proxy):
+                async with semaphore:
+                    tier = await self.verify_proxy(proxy, session=session)
+                    self.harvest_stats["checked"] += 1
+                    if tier > 0:
+                        tier_label = "elite" if tier == 2 else "standard"
+                        working_proxies.append({"address": proxy, "tier": tier_label})
+                        self.harvest_stats["found"] += 1
+                    
+                    # Estimate Time Remaining (ETR)
+                    elapsed = time.time() - self.harvest_stats["start_time"]
+                    if self.harvest_stats["checked"] > 0:
+                        speed = self.harvest_stats["checked"] / elapsed # items/sec
+                        remaining = self.harvest_stats["total"] - self.harvest_stats["checked"]
+                        self.harvest_stats["etr"] = int(remaining / speed) if speed > 0 else 0
+
+            await asyncio.gather(*(check(p) for p in proxy_list))
+            
+        self.harvest_stats["is_active"] = False
         return working_proxies
 
-    async def verify_proxy(self, proxy):
+    async def verify_proxy(self, proxy, session=None):
         proxy_url = proxy if proxy.startswith("http") else f"http://{proxy}"
-        try:
-            async with aiohttp.ClientSession() as session:
-                # Primary Check
-                try:
-                    async with session.get(self.verification_url, proxy=proxy_url, timeout=10) as response:
-                        if response.status == 200:
-                            return True
-                except:
-                    pass
-                
-                # Fallback Check
-                try:
-                    async with session.get("http://example.com", proxy=proxy_url, timeout=10) as response:
-                        return response.status == 200
-                except:
-                    pass
-        except Exception as e:
-            # print(f"DEBUG: Proxy {proxy} failed completely: {e}")
-            pass
-        return False
+        
+        # If no session provided, create a temporary one (backwards compatibility)
+        should_close = False
+        if session is None:
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+            session = aiohttp.ClientSession(headers=headers, connector=aiohttp.TCPConnector(ssl=False))
+            should_close = True
 
-    def get_proxy(self):
-        """Returns a high-quality proxy from the available list."""
+        try:
+            # 1. Elite Check (MUST BE HTTPS for Tunneling Support + Platform specific)
+            # We verify against INSTAGRAM directly to ensure the proxy isn't banned there.
+            try:
+                target = "https://www.instagram.com"
+                async with session.get(target, proxy=proxy_url, timeout=12, ssl=False) as response:
+                    if response.status == 200:
+                        server = response.headers.get("Server", "").lower()
+                        if "cloudflare" not in server:
+                            text = await response.text()
+                            if "Instagram" in text or "instagram" in text:
+                                return 2 # ELITE
+            except:
+                pass
+            
+            # 2. Standard Check (Basic connectivity)
+            try:
+                # Use a lightweight check for standard proxies
+                async with session.get("http://httpbin.org/ip", proxy=proxy_url, timeout=10) as response:
+                    if response.status == 200:
+                        return 1 # STANDARD
+            except:
+                pass
+        finally:
+            if should_close:
+                await session.close()
+                
+        return 0 # FAILED
+
+    def get_proxy(self, tier=None):
+        """
+        Returns a high-quality proxy from the available list.
+        :param tier: 'elite' or 'standard'
+        """
         self._ensure_initialized()
-        if not self.enabled or not self.proxies:
+        if not config.get("proxies", {}).get("enabled", False):
             return None
         
-        # Simple rotation for now, but we could make it smarter
-        proxy = random.choice(self.proxies)
+        pool = self.proxies
+        if tier:
+             # If tier is requested, we need to reload or filter.
+             # self.proxies only stores addresses. We need the tiers.
+             from database import get_best_proxies
+             best = get_best_proxies(limit=100, min_anonymity=tier)
+             pool = [p['address'] for p in best]
+
+        if not pool:
+            return None
+            
+        # Simple rotation for now
+        proxy = random.choice(pool)
         if not proxy.startswith("http"):
              return f"http://{proxy}"
         return proxy
@@ -217,12 +333,23 @@ class ProxyManager:
                 content = f.read()
 
             proxy_list_yaml = "    all://:\n"
-            if self.enabled and self.proxies:
-                for p in self.proxies:
-                    if not p.startswith("http"): p = f"http://{p}"
-                    proxy_list_yaml += f"      - {p}\n"
+            if self.enabled:
+                from database import get_best_proxies
+                # Use Standard proxies for SearXNG to preserve Elite pool for verification
+                std_proxies = get_best_proxies(limit=500, min_anonymity='standard')
+                if not std_proxies:
+                    # Fallback to all working if no standards found
+                    std_proxies = get_best_proxies(limit=500)
+                
+                if std_proxies:
+                    for p in std_proxies:
+                        addr = p['address']
+                        if not addr.startswith("http"): addr = f"http://{addr}"
+                        proxy_list_yaml += f"      - {addr}\n"
+                else:
+                    proxy_list_yaml = "    # Proxies enabled but pool empty\n"
             else:
-                proxy_list_yaml = "    # Proxies disabled or pool empty\n"
+                proxy_list_yaml = "    # Proxies disabled\n"
 
             parts = content.split("outgoing:", 1)
             if len(parts) < 2:
@@ -304,43 +431,25 @@ class ProxyManager:
             return True, "Proxies disabled and removed from configuration."
         return False, f"Failed to disable proxies: {msg}"
 
-    async def ensure_fresh_proxies(self, min_count=10, max_age_hours=24, force=False):
+    async def ensure_fresh_proxies(self, min_count=200, max_age_hours=4, force=False):
         """
         Ensures we have enough fresh proxies in the pool.
-        Reloads from DB first. Only harvests if DB results are insufficient or too old.
-        :param force: If True, bypasses checks and forces a new harvest + restart.
+        Always prefers a fresh harvest if the pool is insufficient.
         """
         self._ensure_initialized()
         if not self.enabled and not force:
              return
 
-        print(f"[{self.__class__.__name__}] Checking proxy freshness (Min: {min_count}, Max Age: {max_age_hours}h, Force: {force})...")
+        print(f"[{self.__class__.__name__}] Checking proxy freshness (Min: {min_count}, Max Age: {max_age_hours}h)...")
         
-        # 1. Reload from DB to see current state
+        # 1. Reload from DB
         self._load_from_db()
-        
-        needs_harvest = False
-        if force:
-            print(f"[{self.__class__.__name__}] 🚨 FORCE HARVEST TRIGGERED. Marking current pool as stale.")
-            needs_harvest = True
-        elif len(self.proxies) < min_count:
-            print(f"[{self.__class__.__name__}] Low proxy count: {len(self.proxies)}/{min_count}. Needs harvest.")
-            needs_harvest = True
-        
-        # TODO: Add logic to check timestamp of oldest/newest proxy in DB for real freshness
-        
-        if needs_harvest:
-            print(f"[{self.__class__.__name__}] Initiating fresh harvest sequence with improved sources...")
+
+        # [Always Fresh] If we have fewer than min_count, we don't bother verifying old ones.
+        # We just clear them and trigger a massive fresh harvest.
+        if len(self.proxies) < min_count or force:
+            print(f"[{self.__class__.__name__}] Proxy count low ({len(self.proxies)}/{min_count}). Initiating massive fresh harvest...")
             await self.fetch_proxies()
-            
-            if self.proxies:
-                success, msg = await self.update_searxng_config()
-                if not success:
-                    print(f"[{self.__class__.__name__}] Warning: Failed to update SearXNG: {msg}")
-                else:
-                    print(f"[{self.__class__.__name__}] ✅ SearXNG config updated and service restarted.")
-            else:
-                print(f"[{self.__class__.__name__}] Critical: Harvest yielded no proxies after validation.")
         else:
             print(f"[{self.__class__.__name__}] Proxy pool is sufficient and fresh. Skipping harvest.")
 

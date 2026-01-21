@@ -1,14 +1,15 @@
 import streamlit as st
 import json
 from database import (
-    get_strategy_presets, save_strategy_preset, delete_strategy_preset
+    get_strategy_presets, save_strategy_preset, delete_strategy_preset, update_strategy_preset
 )
 from agents import ProductManagerAgent
 from ui.agent_lab_ui import render_agent_chat
+from ui.components import premium_header, confirm_action, safe_action_wrapper, render_enhanced_table
+import time
 
 def render_pm_ui():
-    st.header("🏢 Product Lab")
-    st.caption("Conceptualize complex products, architect tech specs, and generate outreach strategies.")
+    premium_header("🏢 Product Lab", "Conceptualize products and architect outreach strategies.")
     
     st.subheader("Product Manager Mode")
     pm_input = st.text_area("Product/Feature Idea", height=100, placeholder="e.g. 'An automated follow-up system for realtors' or 'A niche SEO report generator'")
@@ -25,41 +26,76 @@ def render_pm_ui():
     
     with col_pm2:
         # === STRATEGY PRESETS UI ===
+        st.subheader("Strategy Presets")
         presets = get_strategy_presets()
-        preset_options = ["Default"] + [p['name'] for p in presets]
-        selected_preset_name = st.selectbox("Strategy Preset", preset_options)
+        preset_names = ["Default"] + [p['name'] for p in presets]
         
+        # State handling for Edit
+        if 'pm_edit_mode' not in st.session_state: st.session_state['pm_edit_mode'] = None
+        
+        selected_preset_name = st.selectbox("Select Strategy Preset", preset_names, key="main_preset_sel")
+        
+        # Actions Row
+        p_col1, p_col2, p_col3 = st.columns(3)
+        with p_col1:
+             if st.button("➕ New"): 
+                 st.session_state['pm_edit_mode'] = "new"
+        with p_col2:
+             if selected_preset_name != "Default":
+                 if st.button("✏️ Edit"):
+                     st.session_state['pm_edit_mode'] = "edit"
+        with p_col3:
+             if selected_preset_name != "Default":
+                   def _del():
+                       pid = next(p['id'] for p in presets if p['name'] == selected_preset_name)
+                       delete_strategy_preset(pid)
+                       st.rerun()
+                   confirm_action("🗑️", "Delete this preset?", _del, key="del_preset_btn")
+
+        # Edit/Create Form
+        if st.session_state['pm_edit_mode']:
+             with st.container(border=True):
+                 st.write(f"**{st.session_state['pm_edit_mode'].title()} Preset**")
+                 
+                 # Pre-fill
+                 if st.session_state['pm_edit_mode'] == 'edit' and selected_preset_name != "Default":
+                     curr = next(p for p in presets if p['name'] == selected_preset_name)
+                     def_name = curr['name']
+                     def_desc = curr['description']
+                     def_instr = curr['instruction_template']
+                 else:
+                     def_name = ""
+                     def_desc = ""
+                     def_instr = ""
+
+                 np_name = st.text_input("Name", value=def_name)
+                 np_desc = st.text_input("Description", value=def_desc)
+                 np_instr = st.text_area("Template", value=def_instr, height=150, help="Use {niche} and {product_context}")
+                 
+                 c1, c2 = st.columns(2)
+                 with c1:
+                     if st.button("💾 Save", type="primary"):
+                         if np_name and np_instr:
+                             if st.session_state['pm_edit_mode'] == 'edit':
+                                 # Update
+                                 pid = next(p['id'] for p in presets if p['name'] == selected_preset_name)
+                                 update_strategy_preset(pid, np_name, np_desc, np_instr)
+                             else:
+                                 # Create
+                                 save_strategy_preset(np_name, np_desc, np_instr)
+                             
+                             st.session_state['pm_edit_mode'] = None
+                             st.success("Saved!")
+                             time.sleep(0.5)
+                             st.rerun()
+                         else: st.error("Name & Template required.")
+                 with c2:
+                     if st.button("Cancel"):
+                         st.session_state['pm_edit_mode'] = None
+                         st.rerun()
+
         # Niche input (now dynamic)
         strat_niche = st.text_input("Target Niche", value="General", help="Used to contextualize the strategy")
-
-        # Manage Presets
-        with st.expander("⚙️ Manage Presets"):
-            # Create New
-            with st.form("new_preset_form"):
-                st.write("Create New Strategy Preset")
-                np_name = st.text_input("Preset Name")
-                np_desc = st.text_input("Description")
-                np_instr = st.text_area("Instruction Template", height=150, 
-                    placeholder="Develop a strategy for {niche} focusing on aggressive growth... Product: {product_context}",
-                    help="Use {niche} and {product_context} as placeholders.")
-                if st.form_submit_button("Save Preset"):
-                    if np_name and np_instr:
-                        save_strategy_preset(np_name, np_desc, np_instr)
-                        st.success("Preset saved!")
-                        st.rerun()
-                    else:
-                        st.error("Name and Instructions are required.")
-            
-            # Delete Existing
-            if presets:
-                st.divider()
-                st.write("Delete Presets")
-                p_to_del = st.selectbox("Select to Delete", [p['name'] for p in presets], key="del_preset_sel")
-                if st.button("Delete Selected Preset"):
-                     pid = next(p['id'] for p in presets if p['name'] == p_to_del)
-                     delete_strategy_preset(pid)
-                     st.success("Deleted.")
-                     st.rerun()
 
         if st.button("Generate Outreach Strategy"):
             if pm_input:
@@ -99,7 +135,12 @@ def render_pm_ui():
         render_agent_chat('last_pm_strat', ProductManagerAgent(), 'pm_context')
         
         st.markdown("### 🚀 Execution")
-        if st.button("🤖 Send to Automation Hub"):
+        
+        def launch_hub():
              st.session_state['pending_strategy'] = st.session_state['last_pm_strat']
              st.session_state['current_view'] = "Automation Hub"
+             st.toast("Redirecting to Automation Hub...")
+             time.sleep(1)
              st.rerun()
+
+        confirm_action("🚀 Launch Campaign", "Send this strategy to the Automation Hub for execution?", launch_hub)

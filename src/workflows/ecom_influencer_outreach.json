@@ -39,7 +39,7 @@
         },
         {
             "id": "find_creators",
-            "type": "agent.researcher",
+            "type": "agent.influencer",
             "name": "Find Creators",
             "params": {
                 "task": "Find 50 influencers in the niche using hashtags.",

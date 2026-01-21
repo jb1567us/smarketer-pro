@@ -1,0 +1,135 @@
+[INFO] Activating virtual environment...
+===================================================
+      ≡ƒÜÇ Starting B2B Outreach Tool System ≡ƒÜÇ
+===================================================
+
+[0/2] Checking Proxy Freshness...
+Error loading proxies from DB: No module named 'sqlalchemy'
+[ProxyManager] Checking proxy freshness (Min: 10, Max Age: 24h, Force: False)...
+Error loading proxies from DB: No module named 'sqlalchemy'
+[ProxyManager] Low proxy count: 0/10. Needs harvest.
+[ProxyManager] Initiating fresh harvest sequence with improved sources...
+[ProxyManager] 📡 Starting multi-source proxy harvest...
+[ProxyManager]   [!] Error fetching https://www.proxy-list.downloa...:
+[ProxyManager] 📥 Fetched 41416 raw unique proxies. Testing availability...
+Startup check failed: No module named 'sqlalchemy'
+Warning: Proxy check failed. Proceeding anyway...
+[1/2] Initializing SearXNG...
+[LiteDockManager] 🚨 Docker is unavailable. Attempting Lite-Dock fallback...
+[LiteDockManager] 🚀 Lite-Dock auto-runner launched in a new console.
+SearXNG check complete.
+
+[2/2] Launching Streamlit App...
+
+NOTE: Close this window to stop the server.
+
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://192.168.12.128:8501
+
+2026-01-21 08:29:01.882 Uncaught app execution
+Traceback (most recent call last):
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 129, inexec_func_with_error_handling
+    result = func()
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 671, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\sandbox\b2b_outreach_tool\src\app.py", line 15, in <module>
+    import src.nodes
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 1, in <module>
+    from nodes import core
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 3, in <module>
+    from nodes import domain
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\__init__.py", line 1, in <module>
+    from nodes.domain import search
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\search.py", line 4, in <module>
+    from agents.researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\__init__.py", line 5, in <module>
+    from .researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\researcher.py", line 3, in <module>
+    from social_scraper import SocialScraper
+  File "C:\sandbox\b2b_outreach_tool\src\social_scraper.py", line 9, in <module>
+    from utils.browser_manager import BrowserManager
+  File "C:\sandbox\b2b_outreach_tool\src\utils\browser_manager.py", line 5, in <module>
+    from playwright_stealth import Stealth
+ModuleNotFoundError: No module named 'playwright_stealth'
+2026-01-21 08:29:01.893 Uncaught app execution
+Traceback (most recent call last):
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 129, inexec_func_with_error_handling
+    result = func()
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 671, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\sandbox\b2b_outreach_tool\src\app.py", line 15, in <module>
+    import src.nodes
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 1, in <module>
+    from nodes import core
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 3, in <module>
+    from nodes import domain
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\__init__.py", line 1, in <module>
+    from nodes.domain import search
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\search.py", line 4, in <module>
+    from agents.researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\__init__.py", line 5, in <module>
+    from .researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\researcher.py", line 3, in <module>
+    from social_scraper import SocialScraper
+  File "C:\sandbox\b2b_outreach_tool\src\social_scraper.py", line 9, in <module>
+    from utils.browser_manager import BrowserManager
+  File "C:\sandbox\b2b_outreach_tool\src\utils\browser_manager.py", line 5, in <module>
+    from playwright_stealth import Stealth
+ModuleNotFoundError: No module named 'playwright_stealth'
+2026-01-21 08:29:01.905 Uncaught app execution
+Traceback (most recent call last):
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 129, inexec_func_with_error_handling
+    result = func()
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 671, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\sandbox\b2b_outreach_tool\src\app.py", line 15, in <module>
+    import src.nodes
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 1, in <module>
+    from nodes import core
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 3, in <module>
+    from nodes import domain
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\__init__.py", line 1, in <module>
+    from nodes.domain import search
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\search.py", line 4, in <module>
+    from agents.researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\__init__.py", line 5, in <module>
+    from .researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\researcher.py", line 3, in <module>
+    from social_scraper import SocialScraper
+  File "C:\sandbox\b2b_outreach_tool\src\social_scraper.py", line 9, in <module>
+    from utils.browser_manager import BrowserManager
+  File "C:\sandbox\b2b_outreach_tool\src\utils\browser_manager.py", line 5, in <module>
+    from playwright_stealth import Stealth
+ModuleNotFoundError: No module named 'playwright_stealth'
+2026-01-21 08:29:05.976 Uncaught app execution
+Traceback (most recent call last):
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 129, inexec_func_with_error_handling
+    result = func()
+  File "c:\sandbox\b2b_outreach_tool\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 671, in code_to_exec
+    exec(code, module.__dict__)  # noqa: S102
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\sandbox\b2b_outreach_tool\src\app.py", line 15, in <module>
+    import src.nodes
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 1, in <module>
+    from nodes import core
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\__init__.py", line 3, in <module>
+    from nodes import domain
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\__init__.py", line 1, in <module>
+    from nodes.domain import search
+  File "C:\sandbox\b2b_outreach_tool\src\nodes\domain\search.py", line 4, in <module>
+    from agents.researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\__init__.py", line 5, in <module>
+    from .researcher import ResearcherAgent
+  File "C:\sandbox\b2b_outreach_tool\src\agents\researcher.py", line 3, in <module>
+    from social_scraper import SocialScraper
+  File "C:\sandbox\b2b_outreach_tool\src\social_scraper.py", line 9, in <module>
+    from utils.browser_manager import BrowserManager
+  File "C:\sandbox\b2b_outreach_tool\src\utils\browser_manager.py", line 5, in <module>
+    from playwright_stealth import Stealth
+ModuleNotFoundError: No module named 'playwright_stealth'

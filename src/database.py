@@ -373,7 +373,8 @@ def init_db():
         'twitter_url': 'TEXT',
         'instagram_url': 'TEXT',
         'intent_signals': 'TEXT',
-        'company_bio': 'TEXT'
+        'company_bio': 'TEXT',
+        'notes': 'TEXT'
     }
     
     # Check email_templates for campaign_id
@@ -624,6 +625,18 @@ def init_db():
             except Exception as e:
                 print(f"Error migrating {table}: {e}")
 
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS video_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prompt TEXT,
+            optimized_prompt TEXT,
+            provider TEXT,
+            status TEXT,
+            url TEXT,
+            job_id TEXT,
+            created_at INTEGER
+        );
+    ''')
     conn.commit()
     conn.close()
 
@@ -1281,6 +1294,18 @@ def save_strategy_preset(name, description, instruction_template, type="strategy
     conn.close()
     return preset_id
 
+def update_strategy_preset(preset_id, name, description, instruction_template):
+    """Updates an existing strategy preset."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute('''
+        UPDATE strategy_presets 
+        SET name = ?, description = ?, instruction_template = ?
+        WHERE id = ?
+    ''', (name, description, instruction_template, preset_id))
+    conn.commit()
+    conn.close()
+
 def get_strategy_presets():
     """Retrieves all strategy presets."""
     conn = get_connection()
@@ -1799,21 +1824,29 @@ def get_registration_macro(platform):
 
 # === PROXY MANAGEMENT FUNCTIONS ===
 
-def save_proxies(proxy_list):
+def save_proxies(proxy_list, reset=False):
     """
     Saves or updates a list of proxies.
     proxy_list: list of dicts with keys: address, protocol, anonymity, country, latency
+    reset: If True, marks all existing proxies as inactive before saving/updating new ones.
     """
     conn = get_connection()
     c = conn.cursor()
     now = int(time.time())
+
+    if reset:
+        # Deactivate all proxies first, so only the new batch becomes active
+        # Or delete them? Deleting is cleaner for "fresh harvest".
+        # Let's delete to remove accumulated junk.
+        c.execute('DELETE FROM proxies') 
+
     for p in proxy_list:
         c.execute('''
             INSERT INTO proxies (address, protocol, anonymity, country, latency, last_checked_at, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(address) DO UPDATE SET
                 protocol=COALESCE(excluded.protocol, protocol),
-                anonymity=COALESCE(excluded.anonymity, anonymity),
+                anonymity=excluded.anonymity, -- Explicitly update tier/anonymity
                 country=COALESCE(excluded.country, country),
                 latency=excluded.latency,
                 last_checked_at=excluded.last_checked_at,
@@ -1821,7 +1854,7 @@ def save_proxies(proxy_list):
         ''', (
             p['address'], 
             p.get('protocol', 'http'), 
-            p.get('anonymity', 'transparent'),
+            p.get('anonymity', 'standard'), # Default to standard
             p.get('country', 'Unknown'),
             p.get('latency', 0),
             now,
@@ -2280,3 +2313,215 @@ def log_agent_decision(agent_role, intent, user_input, tool_selected, tool_param
     finally:
         conn.close()
 
+def update_lead(lead_id, data):
+    """Updates a lead record with a dictionary of fields."""
+    conn = get_connection()
+    c = conn.cursor()
+    
+    fields = []
+    values = []
+    for k, v in data.items():
+        fields.append(f"{k} = ?")
+        values.append(v)
+    
+    values.append(lead_id)
+    query = f"UPDATE leads SET {', '.join(fields)} WHERE id = ?"
+    
+    try:
+        c.execute(query, tuple(values))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating lead {lead_id}: {e}")
+        return False
+    finally:
+        conn.close()
+def duplicate_campaign(campaign_id):
+    """Clones a campaign and its core settings."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT name, niche, product_name, product_context, selected_pain_point_id, current_step FROM campaigns WHERE id = ?", (campaign_id,))
+        row = c.fetchone()
+        if row:
+            name, niche, prod, ctx, pp, step = row
+            new_name = f"{name} (Copy)"
+            c.execute('''
+                INSERT INTO campaigns (name, niche, product_name, product_context, selected_pain_point_id, current_step, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'draft', ?)
+            ''', (new_name, niche, prod, ctx, pp, step, int(time.time())))
+            new_id = c.lastrowid
+            conn.commit()
+            return new_id
+        return None
+    except Exception as e:
+        print(f"Error duplicating campaign: {e}")
+        return None
+    finally:
+        conn.close()
+
+def update_campaign_status(campaign_id, status):
+    """Simple status update for campaigns."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE campaigns SET status = ?, updated_at = ? WHERE id = ?", (status, int(time.time()), campaign_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating campaign status: {e}")
+        return False
+    finally:
+        conn.close()
+def delete_dsr(dsr_id):
+    """Deletes a DSR record."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM digital_sales_rooms WHERE id = ?", (dsr_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def update_dsr_content(dsr_id, content_json):
+    """Updates the content of a DSR."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    if isinstance(content_json, dict):
+        content_json = json.dumps(content_json)
+    try:
+        c.execute("UPDATE digital_sales_rooms SET content_json = ? WHERE id = ?", (content_json, dsr_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+def save_video_job(prompt, optimized_prompt, provider, status, job_id, url=None):
+    """Saves a video generation job to history."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('''
+            INSERT INTO video_history (prompt, optimized_prompt, provider, status, job_id, url, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (prompt, optimized_prompt, provider, status, job_id, url, int(time.time())))
+        conn.commit()
+        return c.lastrowid
+    finally:
+        conn.close()
+
+def get_video_history(limit=50):
+    """Retrieves recent video generation jobs."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM video_history ORDER BY created_at DESC LIMIT ?', (limit,))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def update_video_job_status(job_id, status, url=None):
+    """Updates the status and URL of a video job."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        if url:
+            c.execute("UPDATE video_history SET status = ?, url = ? WHERE job_id = ?", (status, url, job_id))
+        else:
+            c.execute("UPDATE video_history SET status = ? WHERE job_id = ?", (status, job_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+def update_scheduled_post(post_id, data):
+    """Updates a scheduled post record."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    fields = []
+    values = []
+    for k, v in data.items():
+        if k == 'platforms' and isinstance(v, list):
+             v = json.dumps(v)
+        fields.append(f"{k} = ?")
+        values.append(v)
+    values.append(post_id)
+    query = f"UPDATE scheduled_posts SET {', '.join(fields)} WHERE id = ?"
+    try:
+        c.execute(query, tuple(values))
+        conn.commit()
+    finally:
+        conn.close()
+
+def delete_lead(lead_id):
+    """Deletes a lead from the database."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM leads WHERE id = ?", (lead_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_leads(limit=None):
+    """Retrieves leads from the database as a list of dictionaries."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        if limit:
+            c.execute("SELECT * FROM leads ORDER BY created_at DESC LIMIT ?", (limit,))
+        else:
+            c.execute("SELECT * FROM leads ORDER BY created_at DESC")
+        
+        columns = [description[0] for description in c.description]
+        return [dict(zip(columns, row)) for row in c.fetchall()]
+    finally:
+        conn.close()
+
+def delete_managed_account(account_id):
+    """Deletes a managed account."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM managed_accounts WHERE id = ?", (account_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def update_managed_account(account_id, platform, username, status):
+    """Updates a managed account."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE managed_accounts SET platform = ?, username = ?, status = ? WHERE id = ?", (platform, username, status, account_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_dashboard_stats():
+    """Returns high-level stats for the Manager Dashboard."""
+    conn = get_connection()
+    c = conn.cursor()
+    stats = {}
+    try:
+        # Leads count
+        c.execute("SELECT count(*) FROM leads")
+        stats['leads_total'] = c.fetchone()[0]
+        
+        # Campaigns count
+        # Checking if 'campaigns' table exists, otherwise defaulting to 0
+        try:
+            c.execute("SELECT count(*) FROM campaigns WHERE status='active'")
+            stats['active_campaigns'] = c.fetchone()[0]
+        except:
+             stats['active_campaigns'] = 0
+
+        # System Health (Mock)
+        stats['system_health'] = "Operational"
+        
+        return stats
+    except Exception as e:
+        print(f"Error fetching stats: {e}")
+        return {'leads_total': 0, 'system_health': 'Error', 'active_campaigns': 0}
+    finally:
+        conn.close()

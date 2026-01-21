@@ -1,11 +1,8 @@
-import streamlit as st
-import os
-import yaml
-import time
 from config import config, reload_config
+from ui.components import confirm_action, safe_action_wrapper, premium_header
 
 def render_settings_page():
-    st.header("⚙️ Configuration")
+    premium_header("⚙️ Configuration", "Manage your enterprise API keys, routing strategies, and system global settings.")
     
     env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env')
     config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'config.yaml')
@@ -47,8 +44,14 @@ def render_settings_page():
     settings_tab1, settings_tab2, settings_tab3, settings_tab4 = st.tabs(["🏢 General", "🔑 API Keys", "🧠 LLM Settings", "📧 Email Settings"])
 
     with settings_tab2:
-        st.subheader("API Key Management")
-        st.info("Keys are stored in your local `.env` file.")
+        st.subheader("🔑 API Key Management")
+        st.markdown("""
+        Configure your external service connections here. **Smarketer Pro** uses these keys to power the AI agents, 
+        send outreach emails, and manage landing pages. 
+        
+        > [!NOTE]
+        > Keys are stored locally in your `.env` file and are never sent to our servers.
+        """)
         
         # Link Map for "Get Key"
         key_links = {
@@ -97,16 +100,25 @@ def render_settings_page():
         ]
         
         for key in email_keys:
-            col1, col2 = st.columns([3, 1])
+            col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
                 current_val = os.getenv(key, "")
-                new_val = st.text_input(f"{key}", value=current_val, type="password")
-                if new_val != current_val:
-                    update_env(key, new_val)
-                    st.toast(f"Updated {key}")
+                new_val = st.text_input(f"{key}", value=current_val, type="password", help=f"Enter your {key.replace('_', ' ').lower()}")
             with col2:
                 if key in key_links:
-                    st.markdown(f"[Get Key]({key_links[key]})")
+                    st.markdown(f"\n\n[Get Key 🔗]({key_links[key]})")
+            with col3:
+                if new_val != current_val:
+                    def save_key():
+                        update_env(key, new_val)
+                    
+                    st.markdown("\n\n") # Align with input
+                    confirm_action(
+                        label=f"Save {key.split('_')[0]}",
+                        prompt=f"Are you sure you want to update {key}? This will overwrite the existing value in your .env file.",
+                        on_confirm=lambda k=key, v=new_val: safe_action_wrapper(lambda: update_env(k, v), f"{k} saved successfully!"),
+                        key=f"save_{key}"
+                    )
         
         st.divider()
         st.markdown("#### 🧠 AI Models")
@@ -117,16 +129,22 @@ def render_settings_page():
             "NVIDIA_API_KEY", "COHERE_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_KEY"
         ]
         for key in llm_keys:
-            col1, col2 = st.columns([3, 1])
+            col1, col2, col3 = st.columns([2, 1, 1])
             with col1:
                 current_val = os.getenv(key, "")
-                new_val = st.text_input(f"{key}", value=current_val, type="password")
-                if new_val != current_val:
-                    update_env(key, new_val)
-                    st.toast(f"Updated {key}")
+                new_val = st.text_input(f"{key}", value=current_val, type="password", help=f"Enter your {key.replace('_', ' ').lower()}")
             with col2:
                 if key in key_links:
-                     st.markdown(f"[Get Key]({key_links[key]})")
+                    st.markdown(f"\n\n[Get Key 🔗]({key_links[key]})")
+            with col3:
+                if new_val != current_val:
+                    st.markdown("\n\n") # Align
+                    confirm_action(
+                        label=f"Save {key.split('_')[0]}",
+                        prompt=f"Are you sure you want to update {key}? A typo may cause AI agents to stop working.",
+                        on_confirm=lambda k=key, v=new_val: safe_action_wrapper(lambda: update_env(k, v), f"{k} saved successfully!"),
+                        key=f"save_{key}"
+                    )
 
     with settings_tab4:
         st.markdown("### Email Routing")

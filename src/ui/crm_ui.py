@@ -1,13 +1,15 @@
-import streamlit as st
-import pandas as pd
-from database import load_data, get_deals, get_tasks, delete_leads_bulk
-from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
-from agents import ManagerAgent
+from database import load_data, get_deals, get_tasks, delete_leads_bulk, update_lead, get_connection
+from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat, safe_action_wrapper, confirm_action, premium_header
 import json
+from datetime import datetime
+import time
 
 def render_crm_dashboard():
-    # (Implementing a combined view of leads and activities)
-    st.header("💼 CRM Command Center")
+    premium_header("💼 CRM Command Center", "Orchestrate your sales pipeline, manage prospect relationships, and track outreach performance.")
+    
+    # Global Date Filter
+    st.sidebar.markdown("### 📅 Pipeline Filters")
+    date_range = st.sidebar.date_input("Filter Data Range", [datetime(2026, 1, 1), datetime.now()], key="crm_date_filter")
     
     tab_overview, tab_leads = st.tabs(["📊 Overview", "📇 All Leads"])
     
@@ -43,46 +45,58 @@ def render_crm_dashboard():
         if leads.empty:
             st.info("No leads found in database. Go to 'Lead Discovery' to find some!")
         else:
-            # Layout: Left Panel (List/Filters), Right Panel (Details)
-            col_list, col_details = st.columns([1, 1.5])
+            # --- Bulk Action Bar ---
+            col_b1, col_b2, col_b3 = st.columns([1, 1, 4])
+            with col_b1:
+                st.markdown(" ") # Spacer
             
-            # --- LEFT PANEL: LIST & FILTERS ---
-            with col_list:
-                status_filter = st.multiselect(
-                    "Filter Status", 
-                    options=leads['status'].unique() if 'status' in leads.columns else [],
-                    default=[]
-                )
-                
-                # Apply filter
-                filtered_leads = leads.copy()
-                if status_filter:
-                    filtered_leads = filtered_leads[filtered_leads['status'].isin(status_filter)]
-                
-                # Search
-                search_q = st.text_input("Search Leads", placeholder="Company, Email...")
+            # --- LIST VIEW WITH ENHANCED TABLE ---
+            st.markdown("#### Selection & Bulk Actions")
+            leads_with_selection = render_enhanced_table(leads[['id', 'company_name', 'contact_person', 'status', 'confidence']], key="leads_table")
+            
+            selected_ids = leads_with_selection[leads_with_selection['Select'] == True]['id'].tolist()
+            
+            if selected_ids:
+                with st.container(border=True):
+                    st.write(f"Selected **{len(selected_ids)}** leads")
+                    cb1, cb2 = st.columns(2)
+                    with cb1:
+                        def bulk_del():
+                            delete_leads_bulk(selected_ids)
+                        
+                        confirm_action("🗑️ Bulk Delete", f"Delete {len(selected_ids)} leads permanently?", bulk_del, key="bulk_del")
+                    with cb2:
+                        new_status_bulk = st.selectbox("Set Status to:", ["new", "contacted", "qualifying", "replied", "nurtured"], key="bulk_status_sel")
+                        if st.button("Apply Status"):
+                            safe_action_wrapper(lambda: [update_lead(lid, {"status": new_status_bulk}) for lid in selected_ids], f"Updated {len(selected_ids)} leads to {new_status_bulk}")
+                            st.rerun()
+
+            st.divider()
+            
+            # --- DETAIL VIEW (Single Select) ---
+            st.markdown("#### Lead Details & Interaction")
+            col_list_mini, col_details = st.columns([1, 2])
+            
+            with col_list_mini:
+                search_q = st.text_input("Quick Lookup", placeholder="Filter by name...", key="crm_search")
+                display_leads = leads.copy()
                 if search_q:
-                    filtered_leads = filtered_leads[
-                        filtered_leads['company_name'].astype(str).str.contains(search_q, case=False) |
-                        filtered_leads['email'].astype(str).str.contains(search_q, case=False)
-                    ]
+                    display_leads = display_leads[display_leads['company_name'].str.contains(search_q, case=False, na=False)]
                 
-                st.caption(f"Showing {len(filtered_leads)} leads")
-                
-                # Selection List
-                # We use a dataframe with selection mode for the master list
+                # Selection for details
                 event = st.dataframe(
-                    filtered_leads[['company_name', 'contact_person', 'status', 'confidence']],
+                    display_leads[['company_name', 'status']],
                     use_container_width=True,
                     hide_index=True,
                     on_select="rerun",
-                    selection_mode="single-row"
+                    selection_mode="single-row",
+                    key="crm_mini_list"
                 )
                 
                 selected_row = None
                 if event.selection.rows:
                     idx = event.selection.rows[0]
-                    selected_row = filtered_leads.iloc[idx]
+                    selected_row = display_leads.iloc[idx]
             
             # --- RIGHT PANEL: DETAILS ---
             with col_details:
@@ -110,28 +124,45 @@ def render_crm_dashboard():
                                     st.text(f"{k.replace('_', ' ').capitalize()}: {v}")
                                     
                         with t_notes:
-                            # Placeholder for notes system (could be a separate table in future)
-                            current_notes = st.session_state.get(f"notes_{selected_row['id']}", "")
-                            new_notes = st.text_area("Lead Notes", value=current_notes, height=150, key=f"note_area_{selected_row['id']}")
-                            if st.button("Save Notes"):
-                                st.session_state[f"notes_{selected_row['id']}"] = new_notes
-                                st.success("Notes saved (locally)!")
+                            current_notes = selected_row.get('notes', "")
+                            new_notes = st.text_area("Record History & Strategic Notes", value=current_notes or "", height=150, key=f"note_area_{selected_row['id']}")
+                            if st.button("💾 Save Notes", use_container_width=True):
+                                safe_action_wrapper(lambda: update_lead(selected_row['id'], {"notes": new_notes}), "Lead notes updated successfully!")
+                                st.rerun()
                                 
                         with t_actions:
-                            st.write("Manage this relationship")
-                            current_status = selected_row.get('status', 'New')
-                            new_status = st.selectbox("Update Status", 
-                                ["New", "Contacted", "Qualifying", "Replied", "Closed Won", "Closed Lost"],
-                                index=0 # Logic to match index would go here
-                            )
-                            if st.button("Update Status"):
-                                # Dummy update
-                                st.toast(f"Status updated to {new_status}")
+                            st.write("### ⚡ Engagement Workflow")
+                            
+                            # CTAs
+                            ca_c1, ca_c2 = st.columns(2)
+                            with ca_c1:
+                                if st.button("🚀 Launch Campaign", use_container_width=True, type="primary"):
+                                    st.session_state['current_view'] = "Campaigns"
+                                    # Logic to pre-select this lead in campaign UI could be added
+                                    st.rerun()
+                            with ca_c2:
+                                if st.button("📄 Generate DSR", use_container_width=True):
+                                    st.session_state['current_view'] = "Digital Sales Room"
+                                    st.rerun()
                             
                             st.divider()
-                            if st.button("🗑️ Delete Lead", type="primary"):
-                                delete_leads_bulk([selected_row['id']])
+                            st.markdown("**Core Management**")
+                            current_status = selected_row.get('status', 'new').lower()
+                            possible_statuses = ["new", "contacted", "qualifying", "replied", "nurtured", "closed won", "closed lost"]
+                            
+                            new_status = st.selectbox("Update Pipeline Status", 
+                                [s.capitalize() for s in possible_statuses],
+                                index=possible_statuses.index(current_status) if current_status in possible_statuses else 0
+                            )
+                            if st.button("Confirm Status Change", use_container_width=True):
+                                safe_action_wrapper(lambda: update_lead(selected_row['id'], {"status": new_status.lower()}), f"Status updated to {new_status}")
                                 st.rerun()
+                            
+                            st.divider()
+                            def single_del():
+                                delete_leads_bulk([selected_row['id']])
+                            
+                            confirm_action("🗑️ Delete Record", f"Permanently remove {selected_row.get('company_name')} from the database?", single_del, key=f"del_{selected_row['id']}")
 
                 else:
                     st.info("👈 Select a lead from the list to view details.")

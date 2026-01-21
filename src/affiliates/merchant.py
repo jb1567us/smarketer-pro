@@ -54,3 +54,10 @@ class ProgramManager:
         """Calculates commission based on program settings."""
         rate = self.program_settings.commission_percentage / 100.0
         return round(conversion_amount * rate, 2)
+
+    def delete_partner(self, partner_id: int):
+        """Deletes a partner from the system."""
+        partner = self.db.query(Partner).get(partner_id)
+        if partner:
+            self.db.delete(partner)
+            self.db.commit()

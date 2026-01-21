@@ -73,7 +73,14 @@ class SocialScraper:
                  "dork_data": dork_results
              }
 
-        # 3. Strategy: Throttled Browser
+        # 2a. Strategy: Lightweight Scrape (Bypass Browser Tunnel Issues)
+        # Verify confirmed that aiohttp works with our proxies, so we should try this first.
+        low_cost_data = await self._try_lightweight_scrape(query_or_url)
+        if low_cost_data:
+             print(f"  [SocialScraper] ✅ Lightweight scrape succeeded! Skipping browser.")
+             return low_cost_data
+
+        # 3. Strategy: Throttled Browser (Only if lightweight failed)
         async with self.browser_semaphore:
             print(f"  [SocialScraper] Acquiring Browser Slot (Limit: 5)...")
             browser_data = await self._try_browser_scrape(query_or_url)
@@ -107,6 +114,60 @@ class SocialScraper:
         if platform == "linkedin": return f"https://linkedin.com/in/{handle}" # Guess
         return None
 
+    async def _try_lightweight_scrape(self, url):
+        """
+        Attempts to scrape meta tags using aiohttp (High speed, low failure rate vs Playwright).
+        Uses the shared ProxyManager to route requests.
+        """
+        if not url or "http" not in url: return None
+        
+        print(f"  [SocialScraper] Attempting Lightweight Scrape (aiohttp)...")
+        from proxy_manager import proxy_manager
+        
+        # Retry loop for lightweight
+        for attempt in range(3):
+            # Explicitly request ELITE proxies for verification tasks
+            proxy = proxy_manager.get_proxy(tier='elite')
+            if not proxy: 
+                # If no proxy, we can try direct IF safe, otherwise fail
+                return None 
+
+            try:
+                # Use same headers as the successful verification
+                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+                
+                async with aiohttp.ClientSession(headers=headers) as session:
+                    async with session.get(url, proxy=proxy, timeout=10) as response:
+                        if response.status == 200:
+                            text = await response.text()
+                            
+                            # Extract Follower Count from Meta Tags
+                            # <meta content="105K Followers, 107 Following, 1,203 Posts..." property="og:description" />
+                            soup = BeautifulSoup(text, 'html.parser')
+                            meta = soup.find("meta", property="og:description")
+                            if meta:
+                                desc = meta.get("content", "")
+                                if "Followers" in desc:
+                                    print(f"    -> Found stats: {desc[:50]}...")
+                                    return {
+                                        "source": "lightweight_http",
+                                        "stats": desc,
+                                        "url": url,
+                                        "status": "success"
+                                    }
+                            # If we got 200 but no meta, might be a login page or captcha.
+                            # But often Instagram public profiles DO return og:meta even if some content is gated.
+                            # If we fail to find it, we proceed to browser.
+                        else:
+                             # print(f"    -> Status {response.status}")
+                             pass
+
+            except Exception as e:
+                # print(f"    -> Error: {e}")
+                pass
+                
+        return None
+
     async def _try_dork_search(self, target, platform):
         """
         Uses SearXNG with site: operators to find content.
@@ -120,7 +181,8 @@ class SocialScraper:
                 "twitter": "site:twitter.com",
                 "tiktok": "site:tiktok.com/@",
                 "threads": "site:threads.net/@",
-                "reddit": "site:reddit.com"
+                "reddit": "site:reddit.com",
+                "instagram": "site:instagram.com"
             }
             
             if platform not in site_map: return None
@@ -167,19 +229,53 @@ class SocialScraper:
         bm = BrowserManager(session_id=session_id)
 
         try:
-            # Dynamic Proxy
-            proxy_url = proxy_manager.get_proxy()
-            proxy_cfg = {"server": proxy_url} if proxy_url else None
-            
-            if proxy_url:
-                print(f"  [SocialScraper] Using Proxy: {proxy_url}")
-
-            page = await bm.launch(headless=True, proxy=proxy_cfg)
-            
             # Anti-detect measures (Extra headers)
-            await page.set_extra_http_headers({
-                "Accept-Language": "en-US,en;q=0.9"
-            })
+            # Retry Loop
+            max_retries = 3
+            last_error = None
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    # Dynamic Proxy (Rotate each attempt)
+                    proxy_cfg = None
+                    if attempt < max_retries:
+                         proxy_url = proxy_manager.get_proxy(tier='elite')
+                         if proxy_url:
+                             proxy_cfg = {"server": proxy_url} 
+                             print(f"  [SocialScraper] Attempt {attempt+1}/{max_retries} Using Proxy: {proxy_url}")
+                    else:
+                         # [Safety] Do NOT fall back to direct connection for Instagram to protect User IP.
+                         # print(f"  [SocialScraper] Proxies exhausted. Aborting to prevent IP ban.")
+                         raise Exception("All proxies failed. Direct connection disabled for safety.")
+                    
+                    # Launch fresh for each attempt to avoid pollution
+                    # Note: launching browser is expensive, so ideally we just new_context, 
+                    # but for proxy rotation we need launch or specific context options.
+                    # BM handles launch idempotency, but we need to force new proxy.
+                    # Actually BM.launch creates a browser. We might need to close it to switch proxy easily 
+                    # or just use context-level proxy if supported (Playwright supports browser-level mostly).
+                    
+                    # If a browser instance exists from a previous (failed) attempt, close it
+                    if bm.browser:
+                        await bm.close()
+                        # Re-init fresh manager to clear any internal state
+                        bm = BrowserManager(session_id=session_id)
+                        
+                    page = await bm.launch(headless=True, proxy=proxy_cfg)
+                    # Sync local to instance (optional, but good for cleanup)
+                    self.browser_manager = bm 
+            
+                    await page.set_extra_http_headers({
+                        "Accept-Language": "en-US,en;q=0.9"
+                    })
+                    
+                    # Break if successful launch (we continue to nav below)
+                    break
+                except Exception as e:
+                    print(f"  [SocialScraper] Proxy attempt failed: {e}")
+                    last_error = e
+                    if attempt == max_retries:
+                        raise last_error
 
             # --- Platform Specific Setup BEFORE navigation ---
             if platform == "twitter":
@@ -233,6 +329,24 @@ class SocialScraper:
                                 continue
                 except Exception as e:
                     print(f"  [SocialScraper] Threads extraction warning: {e}")
+
+            # META TAG FOLLOWER EXTRACTION (Universal Fallback)
+            # Works well for Instagram, TikTok, LinkedIn, Twitter which often put "X Followers" in og:description
+            try:
+                soup = BeautifulSoup(content, 'html.parser')
+                og_desc = soup.find("meta", property="og:description")
+                if og_desc and og_desc.get("content"):
+                    desc_text = og_desc["content"]
+                    # Regex to capture "10K Followers" or "200 Followers"
+                    # Matches "10K Followers" or "10K followers" or "10K subscribers"
+                    follower_match = re.search(r'([0-9\.,KkMm]+?)\s+(?:Followers|followers|Subscribers|subscribers)', desc_text)
+                    if follower_match:
+                        raw_count = follower_match.group(1)
+                        captured_data["follower_count_raw"] = raw_count
+                        print(f"  [SocialScraper] Extracted Followers: {raw_count} (from og:description)")
+            except Exception as e:
+                print(f"  [SocialScraper] Meta tag extraction warning: {e}")
+
 
             # Intelligent Extraction (Simplified)
             soup = BeautifulSoup(content, 'html.parser')

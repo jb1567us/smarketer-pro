@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 from ui.components import (
     render_step_progress, premium_header, render_data_management_bar, 
-    render_enhanced_table, render_page_chat
+    render_enhanced_table, render_page_chat, confirm_action, safe_action_wrapper
 )
 from database import (
     get_all_campaigns, get_campaign, create_campaign, save_campaign_state, 
@@ -15,7 +15,8 @@ from database import (
     create_dsr, update_dsr_wp_info, get_dsrs_for_campaign, get_dsr_by_lead,
     create_sequence, add_sequence_step, enroll_lead_in_sequence, get_due_enrollments, 
     get_sequence_steps, get_campaign_sequences, update_enrollment_progress,
-    update_campaign_pain_point, add_lead_to_campaign, delete_campaign
+    update_campaign_pain_point, add_lead_to_campaign, delete_campaign,
+    duplicate_campaign, update_campaign_status, get_connection
 )
 from agents import (
     ResearcherAgent, CopywriterAgent, ReviewerAgent, ManagerAgent
@@ -51,28 +52,40 @@ def render_campaign_page():
             # 2. Enhanced Table
             edited_camps = render_enhanced_table(camp_df[display_cols], key="camp_selector_grid")
             
-            selected_camps = edited_camps[edited_camps['Select'] == True]
+            selected_ids = edited_camps[edited_camps['Select'] == True]['id'].tolist()
             
-            col_c1, col_c2 = st.columns(2)
-            with col_c1:
-                if not selected_camps.empty and st.button("🚀 Resume/Open Selection", type="primary"):
-                    cid = selected_camps.iloc[0]['id']
-                    c_data = get_campaign(cid)
-                    if c_data:
-                        st.session_state['active_campaign_id'] = cid
-                        st.session_state['campaign_step'] = c_data['current_step']
-                        st.session_state['niche_input'] = c_data['niche']
-                        st.session_state['product_name'] = c_data['product_name']
-                        st.session_state['product_context'] = c_data['product_context']
-                        st.rerun()
-                    else:
-                        st.error("Could not load campaign. It may have been deleted.")
-            with col_c2:
-                if not selected_camps.empty and st.button("🗑️ Delete Selection", type="secondary"):
-                    for cid in selected_camps['id'].tolist():
-                        delete_campaign(cid)
-                    st.warning("Selected campaigns deleted.")
-                    st.rerun()
+            if selected_ids:
+                with st.container(border=True):
+                    st.write(f"Selected **{len(selected_ids)}** campaigns")
+                    col_a1, col_a2, col_a3, col_a4 = st.columns(4)
+                    
+                    with col_a1:
+                        if st.button("🚀 Open Workspace", type="primary", use_container_width=True):
+                            cid = selected_ids[0]
+                            c_data = get_campaign(cid)
+                            if c_data:
+                                st.session_state['active_campaign_id'] = cid
+                                st.session_state['campaign_step'] = c_data['current_step']
+                                st.rerun()
+                    
+                    with col_a2:
+                        if st.button("👯 Clone", use_container_width=True):
+                            for cid in selected_ids:
+                                safe_action_wrapper(lambda c=cid: duplicate_campaign(c), f"Campaign duplicated successfully!")
+                            st.rerun()
+                            
+                    with col_a3:
+                        if st.button("▶️ Direct Launch", use_container_width=True):
+                             for cid in selected_ids:
+                                 safe_action_wrapper(lambda c=cid: update_campaign_status(c, 'active'), f"Campaign {cid} launched!")
+                             st.rerun()
+                    
+                    with col_a4:
+                        def bulk_del_camp():
+                            for cid in selected_ids:
+                                delete_campaign(cid)
+
+                        confirm_action("🗑️ Delete", f"Delete {len(selected_ids)} campaigns permanently?", bulk_del_camp, key="del_camps")
 
             # 3. Page Level Chat
             render_page_chat(

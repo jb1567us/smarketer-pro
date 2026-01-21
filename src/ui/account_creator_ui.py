@@ -6,12 +6,13 @@ import pandas as pd
 from agents.account_creator import AccountCreatorAgent
 from config import get_cpanel_config, config
 from proxy_manager import proxy_manager
-from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat
+from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat, premium_header, safe_action_wrapper, confirm_action
 from agents import ManagerAgent
+import time
+from database import get_managed_accounts, delete_managed_account, update_managed_account
 
 def render_account_creator_ui():
-    st.header("🤖 Automated Account Creator")
-    st.caption("Create verified accounts on any platform using AI-driven form filling and cPanel email automation.")
+    premium_header("🤖 Automated Account Creator", "Create verified accounts on any platform using AI-driven form filling.")
     
     # 1. Config Check
     cpanel_conf = get_cpanel_config()
@@ -37,63 +38,35 @@ def render_account_creator_ui():
             proxy_str = st.text_input("Manual Proxy", placeholder="http://user:pass@host:port")
 
     # 3. Action
-    if st.button("🚀 Create Account", type="primary"):
-        if not platform_name or not reg_url:
-            st.error("Please provide Platform Name and Registration URL.")
-            return
-
-        # Fetch Proxy if Auto
-        if use_auto_proxy:
-            proxy_str = proxy_manager.get_proxy()
-            if not proxy_str:
-                with st.spinner("Proxy pool empty. Harvesting fresh proxies..."):
-                     asyncio.run(proxy_manager.fetch_proxies())
-                     proxy_str = proxy_manager.get_proxy()
-                
-                if not proxy_str:
-                    st.error("Failed to find a working proxy. Please check Proxy Lab.")
-                    return
-            st.success(f"Using Proxy: {proxy_str}")
-            
-        st.info("Starting Account Creation Agent...")
-        
-        # Prepare Agent
-        # Update config with domain if explicitly set in UI? (Maybe later)
-        agent = AccountCreatorAgent(cpanel_conf)
-        
-        details = {}
-        if username:
-            details['username'] = username
-            
-        proxy = None
-        if proxy_str:
-            # Parse proxy string simply
-            proxy = {"server": proxy_str} 
-            # If user/pass handling needed, user should format string or we parse
-            
-        with st.status("Agent Working...", expanded=True) as status:
-            st.write("Initializing...")
-            
-            # Run async function
-            async def run_agent():
-                return await agent.create_account(
-                    platform_name, 
-                    reg_url, 
-                    account_details=details,
-                    proxy=proxy
-                )
-            
-            try:
-                result = asyncio.run(run_agent())
-                status.update(label="Complete!", state="complete", expanded=False)
-                
-                if "verified" in str(result).lower():
-                    st.success(f"Result: {result}")
-                else:
-                    st.warning(f"Result: {result}")
+    st.markdown("### 🚀 Launch Creation")
+    create_col1, create_col2 = st.columns([1, 4])
+    with create_col1:
+        if st.button("Start Agent", type="primary", use_container_width=True):
+            if not platform_name or not reg_url:
+                st.error("Missing Platform/URL.")
+            else:
+                 def _run_creation():
+                    # Fetch Proxy if Auto
+                    p_str = proxy_str
+                    if use_auto_proxy:
+                        p_str = proxy_manager.get_proxy()
+                        if not p_str:
+                             asyncio.run(proxy_manager.fetch_proxies())
+                             p_str = proxy_manager.get_proxy()
                     
-            except Exception as e:
-                st.error(f"Agent failed: {e}")
+                    if not p_str and use_auto_proxy: raise Exception("No proxies available.")
+                    
+                    agent = AccountCreatorAgent(cpanel_conf)
+                    details = {'username': username} if username else {}
+                    t_proxy = {"server": p_str} if p_str else None
+                    
+                    st.info(f"Agent Active. Target: {platform_name}")
+                    return asyncio.run(agent.create_account(platform_name, reg_url, details, t_proxy))
+
+                 res = safe_action_wrapper(_run_creation, "Account Creation")
+                 if res:
+                     st.balloons()
+                     st.success(f"Outcome: {res}")
 
     st.divider()
     
@@ -163,22 +136,62 @@ def render_account_creator_ui():
     st.divider()
     
     # 5. Managed Accounts View
+    # 5. Managed Accounts View
     st.subheader("Managed Accounts")
-    from database import get_managed_accounts
+    
+    # Filters
+    f_col1, f_col2 = st.columns([1, 4])
+    with f_col1:
+        f_days = st.number_input("Days Back", min_value=1, value=30, key="ma_days")
+    
     accounts = get_managed_accounts()
     
     if accounts:
-        # Sort by creation date
-        accounts = sorted(accounts, key=lambda x: x['created_at'], reverse=True)
+        # Date Filter
+        adf = pd.DataFrame(accounts)
+        if 'created_at' in adf.columns:
+             adf['created_at'] = pd.to_datetime(adf['created_at'], errors='coerce')
+             cutoff = pd.Timestamp.now() - pd.Timedelta(days=f_days)
+             adf = adf[adf['created_at'] > cutoff]
         
-        # 1. Bar
-        render_data_management_bar(accounts, filename_prefix="managed_accounts")
+        # Edit Handler
+        if 'edit_acc_id' not in st.session_state: st.session_state['edit_acc_id'] = None
+        
+        if not adf.empty:
+            edited_df = render_enhanced_table(adf, key="managed_accounts_table")
+            
+            # Action Buttons
+            sel_rows = edited_df[edited_df['Select'] == True]
+            if not sel_rows.empty:
+                s_col1, s_col2 = st.columns(2)
+                with s_col1:
+                    # Edit Logic (Single Select)
+                    if len(sel_rows) == 1:
+                         if st.button("✏️ Edit Selected"):
+                             st.session_state['edit_acc_id'] = sel_rows.iloc[0]['id']
+                             st.rerun()
+                with s_col2:
+                    # Delete Logic
+                    selected_ids = sel_rows['id'].tolist()
+                    confirm_action("🗑️ Bulk Delete", f"Delete {len(selected_ids)} accounts?", 
+                                   lambda: [delete_managed_account(aid) for aid in selected_ids], key="del_accs")
 
-        # 2. Table
-        acc_df = pd.DataFrame(accounts)
-        render_enhanced_table(acc_df, key="managed_accounts_table")
+        # Edit Form
+        if st.session_state['edit_acc_id']:
+             with st.form("edit_acc_form"):
+                 st.write("Edit Account")
+                 row = next(a for a in accounts if a['id'] == st.session_state['edit_acc_id'])
+                 e_plat = st.text_input("Platform", value=row['platform'])
+                 e_user = st.text_input("Username", value=row['username'])
+                 e_stat = st.selectbox("Status", ["active", "suspended", "verified"], index=0 if row['status'] not in ["active", "suspended", "verified"] else ["active", "suspended", "verified"].index(row['status']))
+                 
+                 if st.form_submit_button("Update"):
+                     update_managed_account(row['id'], e_plat, e_user, e_stat)
+                     st.session_state['edit_acc_id'] = None
+                     st.success("Updated!")
+                     st.rerun()
     else:
-        st.info("No accounts created yet.")
+        st.info("No accounts created yet in this period.")
 
     # 3. Page Level Chat
     render_page_chat(
