@@ -36,8 +36,12 @@ class BrowserManager:
             "headless": headless,
             "args": [
                 '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
                 '--no-sandbox',
-                '--disable-infobars'
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--disable-infobars',
+                '--window-position=0,0'
             ]
         }
         
@@ -55,12 +59,16 @@ class BrowserManager:
         
         # Generate Random Indentity
         ua = UserAgent()
-        user_agent = ua.random
+        user_agent = ua.chrome # Use Chrome specifically for better compatibility with stealth
         
         # Randomize Viewport (Desktop-ish)
-        width = random.randint(1280, 1920)
-        height = random.randint(720, 1080)
-        viewport = {"width": width, "height": height}
+        viewports = [
+            {"width": 1920, "height": 1080},
+            {"width": 1366, "height": 768},
+            {"width": 1536, "height": 864},
+            {"width": 1440, "height": 900}
+        ]
+        viewport = random.choice(viewports)
 
         # Create Context with Stealth Params
         self.context = await self.browser.new_context(
@@ -74,7 +82,25 @@ class BrowserManager:
         
         self.page = await self.context.new_page()
         
-        # Apply Stealth
+        # [Phase 2] Fingerprint Masking Scripts
+        await self.page.add_init_script("""
+            // Mask WebGL Fingerprint
+            const getParameter = WebGLRenderingContext.prototype.getParameter;
+            WebGLRenderingContext.prototype.getParameter = function(parameter) {
+                // UNMASKED_VENDOR_WEBGL
+                if (parameter === 37445) return 'NVIDIA Corporation';
+                // UNMASKED_RENDERER_WEBGL
+                if (parameter === 37446) return 'NVIDIA GeForce GTX 1080 Ti';
+                return getParameter.apply(this, arguments);
+            };
+
+            // Mask webdriver
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+        """)
+
+        # Apply Stealth (playwright-stealth)
         await Stealth().apply_stealth_async(self.page)
         
         # Attach captcha solver if configured

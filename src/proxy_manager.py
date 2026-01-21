@@ -25,6 +25,7 @@ class ProxyManager:
             "start_time": 0,
             "etr": 0
         }
+        self.tor_proxy = "socks5://127.0.0.1:9050"
         self._initialized = False
 
     @property
@@ -297,7 +298,9 @@ class ProxyManager:
              pool = [p['address'] for p in best]
 
         if not pool:
-            return None
+            # [Phase 3] Fallback to Tor if local Tor is running
+            # Only if proxies are enabled generally
+            return self.tor_proxy
             
         # Simple rotation for now
         proxy = random.choice(pool)
@@ -319,6 +322,30 @@ class ProxyManager:
                     self.proxies.remove(address)
         except Exception as e:
             print(f"Error reporting proxy result: {e}")
+
+    async def rotate_tor_identity(self):
+        """
+        Signals the Tor network to rotate the circuit and get a fresh IP.
+        Requires Tor ControlPort (default 9051) to be open and authenticated (password or cookie).
+        """
+        import socket
+        try:
+            # Connect to Tor Control Port
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(("127.0.0.1", 9051))
+                # authenticate - default empty or '""' if not set
+                s.send(b'AUTHENTICATE ""\r\n')
+                response = s.recv(1024)
+                if b"250 OK" in response:
+                    s.send(b"SIGNAL NEWNYM\r\n")
+                    response = s.recv(1024)
+                    if b"250 OK" in response:
+                        print("[ProxyManager] Tor Identity Rotated! 🎭")
+                        return True
+            print("[ProxyManager] Tor Control connection failed - Check if ControlPort 9051 is enabled.")
+        except Exception as e:
+            print(f"[ProxyManager] Could not rotate Tor: {e}")
+        return False
 
     async def update_searxng_config(self):
         """Injects OR REMOVES proxies from SearXNG settings.yml based on self.enabled."""

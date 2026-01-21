@@ -12,6 +12,39 @@ import uuid
 
 VALID_PLATFORMS = ["twitter", "linkedin", "tiktok", "instagram", "reddit", "youtube", "threads"]
 
+def parse_social_stats(text):
+    """
+    Robust regex parser for social media stats in search engine snippets.
+    Extracted from the 'content' field of SearXNG results.
+    """
+    if not text: return None
+    
+    stats = {}
+    # Patterns for Followers: "10K Followers", "2.5M followers", "500 followers"
+    follower_patterns = [
+        r'([\d\.,KkMm]+?)\s+[Ff]ollowers',
+        r'[Ff]ollowers:\s*([\d\.,KkMm]+)',
+        r'([\d\.,KkMm]+?)\s+[Ss]ubscribers',
+        r'([\d\.,KkMm]+?)\s+abonnés' # French for TikTok/Insta
+    ]
+    
+    for pattern in follower_patterns:
+        match = re.search(pattern, text)
+        if match:
+            stats["followers"] = match.group(1).upper()
+            break
+            
+    # Patterns for Following/Posts if available
+    following_match = re.search(r'([\d\.,KkMm]+?)\s+[Ff]ollowing', text)
+    if following_match:
+        stats["following"] = following_match.group(1).upper()
+        
+    posts_match = re.search(r'([\d\.,KkMm]+?)\s+[Pp]osts', text)
+    if posts_match:
+        stats["posts"] = posts_match.group(1).upper()
+
+    return stats if stats else None
+
 class SocialScraper:
     """
     Unified Social Media Scraper (Filtered + Throttled).
@@ -53,6 +86,16 @@ class SocialScraper:
         # 2. Strategy: Filter First
         dork_results = await self._try_dork_search(query_or_url, platform)
         
+        # [Phase 1] FAST-TRACK: If X-Ray already found high-confidence stats, 
+        # we can skip the browser entirely to save resources and avoid detection risk.
+        if dork_results and dork_results.get("extracted_stats"):
+             print(f"  [SocialScraper] ⚡ X-Ray Fast-Track! Found stats in search snippet.")
+             return {
+                 **dork_results,
+                 "status": "success",
+                 "method": "xray_fast_track"
+             }
+
         # If Dork failed to find ANY indexed pages, it's likely a dead/private profile or bad query
         # But we still might want to try browser if it's a direct URL
         should_use_browser = False
@@ -90,7 +133,8 @@ class SocialScraper:
             
         # Fallback to just dork data if browser failed
         if dork_results:
-            return dork_results
+            # Enrich dork data with extracted stats if available
+            return {**dork_results, "status": "partial_success"}
 
         return {"error": "All scraping methods failed.", "platform": platform}
             
@@ -204,12 +248,58 @@ class SocialScraper:
             results = await search_searxng(dork, session, num_results=5)
             
             if results:
+                 # [Phase 1] Extract Stats from Snippets
+                 parsed_results = []
+                 global_stats = None
+                 
+                 for r in results:
+                     snippet = r.get("content", "")
+                     stats = parse_social_stats(snippet)
+                     if stats and not global_stats:
+                         global_stats = stats # Take the first high-confidence match
+                     
+                     parsed_results.append({
+                         "title": r.get("title"),
+                         "url": r.get("url"),
+                         "snippet": snippet,
+                         "stats": stats
+                     })
+
                  return {
                      "source": "xray_dork",
-                     "results": results,
-                     "note": "Indexed pages found."
+                     "results": parsed_results,
+                     "extracted_stats": global_stats,
+                     "note": "Indexed pages found and parsed."
                  }
         return None
+
+        return None
+
+    async def perform_warmup(self, page):
+        """
+        [Phase 4] Humanoid Warmup
+        Visits safe sites to build cookie history and mimic organic behavior.
+        """
+        warmup_sites = [
+            "https://www.wikipedia.org",
+            "https://news.ycombinator.com",
+            "https://github.com",
+            "https://www.reddit.com"
+        ]
+        
+        # Pick 1-2 random sites
+        sites = random.sample(warmup_sites, k=random.randint(1, 2))
+        print(f"  [SocialScraper] 🔥 Performing Humanoid Warmup on {len(sites)} sites...")
+        
+        for site in sites:
+            try:
+                await page.goto(site, wait_until='domcontentloaded', timeout=15000)
+                await asyncio.sleep(random.uniform(2, 5)) 
+                # Random scroll
+                await page.mouse.wheel(0, random.randint(200, 600))
+                await asyncio.sleep(random.uniform(1, 3))
+            except:
+                continue
 
     async def _try_browser_scrape(self, url):
         """
@@ -243,6 +333,10 @@ class SocialScraper:
                          if proxy_url:
                              proxy_cfg = {"server": proxy_url} 
                              print(f"  [SocialScraper] Attempt {attempt+1}/{max_retries} Using Proxy: {proxy_url}")
+                             
+                             # [Phase 3] Rotate Tor Identity if we are using Tor fallback
+                             if "127.0.0.1:9050" in proxy_url:
+                                 await proxy_manager.rotate_tor_identity()
                     else:
                          # [Safety] Do NOT fall back to direct connection for Instagram to protect User IP.
                          # print(f"  [SocialScraper] Proxies exhausted. Aborting to prevent IP ban.")
@@ -264,6 +358,10 @@ class SocialScraper:
                     page = await bm.launch(headless=True, proxy=proxy_cfg)
                     # Sync local to instance (optional, but good for cleanup)
                     self.browser_manager = bm 
+
+                    # [Phase 4] Perform Warmup before the real target
+                    # But only if it's the first attempt or proxy changed
+                    await self.perform_warmup(page)
             
                     await page.set_extra_http_headers({
                         "Accept-Language": "en-US,en;q=0.9"
