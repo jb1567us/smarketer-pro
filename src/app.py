@@ -90,7 +90,7 @@ from ui.dsr_ui import render_dsr_page
 from ui.hosting_ui import render_hosting_dashboard
 from ui.manager_ui import render_manager_ui
 from model_fetcher import fetch_models_for_provider, scan_all_free_providers
-from config import config, reload_config
+from config import config, reload_config, update_config
 from proxy_manager import proxy_manager
 from agents import (
     ResearcherAgent, QualifierAgent, CopywriterAgent, ReviewerAgent, 
@@ -198,6 +198,65 @@ def get_auto_engine():
     from src.automation_engine import AutomationEngine
     return AutomationEngine()
 
+async def perform_auto_llm_scan():
+    """Background task to scan for free models if enabled."""
+    # Local import to avoid circular dependencies
+    from model_fetcher import scan_all_free_providers
+    from config import config, update_config
+    
+    if not config.get('llm', {}).get('auto_scan', False):
+        return
+
+    # Check last scan time (12 hour cooldown)
+    last_scan = config.get('llm', {}).get('last_auto_scan', 0)
+    current_time = time.time()
+    
+    if (current_time - last_scan) < 43200: # 12 hours
+        return
+        
+    print("[LLM-AutoScan] Starting periodic model discovery...", flush=True)
+    try:
+        results = await scan_all_free_providers()
+        if results:
+            current_candidates = config.get('llm', {}).get('router', {}).get('candidates', [])
+            
+            # Merge logic
+            new_candidates = current_candidates.copy()
+            added = 0
+            for r in results:
+                if not any(c['provider'] == r['provider'] and c['model_name'] == r['model_name'] for c in new_candidates):
+                    new_candidates.append(r)
+                    added += 1
+            
+            if added > 0:
+                print(f"[LLM-AutoScan] Success: Added {added} new free models to router.", flush=True)
+                router_config = config.get('llm', {}).get('router', {}).copy()
+                router_config['candidates'] = new_candidates
+                update_config('llm', 'router', router_config)
+            
+            # Always update timestamp to avoid retry loops on failure if it's partially working
+            update_config('llm', 'last_auto_scan', current_time)
+        
+    except Exception as e:
+        print(f"[LLM-AutoScan] Error during startup scan: {e}", flush=True)
+
+def trigger_llm_scan_bg():
+    """Triggers the scan in a background thread to avoid blocking startup UI."""
+    import threading
+    def _run():
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(perform_auto_llm_scan())
+            loop.close()
+        except Exception as e:
+            print(f"[LLM-AutoScan] Thread failed: {e}", flush=True)
+    
+    # Run once per process life
+    if not st.session_state.get('llm_auto_scan_triggered'):
+        thread = threading.Thread(target=_run, daemon=True)
+        thread.start()
+        st.session_state['llm_auto_scan_triggered'] = True
 
 def render_sidebar_chat():
     """Persistent AI Command Center in the sidebar."""
@@ -245,7 +304,7 @@ def render_top_navigation():
         "🏠 Command": ["Dashboard", "CRM Dashboard", "Performance Reports", "Manager Console"],
         "📣 Outreach": ["Campaigns", "Lead Discovery", "Social Scheduler", "Social Pulse", "Affiliate Hub", "DSR Manager"],
         "✨ Creative": ["Designer", "Video Studio", "WordPress Manager"],
-        "🛠️ Tools": ["Agent Lab", "Account Creator", "Hosting Dashboard", "Proxy Lab", "Product Lab"],
+        "🛠️ Tools": ["Agent Lab", "Account Creator", "Hosting Dashboard", "Proxy Lab", "Product Lab", "System Monitor"],
         "⚙️ Admin": ["Settings"]
     }
 
@@ -259,7 +318,7 @@ def render_top_navigation():
         with cat_cols[i]:
             is_active = st.session_state['current_category'] == cat
             btn_type = "primary" if is_active else "secondary"
-            if st.button(cat, key=f"cat_btn_{cat}", use_container_width=True, type=btn_type):
+            if st.button(cat, key=f"cat_btn_{cat}", width="stretch", type=btn_type):
                 st.session_state['current_category'] = cat
                 # Default to first view in category when switching
                 st.session_state['current_view'] = categories[cat][0]
@@ -275,7 +334,9 @@ def render_top_navigation():
         with sub_cols[i]:
             is_active_view = st.session_state.get('current_view') == view
             # Use small text or different style for sub-nav
-            if st.button(view, key=f"view_btn_{view}", use_container_width=True):
+            if st.button(view, key=f"view_btn_{view}", width="stretch"):
+                if view == "Campaigns":
+                    st.session_state.pop('active_campaign_id', None)
                 st.session_state['current_view'] = view
                 st.query_params["page"] = view
                 st.rerun()
@@ -289,10 +350,12 @@ def main():
     init_db()
     
     st.session_state['automation_engine'] = get_auto_engine()
+    trigger_llm_scan_bg()
     
     # Trigger background proxy check (once per session)
     if not st.session_state.get('proxy_startup_checked'):
-        proxy_manager.ensure_fresh_bg()
+        # Use 1 hour window for startup to ensure fresh session
+        proxy_manager.ensure_fresh_bg(max_age_hours=1)
         st.session_state['proxy_startup_checked'] = True
     
     # 0. Sync URL parameters with session state
@@ -304,10 +367,10 @@ def main():
             "🏠 Command": ["Dashboard", "CRM Dashboard", "Performance Reports", "Manager Console"],
             "📣 Outreach": ["Campaigns", "Lead Discovery", "Social Scheduler", "Social Pulse", "Affiliate Hub", "DSR Manager"],
             "✨ Creative": ["Designer", "Video Studio", "WordPress Manager"],
-            "🛠️ Tools": ["Agent Lab", "Account Creator", "Hosting Dashboard", "Proxy Lab", "Product Lab"],
+            "🛠️ Tools": ["Agent Lab", "Account Creator", "Hosting Dashboard", "Proxy Lab", "Product Lab", "System Monitor"],
             "⚙️ Admin": ["Settings"]
         }
-        
+
         # Check if page exists and set category
         for cat, views in categories.items():
             if requested_page in views:
@@ -320,26 +383,26 @@ def main():
     
     st.title("🚀 Smarketer Pro: CRM & Growth OS")
 
-    # === GLOBAL PROXY HARVEST PROGRESS ===
+    # === GLOBAL PROXY HARVEST PROGRESS (NON-BLOCKING) ===
     stats = proxy_manager.harvest_stats
     if stats.get("is_active"):
-        with st.container(border=True):
-            st.write("🛰️ **Mass Proxy Harvest in Progress...**")
+        with st.sidebar.expander("🛰️ Harvest Progress", expanded=True):
+            st.write("**Mass Proxy Harvest Active**")
             progress = stats['checked'] / stats['total'] if stats['total'] > 0 else 0
             st.progress(progress)
             
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Checked", f"{stats['checked']:,} / {stats['total']:,}")
-            c2.metric("Elite Found", stats['found'])
+            h1, h2 = st.columns(2)
+            h1.metric("Elite", stats.get('found_elite', 0))
+            h2.metric("Std", stats.get('found_standard', 0))
             
             etr = stats.get('etr', 0)
             mins, secs = divmod(etr, 60)
-            st.metric("Est. Time Remaining", f"{mins}m {secs}s")
+            st.caption(f"Checked: {stats['checked']:,}/{stats['total']:,} | Est: {mins}m {secs}s")
             
-            # Auto-refresh if active to keep progress moving
-            # Use a slightly longer sleep to avoid flickering
-            time.sleep(0.5)
-            st.rerun()
+            # Non-blocking refresh: Only rerun if user opts in
+            if st.toggle("Watch Live", value=False, help="Enable auto-refresh to see progress in real-time."):
+                time.sleep(1)
+                st.rerun()
     
     # 2. Top Navigation
     render_top_navigation()
@@ -396,6 +459,63 @@ def main():
 
     elif choice == "Account Creator":
         render_account_creator_ui()
+
+    elif choice == "System Monitor":
+        st.header("💻 System Monitor")
+        st.caption("Live view of backend processes, agent thoughts, and system logs.")
+        
+        # CPU/RAM Stats
+        if psutil:
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            c1, c2 = st.columns(2)
+            c1.metric("CPU Usage", f"{cpu}%")
+            
+            # RAM Color Logic
+            ram_delta_color = "normal"
+            if ram > 85: ram_delta_color = "inverse"
+            c2.metric("RAM Usage", f"{ram}%", delta_color=ram_delta_color)
+            if ram > 90:
+                st.error("⚠️ High Memory Usage! Performance may degrade.")
+
+        st.divider()
+        st.subheader("📜 Live Engine Logs")
+        
+        # Log Reader
+        log_path = os.path.join(project_root, "logs", "engine.log")
+        
+        col_ctrl, col_view = st.columns([1, 4])
+        with col_ctrl:
+            auto_refresh = st.toggle("Auto-Refresh", value=True)
+            if st.button("🗑️ Clear Logs"):
+                open(log_path, 'w').close()
+                st.success("Logs cleared.")
+                st.rerun()
+            
+            lines_to_show = st.select_slider("Lines", options=[50, 100, 200, 500, 1000], value=100)
+            
+        with col_view:
+            log_container = st.empty()
+            
+            # Simple tail implementation
+            try:
+                if os.path.exists(log_path):
+                    with open(log_path, 'r', encoding='utf-8') as f:
+                        # Improved: Read last N lines effectively
+                         # For small files traverse; for large files seek
+                        lines = f.readlines()
+                        last_n = lines[-lines_to_show:]
+                        log_text = "".join(last_n)
+                        
+                        st.code(log_text, language="log")
+                else:
+                    st.info("Log file not found yet (waiting for startup...)")
+            except Exception as e:
+                st.error(f"Error reading log: {e}")
+        
+        if auto_refresh:
+            time.sleep(2)
+            st.rerun()
 
     elif choice == "Hosting Dashboard":
         render_hosting_dashboard()
@@ -576,27 +696,46 @@ def main():
         st.caption("Advanced ScrapeBox-style proxy management and elite harvesting.")
 
         # Dashboard Stats
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Active Elite Proxies", len(proxy_manager.proxies))
-        col2.metric("Bad Proxies Blocked", len(proxy_manager.bad_proxies))
-        col3.metric("Proxy Usage", "Enabled" if proxy_manager.enabled else "Disabled")
+        col1, col2, col3, col4 = st.columns(4)
+        # Fetching counts from DB for accuracy
+        from database import get_best_proxies
+        elites = len(get_best_proxies(limit=1000, min_anonymity='elite'))
+        standards = len(get_best_proxies(limit=1000, min_anonymity='standard'))
+        
+        col1.metric("Active Elite", elites)
+        col2.metric("Active Standard", standards)
+        col3.metric("Bad Blocked", len(proxy_manager.bad_proxies))
+        col4.metric("Usage", "Enabled" if proxy_manager.enabled else "Disabled")
         
         st.divider()
         
         col_main, col_side = st.columns([2, 1])
         
         with col_main:
-            st.subheader("Elite Proxy Pool")
-            if proxy_manager.proxies:
-                proxy_df = pd.DataFrame(proxy_manager.proxies, columns=["Proxy Address"])
-                st.dataframe(proxy_df, hide_index=True, use_container_width=True)
+            st.subheader("Proxy Pool (Active)")
+            from database import get_best_proxies
+            all_best = get_best_proxies(limit=1000)
+            if all_best:
+                proxy_df = pd.DataFrame(all_best)
+                # Ensure correct columns displayed
+                display_cols = ["address", "anonymity", "latency"]
+                existing_cols = [c for c in display_cols if c in proxy_df.columns]
+                st.dataframe(proxy_df[existing_cols], hide_index=True, width="stretch")
             else:
                 st.warning("No active proxies found. Start a harvest to populate the pool.")
             
         with col_side:
             st.subheader("Control Panel")
             
-            # Proxy Toggle
+            # Concurrency Slider
+            curr_conc = config.get("proxies", {}).get("harvest_concurrency", 50)
+            new_conc = st.slider("Harvest Concurrency", min_value=1, max_value=400, value=curr_conc, step=10, help="Max concurrent connections for proxy harvesting.")
+            
+            if new_conc != curr_conc:
+                update_config("proxies", "harvest_concurrency", new_conc)
+                st.toast(f"Concurrency updated to {new_conc}!")
+                time.sleep(0.5)
+                st.rerun()
             # Check state change
             new_state = st.toggle("Enable Upstream Proxies", value=proxy_manager.enabled, key="proxy_toggle")
             
@@ -620,7 +759,7 @@ def main():
             
             st.divider()
 
-            if st.button("🚀 Trigger Mass Harvest", use_container_width=True, type="primary"):
+            if st.button("🚀 Trigger Mass Harvest", width="stretch", type="primary"):
                 success, msg = proxy_manager.start_harvest_bg()
                 if success:
                     st.success("🛰️ Background harvest initiated. Observe progress above.")
@@ -629,7 +768,7 @@ def main():
                 else: 
                     st.error(msg)
             
-            if st.button("🧹 Clear Bad Proxies", use_container_width=True):
+            if st.button("🧹 Clear Bad Proxies", width="stretch"):
                 proxy_manager.bad_proxies.clear()
                 st.success("Bad proxy list cleared.")
                 st.rerun()
@@ -648,7 +787,7 @@ def main():
             st.divider()
             
             st.markdown("#### 🔗 SearXNG Integration")
-            if st.button("💉 Inject Proxies into SearXNG", use_container_width=True, help="Updates SearXNG settings.yml and restarts the container."):
+            if st.button("💉 Inject Proxies into SearXNG", width="stretch", help="Updates SearXNG settings.yml and restarts the container."):
                 if not proxy_manager.proxies:
                     st.error("No proxies to inject! Harvest some first.")
                 else:
@@ -675,6 +814,63 @@ def main():
 
     elif choice == "Account Creator":
         render_account_creator_ui()
+
+    elif choice == "System Monitor":
+        st.header("💻 System Monitor")
+        st.caption("Live view of backend processes, agent thoughts, and system logs.")
+        
+        # CPU/RAM Stats
+        if psutil:
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            c1, c2 = st.columns(2)
+            c1.metric("CPU Usage", f"{cpu}%")
+            
+            # RAM Color Logic
+            ram_delta_color = "normal"
+            if ram > 85: ram_delta_color = "inverse"
+            c2.metric("RAM Usage", f"{ram}%", delta_color=ram_delta_color)
+            if ram > 90:
+                st.error("⚠️ High Memory Usage! Performance may degrade.")
+
+        st.divider()
+        st.subheader("📜 Live Engine Logs")
+        
+        # Log Reader
+        log_path = os.path.join(project_root, "logs", "engine.log")
+        
+        col_ctrl, col_view = st.columns([1, 4])
+        with col_ctrl:
+            auto_refresh = st.toggle("Auto-Refresh", value=True)
+            if st.button("🗑️ Clear Logs"):
+                open(log_path, 'w').close()
+                st.success("Logs cleared.")
+                st.rerun()
+            
+            lines_to_show = st.select_slider("Lines", options=[50, 100, 200, 500, 1000], value=100)
+            
+        with col_view:
+            log_container = st.empty()
+            
+            # Simple tail implementation
+            try:
+                if os.path.exists(log_path):
+                    with open(log_path, 'r', encoding='utf-8') as f:
+                        # Improved: Read last N lines effectively
+                         # For small files traverse; for large files seek
+                        lines = f.readlines()
+                        last_n = lines[-lines_to_show:]
+                        log_text = "".join(last_n)
+                        
+                        st.code(log_text, language="log")
+                else:
+                    st.info("Log file not found yet (waiting for startup...)")
+            except Exception as e:
+                st.error(f"Error reading log: {e}")
+        
+        if auto_refresh:
+            time.sleep(2)
+            st.rerun()
 
     elif choice == "Agency Orchestrator":
         render_agency_ui()
@@ -790,7 +986,7 @@ def main():
             workflows = list_workflows()
             
             # Action: Content Creator
-            if st.button("➕ New Workflow", use_container_width=True):
+            if st.button("➕ New Workflow", width="stretch"):
                 st.session_state['editing_workflow'] = None
                 st.session_state['workflow_name'] = ""
                 st.session_state['workflow_desc'] = ""
@@ -798,7 +994,7 @@ def main():
                 st.rerun()
 
             for wf in workflows:
-                if st.button(f"📄 {wf}", key=f"sel_{wf}", use_container_width=True):
+                if st.button(f"📄 {wf}", key=f"sel_{wf}", width="stretch"):
                     data = load_workflow(wf)
                     if data:
                         st.session_state['editing_workflow'] = wf
@@ -818,7 +1014,7 @@ def main():
                 c_save, c_del = st.columns([4, 1])
                 
                 with c_save:
-                    if st.form_submit_button("💾 Save Workflow", type="primary", use_container_width=True):
+                    if st.form_submit_button("💾 Save Workflow", type="primary", width="stretch"):
                         if w_name and w_content:
                             save_workflow(w_name, w_content, w_desc)
                             st.success(f"Saved {w_name}!")
@@ -830,7 +1026,7 @@ def main():
                             
                 with c_del:
                     # Fix: Submit button must always be rendered inside form!
-                    delete_submitted = st.form_submit_button("🗑️ Delete", type="secondary", use_container_width=True, disabled=not bool(st.session_state.get('editing_workflow')))
+                    delete_submitted = st.form_submit_button("🗑️ Delete", type="secondary", width="stretch", disabled=not bool(st.session_state.get('editing_workflow')))
                     
                     if delete_submitted and st.session_state.get('editing_workflow'):
                         delete_workflow(st.session_state['editing_workflow'])
@@ -1005,7 +1201,7 @@ def main():
                 selected_lead_label = st.selectbox("Associate with Lead", list(lead_options.keys()))
                 lead_id = lead_options[selected_lead_label]
                 
-                if st.form_submit_button("Create Task", use_container_width=True):
+                if st.form_submit_button("Create Task", width="stretch"):
                     if description:
                         # Convert date to timestamp
                         dt = datetime.combine(due_date, datetime.min.time())
@@ -1283,7 +1479,7 @@ def main():
             st.warning("⚠️ Do not leave this page while the search is running. It will stop the process.")
             
             st.divider()
-            submitted = st.form_submit_button("Start Search 🚀", type="primary", use_container_width=True)
+            submitted = st.form_submit_button("Start Search 🚀", type="primary", width="stretch")
             
             if submitted:
                 # Check for empty Quality Gate

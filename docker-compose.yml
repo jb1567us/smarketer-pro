@@ -1,0 +1,49 @@
+services:
+  app:
+    build: .
+    container_name: smarketer_pro_app
+    ports:
+      - "8501:8501"
+    volumes:
+      # Mount data directories for persistence
+      - ./data:/app/data
+      - ./sessions:/app/sessions
+      - ./logs:/app/logs
+      - ./brain:/app/brain
+      - ./screenshots:/app/screenshots
+      # Mount .env to ensure secrets are available
+      - ./.env:/app/.env
+      - ./config.yaml:/app/config.yaml
+      # Optional: Mount src for hot-reloading during dev (remove in prod)
+      - ./src:/app/src
+      - ./searxng/searxng:/app/searxng/searxng
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SEARXNG_URL=http://searxng:8080/search
+    depends_on:
+      - searxng
+    restart: unless-stopped
+    # IPC host needed for some browser shared memory scenarios, though --disable-dev-shm-usage usually fixes it
+    shm_size: '2gb'
+
+  searxng:
+    image: searxng/searxng:2025.12.30-a5c946a32
+    container_name: smarketer_pro_searxng
+    ports:
+      - "8081:8080" # Host 8081 -> Container 8080
+    volumes:
+      - ./searxng/searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8081/
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+
+networks:
+  default:
+    driver: bridge

@@ -25,6 +25,7 @@ def render_account_creator_ui():
     with col1:
         platform_name = st.text_input("Platform Name", placeholder="e.g. Facebook")
         username = st.text_input("Desired Username (Optional)")
+        lead_source = st.selectbox("Attribution Source", ["Organic", "Cold Outreach", "Referral", "Ad", "Other"])
 
     with col2:
         reg_url = st.text_input("Registration URL", placeholder="https://facebook.com/r.php")
@@ -41,35 +42,69 @@ def render_account_creator_ui():
     st.markdown("### 🚀 Launch Creation")
     create_col1, create_col2 = st.columns([1, 4])
     with create_col1:
-        if st.button("Start Agent", type="primary", use_container_width=True):
-            if not platform_name or not reg_url:
-                st.error("Missing Platform/URL.")
+        # Pre-validation check to visualize readiness
+        is_ready = bool(platform_name and reg_url)
+        
+        if st.button("Start Agent", type="primary", width="stretch"):
+            # Detailed Validation
+            import re
+            url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+            
+            error_msg = None
+            if not platform_name:
+                error_msg = "❌ Platform Name is required."
+            elif not reg_url:
+                error_msg = "❌ Registration URL is required."
+            elif not re.match(url_regex, reg_url):
+                error_msg = "❌ Invalid URL format. Must start with http:// or https://"
+                
+            if error_msg:
+                st.error(error_msg)
             else:
                  def _run_creation():
-                    # Fetch Proxy if Auto
                     p_str = proxy_str
                     if use_auto_proxy:
-                        p_str = proxy_manager.get_proxy()
-                        if not p_str:
-                             asyncio.run(proxy_manager.fetch_proxies())
-                             p_str = proxy_manager.get_proxy()
+                        with st.spinner("Fetching best proxy..."):
+                            p_str = proxy_manager.get_proxy()
+                            if not p_str:
+                                 asyncio.run(proxy_manager.fetch_proxies())
+                                 p_str = proxy_manager.get_proxy()
                     
-                    if not p_str and use_auto_proxy: raise Exception("No proxies available.")
+                    if not p_str and use_auto_proxy: 
+                        raise Exception("No proxies available. Please add proxies in the Proxy Lab.")
                     
                     agent = AccountCreatorAgent(cpanel_conf)
-                    details = {'username': username} if username else {}
+                    details = {
+                        'username': username,
+                        'lead_source': lead_source
+                    }
                     t_proxy = {"server": p_str} if p_str else None
                     
-                    st.info(f"Agent Active. Target: {platform_name}")
-                    return asyncio.run(agent.create_account(platform_name, reg_url, details, t_proxy))
+                    st.toast(f"Agent Active. Target: {platform_name}", icon="🤖")
+                    
+                    with st.spinner(f"Creating account on {platform_name}..."):
+                        return asyncio.run(agent.create_account(platform_name, reg_url, details, t_proxy))
 
-                 res = safe_action_wrapper(_run_creation, "Account Creation")
-                 if res:
-                     st.balloons()
-                     st.success(f"Outcome: {res}")
+                 try:
+                     res = safe_action_wrapper(_run_creation, "Account Creation")
+                     if res:
+                         st.balloons()
+                         st.success(f"Account Created Successfully! Outcome: {res}")
+                         
+                         # Clear Dead End - Provide Next Steps
+                         ns1, ns2 = st.columns(2)
+                         with ns1:
+                             if st.button("🔗 Add Leads to this Account", key="btn_add_leads_success"):
+                                 st.session_state['current_view'] = "Lead Discovery"
+                                 st.rerun()
+                         with ns2:
+                             if st.button("🏠 Return to Dashboard", key="btn_dash_success"):
+                                 st.session_state['current_view'] = "CRM Dashboard"
+                                 st.rerun()
+                                 
+                 except Exception as e:
+                     st.error(f"Creation Failed: {str(e)}")
 
-    st.divider()
-    
     st.divider()
     
     # 4. Manual Interventions
@@ -136,13 +171,14 @@ def render_account_creator_ui():
     st.divider()
     
     # 5. Managed Accounts View
-    # 5. Managed Accounts View
     st.subheader("Managed Accounts")
     
     # Filters
-    f_col1, f_col2 = st.columns([1, 4])
+    f_col1, f_col2 = st.columns([1, 3])
     with f_col1:
         f_days = st.number_input("Days Back", min_value=1, value=30, key="ma_days")
+    with f_col2:
+        search_query = st.text_input("Search Accounts", placeholder="Search by Platform, Username, or Status...")
     
     accounts = get_managed_accounts()
     
@@ -154,6 +190,14 @@ def render_account_creator_ui():
              cutoff = pd.Timestamp.now() - pd.Timedelta(days=f_days)
              adf = adf[adf['created_at'] > cutoff]
         
+        # Text Search Filter
+        if search_query and not adf.empty:
+            search_query_lower = search_query.lower()
+            adf = adf[adf.apply(lambda row: 
+                search_query_lower in str(row.get('platform', '')).lower() or 
+                search_query_lower in str(row.get('username', '')).lower() or
+                search_query_lower in str(row.get('status', '')).lower(), axis=1)]
+
         # Edit Handler
         if 'edit_acc_id' not in st.session_state: st.session_state['edit_acc_id'] = None
         
@@ -177,19 +221,27 @@ def render_account_creator_ui():
                                    lambda: [delete_managed_account(aid) for aid in selected_ids], key="del_accs")
 
         # Edit Form
-        if st.session_state['edit_acc_id']:
+        if st.session_state.get('edit_acc_id'):
              with st.form("edit_acc_form"):
                  st.write("Edit Account")
-                 row = next(a for a in accounts if a['id'] == st.session_state['edit_acc_id'])
-                 e_plat = st.text_input("Platform", value=row['platform'])
-                 e_user = st.text_input("Username", value=row['username'])
-                 e_stat = st.selectbox("Status", ["active", "suspended", "verified"], index=0 if row['status'] not in ["active", "suspended", "verified"] else ["active", "suspended", "verified"].index(row['status']))
-                 
-                 if st.form_submit_button("Update"):
-                     update_managed_account(row['id'], e_plat, e_user, e_stat)
+                 # Handle case where account might have been deleted but id is still in session
+                 try:
+                     row = next(a for a in accounts if a['id'] == st.session_state['edit_acc_id'])
+                     e_plat = st.text_input("Platform", value=row['platform'])
+                     e_user = st.text_input("Username", value=row['username'])
+                     e_stat = st.selectbox("Status", ["active", "suspended", "verified"], index=0 if row['status'] not in ["active", "suspended", "verified"] else ["active", "suspended", "verified"].index(row['status']))
+                     
+                     if st.form_submit_button("Update"):
+                         update_managed_account(row['id'], e_plat, e_user, e_stat)
+                         st.session_state['edit_acc_id'] = None
+                         st.success("Updated!")
+                         st.rerun()
+                 except StopIteration:
                      st.session_state['edit_acc_id'] = None
-                     st.success("Updated!")
                      st.rerun()
+        
+        if adf.empty:
+            st.info("No accounts match your filters.")
     else:
         st.info("No accounts created yet in this period.")
 

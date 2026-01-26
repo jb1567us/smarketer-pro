@@ -5,6 +5,7 @@ import csv
 import time
 import aiohttp
 import functools
+import json
 
 # Appends src to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -81,15 +82,26 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
         if not urls: return
 
         # 3. Deep Analysis (Researcher + Qualifier Loop)
-        # log(f"Analyzing {len(urls)} sites concurrently...") # Original line
-        
         candidates = []
         
-        # Throttling
+        # [Phase 3] Adaptive Throttling
         # Concurrency limit from config (Default: 20)
-        limit = config.get("search", {}).get("concurrency", 20)
-        log(f"Analyzing {len(urls)} candidates (Queue Size)...") # Updated to use len(urls) as candidates is empty
-        log(f"  [System] Concurrency Throttle: {config['search']['concurrency']} parallel tasks")
+        config_limit = config.get("search", {}).get("concurrency", 20)
+        
+        # Check System RAM
+        import psutil
+        try:
+            mem = psutil.virtual_memory()
+            available_gb = mem.available / (1024 ** 3)
+            # Safe heuristic: 4 threads per GB of FREE RAM
+            # Each chrome instance + python overhead ~ 250MB worst case
+            resilient_limit = max(1, int(available_gb * 4))
+            
+            limit = min(config_limit, resilient_limit)
+            log(f"  [System] Adaptive Throttling: RAM Free={available_gb:.1f}GB. Adjusted Concurrency: {limit} (Config: {config_limit})")
+        except:
+             limit = config_limit
+        
         sem = asyncio.Semaphore(limit)
 
         # Debug Stats
@@ -101,97 +113,102 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
 
         async def process_candidate(candidate):
             async with sem:
-                # Handle legacy string format just in case, but prefer dict
-                if isinstance(candidate, str):
-                    url = candidate
-                    source_type = "organic"
-                else:
-                    url = candidate.get("url")
-                    source_type = candidate.get("source_type", "organic")
-
-                log(f"  > Processing {url} ({source_type})...")
-
-                # FILTER: Organic Filter Reworked
-                # Allowing Organic results to pass through to the "Strict Email Check".
-                # This ensures we don't drop direct business sites, but still skip junk (no email).
-                # if source_type == "organic":
-                #      log(f"    ⏭️ Skipping {url} (Organic result). Strict Filter Active.")
-                #      return None
+                # Dead Letter Queue Context
+                dlq_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "failed_leads.jsonl")
                 
-                # A. Research (Gather Intel)
-                # Researcher agent "deep scrape" capability
-                intel = await researcher.gather_intel({"url": url})
-                
-                if not intel.get('html_preview'):
+                try:
+                    # Handle legacy string format just in case, but prefer dict
+                    if isinstance(candidate, str):
+                        url = candidate
+                        source_type = "organic"
+                    else:
+                        url = candidate.get("url")
+                        source_type = candidate.get("source_type", "organic")
+
+                    log(f"  > Processing {url} ({source_type})...")
+                    
+                    # A. Research (Gather Intel)
+                    # Researcher agent "deep scrape" capability
+                    intel = await researcher.gather_intel({"url": url})
+                    
+                    if not intel.get('html_preview'):
+                        return None
+                    
+                    # B. Qualify (Gatekeeper)
+                    if icp_criteria:
+                        log(f"    [Agent] Qualifier is evaluating {url} against ICP...")
+                        
+                        # Construct context for qualifier
+                        q_context = f"Company URL: {url}\nIndustry: {target_niche}\nContent Preview: {intel.get('html_preview', '')[:3000]}\n\nICP Criteria:\n{icp_criteria}"
+                        
+                        try:
+                            qualification = qualifier.think(q_context)
+                        except Exception as e:
+                            log(f"    ⚠️ Qualification failed for {url}: {e}")
+                            qualification = {'qualified': True, 'score': 50, 'reason': 'Error during qualification, allowing as neutral.'}
+                    else:
+                        # AUTO-QUALIFY MODE ENABLED (only if no criteria provided)
+                        log(f"    [Agent] Auto-Qualifying {url} (No ICP criteria provided)...")
+                        
+                        qualification = {
+                            'qualified': True,
+                            'score': 100,
+                            'reason': f'Auto-Qualified ({source_type} - No strict ICP)'
+                        }
+                    
+                    # Parse result
+                    if qualification:
+                        if not qualification.get('qualified'):
+                            log(f"    ❌ Rejected: {qualification.get('reason')}")
+                            return None
+                        else:
+                            log(f"    ✅ Qualified! Score: {qualification.get('score')}")
+                            
+                            # Extract Details
+                            details = {}
+                            has_emails = bool(intel.get('emails'))
+                            
+                            if has_emails:
+                                 log(f"    ⚡ Emails found ({len(intel.get('emails'))}). FAST SAVE.")
+                                 details = {
+                                     "company_name": "Unknown (Fast Save)", 
+                                     "confidence": 0.9
+                                 }
+                            else:
+                                try:
+                                    loop = asyncio.get_running_loop()
+                                    details = await loop.run_in_executor(
+                                        None, 
+                                        analyze_content, 
+                                        url, 
+                                        intel.get('html_preview'), 
+                                        target_niche
+                                    )
+                                except Exception as e:
+                                    log(f"    ⚠️ Details Extraction Failed for {url}: {e}")
+                                # Proceed without details
+                            
+                            return {
+                                "url": url,
+                                "emails": intel.get('emails'),
+                                "analysis": qualification,
+                                "intel": intel,
+                                "details": details or {}
+                            }
                     return None
                 
-                # B. Qualify (Gatekeeper)
-                if icp_criteria:
-                    log(f"    [Agent] Qualifier is evaluating {url} against ICP...")
-                    
-                    # Construct context for qualifier
-                    q_context = f"Company URL: {url}\nIndustry: {target_niche}\nContent Preview: {intel.get('html_preview', '')[:3000]}\n\nICP Criteria:\n{icp_criteria}"
-                    
+                except Exception as e:
+                    # [Phase 3] Dead Letter Queue
+                    log(f"    🔥 CRITICAL FAILURE for {candidate}: {e}. Saved to DLQ.")
                     try:
-                        qualification = qualifier.think(q_context)
-                    except Exception as e:
-                        log(f"    ⚠️ Qualification failed for {url}: {e}")
-                        qualification = {'qualified': True, 'score': 50, 'reason': 'Error during qualification, allowing as neutral.'}
-                else:
-                    # AUTO-QUALIFY MODE ENABLED (only if no criteria provided)
-                    log(f"    [Agent] Auto-Qualifying {url} (No ICP criteria provided)...")
-                    
-                    qualification = {
-                        'qualified': True,
-                        'score': 100,
-                        'reason': f'Auto-Qualified ({source_type} - No strict ICP)'
-                    }
-                
-                # Parse result
-                if qualification:
-                    if not qualification.get('qualified'):
-                        log(f"    ❌ Rejected: {qualification.get('reason')}")
-                        return None
-                    else:
-                        log(f"    ✅ Qualified! Score: {qualification.get('score')}")
-                        
-                        # Extract Details
-                        # OPTIMIZATION: Strict Email Requirement
-                        details = {}
-                        has_emails = bool(intel.get('emails'))
-                        
-                        if has_emails:
-                             log(f"    ⚡ Emails found ({len(intel.get('emails'))}). FAST SAVE.")
-                             details = {
-                                 "company_name": "Unknown (Fast Save)", 
-                                 "confidence": 0.9
-                             }
-                        else:
-                            # Only use LLM if we desperately need to find contact info
-                            # With 90+ free models, we can afford this now!
-                            try:
-                                loop = asyncio.get_running_loop()
-                                details = await loop.run_in_executor(
-                                    None, 
-                                    analyze_content, 
-                                    url, 
-                                    intel.get('html_preview'), 
-                                    target_niche
-                                )
-                            except Exception as e:
-                                log(f"    ⚠️ Details Extraction Failed for {url}: {e}")
-                            # Proceed without details
-                        
-                        return {
-                            "url": url,
-                            "emails": intel.get('emails'),
-                            "analysis": qualification,
-                            "intel": intel,
-                            "details": details or {}
-                        }
-                return None
+                        with open(dlq_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({"candidate": candidate, "error": str(e), "time": time.time()}) + "\n")
+                    except:
+                        pass # Double fail shouldn't crash loop
+                    return None
 
         tasks = [process_candidate(u) for u in urls]
+        # Use return_exceptions=True to ensure gather doesn't crash on unhandled exceptions
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
         # Filter successful results and log errors
@@ -199,6 +216,7 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
         for r in results:
             if isinstance(r, Exception):
                 log(f"    ⚠️ Task failed: {r}")
+                # Also Log to DLQ if not already handled
             elif r:
                 candidates.append(r)
         
@@ -207,10 +225,10 @@ async def run_outreach(keywords, profile_names=["default"], target_niche=None, s
         if healed_raw:
             log(f"\n--- Phase 2.5: Captcha Healing ({len(healed_raw)} leads) ---")
             for res in healed_raw:
-                log(f"  [Agent] Evaluating HEALED candidate: {res['url']}")
-                # Simplified qualification for healed leads to avoid full recursion
-                q_context = f"Company URL: {res['url']}\nContent: {res.get('html_preview', '')[:3000]}\nCriteria: {icp_criteria}"
                 try:
+                    log(f"  [Agent] Evaluating HEALED candidate: {res['url']}")
+                    # Simplified qualification for healed leads to avoid full recursion
+                    q_context = f"Company URL: {res['url']}\nContent: {res.get('html_preview', '')[:3000]}\nCriteria: {icp_criteria}"
                     qualification = qualifier.think(q_context)
                     if qualification.get('qualified'):
                         log(f"    ✅ Healed lead qualified!")

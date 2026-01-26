@@ -15,8 +15,15 @@ class LiteDockManager:
         self.auto_runner_script = os.path.join(self.litedock_dir, "auto_runner.py")
         self.docker_available = None # Cache status
 
+    def is_running_in_docker(self):
+        """Checks if the app itself is running inside a Docker container."""
+        return os.path.exists('/.dockerenv')
+
     def is_docker_running(self):
         """Checks if Docker daemon is responsive."""
+        if self.is_running_in_docker():
+            return True 
+            
         try:
             # Using 'docker info' is the standard way to check if daemon is running
             result = subprocess.run(["docker", "info"], capture_output=True, text=True, timeout=5)
@@ -39,6 +46,10 @@ class LiteDockManager:
         Ensures a SearXNG instance is available.
         Prioritizes Docker, falls back to Lite-Dock if Docker is down.
         """
+        if self.is_running_in_docker():
+            print("[LiteDockManager] Running inside Docker container. Assuming sibling SearXNG service is active.")
+            return "docker"
+
         if self.is_docker_running():
             print("[LiteDockManager] Docker is running. Standard SearXNG (Port 8081) prioritized.")
             return "docker"
@@ -67,8 +78,47 @@ class LiteDockManager:
             print(f"[LiteDockManager] ❌ Failed to launch Lite-Dock: {e}")
             return "none"
 
+    def restart_searxng(self):
+        """Kills and restarts SearXNG based on active provider."""
+        if self.is_running_in_docker():
+            # Check for socket mount
+            if os.path.exists('/var/run/docker.sock'):
+                print("[LiteDockManager] Docker socket found! Attempting to restart sibling container 'smarketer_pro_searxng'...")
+                try:
+                    # Note: We must use the container name defined in docker-compose
+                    res = subprocess.run(["docker", "restart", "smarketer_pro_searxng"], capture_output=True, text=True, timeout=30)
+                    if res.returncode == 0:
+                        print("[LiteDockManager] ✅ Successfully restarted smarketer_pro_searxng!")
+                        return True
+                    else:
+                        print(f"[LiteDockManager] ❌ Restart failed: {res.stderr}")
+                        return False
+                except Exception as e:
+                     print(f"[LiteDockManager] ❌ Error executing docker restart: {e}")
+                     return False
+            else:
+                print("[LiteDockManager] Running inside Docker but /var/run/docker.sock is NOT mounted.")
+                print("[LiteDockManager] Please restart the 'searxng' container manually to apply changes.")
+                return True
+
+        if self.is_docker_running():
+            print("[LiteDockManager] Restarting SearXNG via Docker Compose...")
+            docker_compose_path = os.path.join(self.root_dir, "searxng", "docker-compose.yaml")
+            subprocess.run(["docker", "compose", "-f", docker_compose_path, "restart", "searxng"], check=False)
+            return True
+        
+        # Lite-Dock Restart
+        print("[LiteDockManager] Restarting SearXNG via Lite-Dock (WSL Kill)...")
+        # Kill python3 -m searx.webapp inside the sidecar
+        subprocess.run(["wsl", "-d", "lite-dock-host", "pkill", "-f", "searx.webapp"], check=False)
+        # It will be relaunched next time ensure_searxng is called or by the background loop
+        return True
+
     def get_local_url(self):
         """Returns the appropriate local URL based on active management."""
+        if self.is_running_in_docker():
+             return os.getenv("SEARXNG_URL", "http://searxng:8080/search")
+
         if self.is_docker_running():
             return config.get("search", {}).get("searxng_url", "http://localhost:8081/search")
         else:

@@ -2,9 +2,10 @@ from llm import LLMFactory
 from utils.memory import memory_manager
 
 class BaseAgent:
-    def __init__(self, role, goal, provider=None):
+    def __init__(self, role, goal, provider=None, tier='economy'):
         self.role = role
         self.goal = goal
+        self.tier = tier # 'performance' or 'economy'
         
         # Centralized Logging
         from utils.logger_service import get_logger
@@ -38,7 +39,7 @@ class BaseAgent:
         """
         system_msg = f"Role: {self.role}\nGoal: {self.goal}\n\nCRITICAL: Do NOT hallucinate. Only use provided information or verifiable facts. if you don't know, say 'Unknown'."
         full_prompt = f"{system_msg}\n\nContext:\n{context}\n\nInstructions:\n{instructions}"
-        return self.provider.generate_text(full_prompt)
+        return self.provider.generate_text(full_prompt, tier=self.tier)
 
     async def think_async(self, context, instructions=None):
         """
@@ -68,7 +69,7 @@ class BaseAgent:
             f"Tuning Instructions:\n{instructions}\n\n"
             f"Please update the output based on these instructions."
         )
-        return self.provider.generate_text(full_prompt)
+        return self.provider.generate_text(full_prompt, tier=self.tier)
 
     def discuss(self, context, previous_response, message, history=None):
         """
@@ -83,7 +84,7 @@ class BaseAgent:
             f"{history_str}\n\n"
             f"User Question/Feedback:\n{message}"
         )
-        return self.provider.generate_text(full_prompt)
+        return self.provider.generate_text(full_prompt, tier=self.tier)
 
     def remember(self, key, content, metadata=None):
         """Stores a fact for this agent."""

@@ -1,0 +1,9 @@
+38: import pandas as pd
+97:     import pandas as pd
+227:                         rows = pd.read_csv(batch_file).to_dict(orient='records')
+355:                             df_imp = pd.read_csv(up_file)
+393:             inf_df = pd.DataFrame(candidates)
+605:                             leads_to_add = pd.read_csv(up_leads).to_dict(orient='records')
+646:              full_df = pd.DataFrame(rec_leads_full)
+714:              c_df = pd.DataFrame(content_items)
+786:              w_df = pd.DataFrame(logs)

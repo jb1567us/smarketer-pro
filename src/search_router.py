@@ -39,23 +39,28 @@ class SearXNGRouter:
 
     def get_candidates(self):
         """Returns a list of URLs to try in order."""
-        # Check environment - Default to 'local' if not specified
+        # Check environment - Default to 'local' (Strict Privacy)
         env = os.environ.get("ENVIRONMENT", "local").lower()
+        strict_privacy = config.get("search", {}).get("strict_privacy", True)
         
         # Ensure infrastructure is ready if using local
         from utils.litedock_manager import litedock_manager
         if "localhost" in self.local_url or "127.0.0.1" in self.local_url:
-             # Refresh local_url in case Docker just came up or lite-dock just started
              self.local_url = litedock_manager.get_local_url()
         
         candidates = []
         
         # 1. Always prioritize Local Instance
-        # If we are local, we ONLY want to use local (as per user request)
-        if env == "local":
+        if env == "local" or strict_privacy:
+            # In strict mode, we NEVER return public instances
+            if self._is_cooling_down(self.local_url):
+                 # If local is dead, we prefer to FAIL than to leak data to public instances
+                 # But we can try to return it anyway and let the caller fail, 
+                 # triggering the auto-healing logic in report_failure
+                 return [self.local_url] 
             return [self.local_url]
             
-        # CLOUD/PROD LOGIC:
+        # CLOUD/PROD LOGIC (Only reached if ENVIRONMENT != local AND strict_privacy = False):
         if not self._is_cooling_down(self.local_url):
             candidates.append(self.local_url)
         

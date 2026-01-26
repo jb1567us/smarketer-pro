@@ -1,18 +1,23 @@
 import streamlit as st
 import os
+import time
+import pandas as pd
+import json
 from agents.designer import GraphicsDesignerAgent
 from database import save_creative_content, get_creative_library, delete_creative_item, get_connection
 from ui.components import (
-    premium_header, safe_action_wrapper, render_enhanced_table, confirm_action
+    premium_header, safe_action_wrapper, render_enhanced_table, confirm_action, render_page_chat
 )
-import time
-import pandas as pd
+from agents import ManagerAgent
 
 def render_designer_page():
     premium_header("🎨 Creative Designer", "AI-driven visual asset generation for marketing and WordPress design.")
 
     # Initialize Agent
-    designer = GraphicsDesignerAgent()
+    if 'designer_agent' not in st.session_state:
+        st.session_state['designer_agent'] = GraphicsDesignerAgent()
+    
+    designer = st.session_state['designer_agent']
 
     tab_gen, tab_library = st.tabs(["🚀 Generate Assets", "📚 Creative Library"])
 
@@ -41,7 +46,7 @@ def render_designer_page():
             style = st.selectbox("Style Preset", style_presets)
             aspect_ratio = st.selectbox("Aspect Ratio", ["16:9 (Blog Header)", "1:1 (Social Post)", "9:16 (Story/Shorts)"])
 
-        if st.button("✨ Generate AI Visual", type="primary", use_container_width=True):
+        if st.button("✨ Generate AI Visual", type="primary", width="stretch"):
             if not concept:
                 st.error("Please describe your concept first.")
             else:
@@ -57,7 +62,7 @@ def render_designer_page():
                         title=concept[:50],
                         content_url=res['image_url'],
                         local_path=res.get('local_path'),
-                        metadata={"prompt": res.get('revised_prompt'), "style": style, "base_concept": concept}
+                        metadata=json.dumps({"prompt": res.get('revised_prompt'), "style": style, "base_concept": concept})
                     )
                     st.rerun()
 
@@ -77,12 +82,10 @@ def render_designer_page():
             with c_tweak:
                 st.markdown("**Iterative Feedback**")
                 tweak_suggestion = st.text_input("What would you like to change?", placeholder="e.g. Make the colors more vibrant, add a person...")
-                if st.button("🔄 Tweak & Regenerate", use_container_width=True):
+                if st.button("🔄 Tweak & Regenerate", width="stretch"):
                     if tweak_suggestion:
                         st.session_state['last_design_concept'] = f"Previous layout: {res.get('revised_prompt')}. Adjustment: {tweak_suggestion}"
-                        # Trigger loop logic might need state management, for now we just notify
                         st.info("Concept updated. Click 'Generate AI Visual' again to apply tweaks.")
-                        # We can actually automate this by updating the 'concept' variable via session state
                         st.session_state['designer_concept_value'] = st.session_state['last_design_concept']
                         st.rerun()
 
@@ -94,44 +97,46 @@ def render_designer_page():
             st.info("No saved assets yet. Start generating in the first tab!")
         else:
             lib_df = pd.DataFrame(library)
-            # Enhanced table for bulk
-            edited_lib = render_enhanced_table(lib_df[['id', 'title', 'created_at']], key="designer_lib_table")
             
-            selected_ids = edited_lib[edited_lib['Select'] == True]['id'].tolist()
-            if selected_ids:
-                confirm_action("🗑️ Bulk Delete", f"Remove {len(selected_ids)} assets?", 
-                               lambda: [delete_creative_item(lid) for lid in selected_ids], key="bulk_del_design")
+            # --- Visual Grid for Gallery ---
+            st.write(f"Found {len(library)} assets")
+            cols = st.columns(3)
+            for i, item in enumerate(library):
+                with cols[i % 3]:
+                    with st.container(border=True):
+                        # Display Image
+                        if item.get('local_path') and os.path.exists(item['local_path']):
+                            st.image(item['local_path'], width="stretch")
+                        elif item.get('content_url'):
+                             st.image(item['content_url'], width="stretch")
+                        else:
+                            st.image("https://via.placeholder.com/150", caption="Missing Image")
 
+                        st.caption(f"**{item['title'][:30]}...**")
+                        
+                        # Actions
+                        ac1, ac2 = st.columns(2)
+                        with ac1:
+                            if st.button("Reuse", key=f"r_{item['id']}"):
+                                meta = json.loads(item['metadata']) if isinstance(item['metadata'], str) else item.get('metadata', {})
+                                st.session_state['designer_concept_value'] = meta.get('base_concept', item['title'])
+                                st.toast("Concept loaded into Generator!")
+                        with ac2:
+                            confirm_action("🗑️", "Delete?", lambda: [delete_creative_item(item['id']), st.rerun()], key=f"d_gal_{item['id']}")
+            
             st.divider()
-            # Detail/Reuse view
-            selected_asset = st.selectbox("Select Asset to View/Iterate", lib_df['title'].tolist())
-            if selected_asset:
-                item = lib_df[lib_df['title'] == selected_asset].iloc[0]
-                with st.container(border=True):
-                    img_path = item.get('local_path')
-                    if img_path and os.path.exists(img_path):
-                        st.image(img_path)
-                    else:
-                        st.image(item['content_url'])
-                    
-                    st.markdown(f"**Prompt:** {item.get('metadata', {}).get('prompt', 'N/A')}")
-                    
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        if st.button("🚀 Use as Base for New Design", key=f"reuse_{item['id']}"):
-                            st.session_state['designer_concept_value'] = item.get('metadata', {}).get('base_concept', item['title'])
-                            st.rerun()
-                    with c2:
-                         confirm_action("🗑️ Delete Single", "Delete this asset?", lambda: delete_creative_item(item['id']), key=f"del_{item['id']}")
+            with st.expander("Manage Table View"):
+                # Enhanced table for bulk
+                edited_lib = render_enhanced_table(lib_df[['id', 'title', 'created_at']], key="designer_lib_table")
+                
+                selected_ids = edited_lib[edited_lib['Select'] == True]['id'].tolist() if 'Select' in edited_lib.columns else []
+                if selected_ids:
+                    confirm_action("🗑️ Bulk Delete", f"Remove {len(selected_ids)} assets?", 
+                                   lambda: [delete_creative_item(lid) for lid in selected_ids], key="bulk_del_design")
 
     st.divider()
+    # Page Level Chat
+    render_page_chat("Designer Assistant", ManagerAgent(), "Discuss design concepts and visual strategy.")
+
     st.markdown("### 📝 Designer as WordPress Lead")
     st.info("The Designer Agent is integrated with the WordPress Manager to provide cohesive visual themes and layouts for new site builds.")
-    
-    with st.expander("Designer Capabilities"):
-        st.markdown("""
-        - **Blog Headers**: High-quality editorial illustrations.
-        - **WordPress Themes**: Brand-aligned color palettes and visual styles.
-        - **Social Assets**: Optimized layouts for LinkedIn, Twitter, and Instagram.
-        - **Ad Creatives**: High-conversion visual concepts for campaign assets.
-        """)

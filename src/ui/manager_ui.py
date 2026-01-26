@@ -1,3 +1,4 @@
+
 import streamlit as st
 import asyncio
 import random
@@ -14,7 +15,8 @@ from database import (
     create_chat_session, save_chat_message, get_chat_history, 
     get_chat_sessions, update_session_title, get_dashboard_stats
 )
-from src.ui.components import premium_header, confirm_action
+from src.ui.components import premium_header, confirm_action, safe_action_wrapper
+from workflow_manager import save_workflow, extract_steps_from_workflow, list_workflows, load_workflow, delete_workflow
 
 # Force registration of nodes if needed
 import src.nodes.domain.wordpress_node
@@ -26,7 +28,6 @@ def execute_tool_logic(tool, params, agent, recorder, voice, memory, discovery, 
     try:
         from utils.agent_registry import get_agent_class
         from workflow import run_outreach
-        from workflow_manager import save_workflow, extract_steps_from_workflow
         
         if tool == "run_search":
             recorder.log_step(tool, params, description=f"Search for '{params.get('query')}'")
@@ -131,6 +132,13 @@ def execute_tool_logic(tool, params, agent, recorder, voice, memory, discovery, 
             st.session_state['manager_messages'].append({"role": "assistant", "content": content})
             save_chat_message(st.session_state['current_session_id'], "assistant", content)
 
+        else:
+            # Fallback for valid LLM tools that aren't yet handled in UI
+            msg = f"⚠️ Tool `{tool}` is valid but has no UI handler. params: {params}"
+            status_container.warning(msg)
+            st.session_state['manager_messages'].append({"role": "system", "content": msg})
+            memory.add_feedback(tool, "Failed", 0, "Tool handler missing in UI")
+
     except Exception as e:
         st.error(f"Execution failed: {e}")
         voice.speak("I encountered an error.")
@@ -186,7 +194,7 @@ def render_manager_ui():
         st.title("🤖 Manager Access")
         
         # STOP ALL
-        if st.button("🚨 EMERGENCY: STOP ALL", type="primary", use_container_width=True):
+        if st.button("🚨 EMERGENCY: STOP ALL", type="primary", width="stretch"):
              if 'automation_engine' in st.session_state:
                  st.session_state['automation_engine'].stop()
              st.error("All engines stopped.")
@@ -194,13 +202,33 @@ def render_manager_ui():
 
         st.divider()
 
-        # Mission Status
+        # Mission Status & Live Monitor
         if 'automation_engine' in st.session_state:
             engine = st.session_state['automation_engine']
-            if engine.is_running:
-                st.success(f"🚀 **Mission Running**\n\n'{engine.current_mission}'")
+            
+            # Find active job
+            active_job = None
+            for jid, job in engine.jobs.items():
+                if job['status'] == 'running':
+                    active_job = job
+                    break
+            
+            if active_job:
+                st.success(f"🚀 **Running:** {active_job['name']}")
+                
+                # Live Log Snippet
+                st.caption("Recent Logs:")
+                logs = active_job.get('logs', [])
+                if logs:
+                    st.code("\n".join(logs[-5:]), language="text")
+                else:
+                    st.caption("Initializing...")
+
                 if st.button("Stop Mission"):
-                    engine.stop()
+                    engine.stop_job(active_job['id'])
+                    st.rerun()
+                    
+                if st.button("🔄 Refresh Status"):
                     st.rerun()
             else:
                 st.caption("System Status: Idle ⚪")
@@ -217,31 +245,31 @@ def render_manager_ui():
 
         st.divider()
         
-        # New Chat
-        if st.button("➕ Start New Chat"):
+        # Session Management
+        st.subheader("Sessions")
+        col_new, col_del = st.columns([4, 1])
+        if col_new.button("➕ New Chat", width="stretch"):
             new_id = create_chat_session()
             st.session_state['current_session_id'] = new_id
             st.session_state['manager_messages'] = []
             st.session_state['transcript_log'] = []
             st.rerun()
-
-        # Session Switcher
-        if recent_sessions:
-            session_options = {s['id']: f"{s['title'] or 'New Chat'} ({datetime.fromtimestamp(s['created_at']).strftime('%H:%M')})" for s in recent_sessions}
-            selected_session_id = st.selectbox(
-                "Recent Chats", 
-                options=recent_sessions, 
-                format_func=lambda s: f"{s['title'] or 'New Chat'} ({datetime.fromtimestamp(s['created_at']).strftime('%m/%d %H:%M')})",
-                index=0,
-                key="session_selector"
-            )
             
-            if selected_session_id['id'] != st.session_state['current_session_id']:
-                 st.session_state['current_session_id'] = selected_session_id['id']
-                 st.rerun()
-                 
+        if recent_sessions:
+            session_options = {s['id']: f"{s['title'] or 'New Chat'}" for s in recent_sessions}
+            
+            # Custom styled list for sessions
+            for s in recent_sessions:
+                label = f"{s['title'] or 'New Chat'}"
+                # Highlight active
+                is_active = s['id'] == st.session_state['current_session_id']
+                if st.button(f"{'🔵 ' if is_active else ''}{label}", key=f"sess_{s['id']}", width="stretch"):
+                     if s['id'] != st.session_state['current_session_id']:
+                        st.session_state['current_session_id'] = s['id']
+                        st.rerun()
+    
     # --- MAIN UI TABS ---
-    tab_dash, tab_chat, tab_exec = st.tabs(["📊 Dashboard", "💬 Discussion", "🚀 Execution"])
+    tab_dash, tab_chat, tab_exec, tab_lib = st.tabs(["📊 Dashboard", "💬 Discussion", "🚀 Execution", "📚 Library"])
 
     # --- TAB 1: DASHBOARD ---
     with tab_dash:
@@ -255,7 +283,7 @@ def render_manager_ui():
         col1, col2, col3 = st.columns(3)
         col1.metric("System Health", stats.get('system_health', 'Operational'), delta="Normal")
         col2.metric("Total Leads", stats.get('leads_total', 0))
-        col3.metric("Active Campaigns", stats.get('active_campaigns', 0)) # Placeholder if not implemented in DB
+        col3.metric("Active Campaigns", stats.get('active_campaigns', 0)) 
         
         st.divider()
         st.subheader("Recent Activity")
@@ -364,6 +392,39 @@ def render_manager_ui():
                         if st.button("🗑️ Clear", key=f"clear_staged_{i}"):
                             st.session_state['staged_plans'].pop(i)
                             st.rerun()
+
+    # --- TAB 4: LIBRARY ---
+    with tab_lib:
+        st.subheader("📚 Workflow Library")
+        workflows = list_workflows()
+        
+        if not workflows:
+            st.info("No saved workflows found. Ask Manager to 'Save this workflow' after running some tools.")
+        else:
+            for wf in workflows:
+                with st.expander(f"📄 {wf}", expanded=False):
+                    data = load_workflow(wf)
+                    if data:
+                        st.markdown(data.get('content', ''))
+                        
+                        lc1, lc2 = st.columns(2)
+                        with lc1:
+                            if st.button(f"Load to Execution", key=f"load_{wf}"):
+                                # Extract steps and stage
+                                steps = extract_steps_from_workflow(wf)
+                                if steps:
+                                    st.session_state['staged_plans'].append({
+                                        "id": f"plan_from_{wf}_{int(time.time())}",
+                                        "tool": "run_workflow",
+                                        "params": {"name": wf},
+                                        "name": f"Run {wf}"
+                                    })
+                                    st.toast(f"Staged {wf} for execution.")
+                                else:
+                                    st.error("This workflow has no executable steps.")
+                                    
+                        with lc2:
+                             confirm_action("Delete Workflow", f"Delete {wf} permanently?", lambda: delete_workflow(wf), key=f"del_{wf}")
 
     # --- TRAP EXECUTION ---
     if 'active_execution_plan' in st.session_state and st.session_state['active_execution_plan']:

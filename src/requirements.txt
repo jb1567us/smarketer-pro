@@ -19,3 +19,5 @@ openai-whisper
 static-ffmpeg
 playwright-stealth
 fake-useragent
+sqlalchemy
+boto3

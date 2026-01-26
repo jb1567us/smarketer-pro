@@ -6,10 +6,11 @@ import time
 from .local_whisper import LocalWhisperSolver
 
 class CaptchaSolver:
-    def __init__(self, provider, api_key):
+    def __init__(self, provider, api_key, **kwargs):
         self.provider = provider.lower()
         self.api_key = api_key
         self.enabled = bool(api_key and self.provider != "none")
+        self.options = kwargs
 
     async def solve_recaptcha_v2(self, site_key, page_url):
         """Solves reCAPTCHA v2 using the configured provider."""

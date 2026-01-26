@@ -206,6 +206,24 @@ async def get_free_models_for_provider(session, provider_name):
         
     return []
 
+def guess_model_tier(model_name):
+    """Guesstimate if a model is high-performance or economy based on naming."""
+    m = model_name.lower()
+    
+    # Performance Indicators
+    performance_keywords = ['70b', 'pro', '-large', 'gpt-4o', 'sonnet', 'opus', 'instruct', '405b']
+    # Economy Indicators
+    economy_keywords = ['8b', 'flash', 'mini', 'haiku', '4b', 'phi-3', 'gemma', 'tiny', 'exp', 'free']
+    
+    # Check economy first (stricter)
+    if any(k in m for k in economy_keywords):
+        return 'economy'
+    
+    if any(k in m for k in performance_keywords):
+        return 'performance'
+        
+    return 'economy'
+
 async def verify_model_access(candidate, log_func=None):
     """Async verification using generate_text_async."""
     provider_name = candidate['provider']
@@ -230,7 +248,7 @@ async def scan_all_free_providers(status_callback=None):
         if status_callback: status_callback(msg)
 
     candidates = []
-    providers_to_check = ['groq', 'gemini', 'openrouter', 'huggingface', 'ollama']
+    providers_to_check = ['groq', 'gemini', 'openrouter', 'huggingface', 'ollama', 'mistral']
     potential_candidates = []
 
     print("[Scanner] Phase 1: Fetching Model Lists (Async)...", flush=True)
@@ -246,6 +264,7 @@ async def scan_all_free_providers(status_callback=None):
             if provider == 'gemini' and not os.getenv('GEMINI_API_KEY'): skip = True
             if provider == 'openrouter' and not os.getenv('OPENROUTER_API_KEY'): skip = True
             if provider == 'huggingface' and not os.getenv('HUGGINGFACE_API_KEY'): skip = True
+            if provider == 'mistral' and not os.getenv('MISTRAL_API_KEY'): skip = True
             
             if not skip:
                 tasks.append((provider, get_free_models_for_provider(session, provider)))
@@ -257,7 +276,11 @@ async def scan_all_free_providers(status_callback=None):
             provider = tasks[i][0]
             if isinstance(res, list):
                 for m in res:
-                    potential_candidates.append({'provider': provider, 'model_name': m})
+                    potential_candidates.append({
+                        'provider': provider, 
+                        'model_name': m,
+                        'tier': guess_model_tier(m)
+                    })
             else:
                 print(f"Error fetching {provider}: {res}")
 

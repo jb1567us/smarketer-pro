@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Docker
+docker-compose.override.yml
+
+# Project specific huge artifacts or temp files
+lite-dock/lite-dock.exe
+lite-dock/lite-dock.exe~
+**/__pycache__
+logs/
+sessions/
+data/
+outputs/
+screenshots/
+tmp/
+
+# VS Code
+.vscode/
+.devcontainer/

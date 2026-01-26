@@ -5,6 +5,7 @@ import json
 import asyncio
 import os
 import datetime
+from playwright_stealth import Stealth
 
 class WordPressAgent(BaseAgent):
     def __init__(self, provider=None):
@@ -200,6 +201,10 @@ volumes:
             browser = await p.chromium.launch(headless=True)
             context = await browser.new_context()
             page = await context.new_page()
+            
+            # Apply Stealth & Hard Masking
+            await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            await Stealth().apply_stealth_async(page)
 
             try:
                 # 1. Login
@@ -245,6 +250,10 @@ volumes:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
+            
+            # Apply Stealth & Hard Masking
+            await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            await Stealth().apply_stealth_async(page)
 
             try:
                 # 1. cPanel Login

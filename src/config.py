@@ -1,25 +1,9 @@
 import yaml
 import os
 import sys
+from utils.secrets import secrets
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.yaml")
-ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
-
-def load_env():
-    """Manually load .env file to avoid python-dotenv dependency."""
-    if os.path.exists(ENV_PATH):
-        with open(ENV_PATH, "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" in line:
-                    key, value = line.split("=", 1)
-                    key = key.strip()
-                    value = value.strip().strip('"').strip("'")
-                    os.environ[key] = value
-
-load_env()
 
 def load_config():
     """Loads the YAML configuration file."""
@@ -50,16 +34,14 @@ def _inject_env_config():
     if 'ftp' not in config:
         config['ftp'] = {}
     
-    # FTP Overrides from Env
-    if os.getenv('FTP_HOST'): config['ftp']['host'] = os.getenv('FTP_HOST')
-    if os.getenv('FTP_USER'): config['ftp']['user'] = os.getenv('FTP_USER')
-    if os.getenv('FTP_PASS'): config['ftp']['pass'] = os.getenv('FTP_PASS')
-    if os.getenv('FTP_PORT'): config['ftp']['port'] = os.getenv('FTP_PORT')
+    # FTP Overrides from Env (Safe Get)
+    if secrets.get('FTP_HOST'): config['ftp']['host'] = secrets.get('FTP_HOST')
+    if secrets.get('FTP_USER'): config['ftp']['user'] = secrets.get('FTP_USER')
+    if secrets.get('FTP_PASS'): config['ftp']['pass'] = secrets.get('FTP_PASS')
+    if secrets.get('FTP_PORT'): config['ftp']['port'] = secrets.get('FTP_PORT')
 
 # Initial injection
 _inject_env_config()
-
-
 
 def get_smtp_config():
     """Helper to resolve environment variables in SMTP config."""
@@ -70,21 +52,36 @@ def get_smtp_config():
     # Simple env var substitution if they start with $
     if user.startswith("${") and user.endswith("}"):
         var_name = user[2:-1]
-        user = os.getenv(var_name, "")
+        user = secrets.get(var_name, "")
         
     if password.startswith("${") and password.endswith("}"):
         var_name = password[2:-1]
-        password = os.getenv(var_name, "")
+        password = secrets.get(var_name, "")
         
     return c["smtp_server"], c["smtp_port"], user, password
+
+def update_config(section, key, value):
+    """Updates config.yaml and reloads."""
+    with open(CONFIG_PATH, 'r') as f:
+        full_config = yaml.safe_load(f) or {}
+        
+    if section not in full_config:
+        full_config[section] = {}
+        
+    full_config[section][key] = value
+    
+    with open(CONFIG_PATH, 'w') as f:
+        yaml.dump(full_config, f, sort_keys=False)
+        
+    reload_config()
 
 def get_cpanel_config():
     """Returns cPanel configuration from environment or config."""
     cp = config.get("cpanel", {})
-    url = os.getenv("CPANEL_URL") or cp.get("url", "")
-    user = os.getenv("CPANEL_USER") or cp.get("user", "")
-    token = os.getenv("CPANEL_TOKEN") or os.getenv("CPANEL_PASS") or cp.get("token", "")
-    domain = os.getenv("CPANEL_DOMAIN") or cp.get("domain", "")
+    url = secrets.get("CPANEL_URL") or cp.get("url", "")
+    user = secrets.get("CPANEL_USER") or cp.get("user", "")
+    token = secrets.get("CPANEL_TOKEN") or secrets.get("CPANEL_PASS") or cp.get("token", "")
+    domain = secrets.get("CPANEL_DOMAIN") or cp.get("domain", "")
     
     return {
         "url": url,

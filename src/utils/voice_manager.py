@@ -94,14 +94,19 @@ class VoiceManager:
             return
             
         try:
-            # Adjust for noise once before starting
+            # Check if microphone is actually working by trying to enter context once
+            # This catches the 'NoneType object has no attribute close' error from buggy drivers
             with self.microphone as source:
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                
+            # listen_in_background returns a function to call to stop listening
+            self.listen_stopper = self.recognizer.listen_in_background(self.microphone, self._callback, phrase_time_limit=10)
+            
         except Exception as e:
-            print(f"Noise adjustment skipped due to error: {e}")
-
-        # listen_in_background returns a function to call to stop listening
-        self.listen_stopper = self.recognizer.listen_in_background(self.microphone, self._callback, phrase_time_limit=10)
+            print(f"[VoiceManager] ⚠️ Microphone initialization failed: {e}")
+            print("[VoiceManager] Voice commands will be disabled for this session.")
+            self.microphone = None # Disable further attempts
+            return
         
     def stop_listening(self):
         """Stops the background listening."""

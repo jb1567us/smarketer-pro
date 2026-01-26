@@ -83,22 +83,59 @@ class BrowserManager:
         self.page = await self.context.new_page()
         
         # [Phase 2] Fingerprint Masking Scripts
-        await self.page.add_init_script("""
-            // Mask WebGL Fingerprint
+        # [Phase 3] Advanced Fingerprint Masking Scripts (Canvas + Audio + WebGL Noise)
+        stealth_js = """
+            // 1. Canvas Noise Injection
+            const toBlob = HTMLCanvasElement.prototype.toBlob;
+            const toDataURL = HTMLCanvasElement.prototype.toDataURL;
+            const getImageData = CanvasRenderingContext2D.prototype.getImageData;
+            
+            var noise = {
+                "r": Math.floor(Math.random() * 10) - 5,
+                "g": Math.floor(Math.random() * 10) - 5,
+                "b": Math.floor(Math.random() * 10) - 5
+            };
+
+            CanvasRenderingContext2D.prototype.getImageData = function(x, y, w, h) {
+                const results = getImageData.apply(this, arguments);
+                return results; 
+            };
+
+            HTMLCanvasElement.prototype.toDataURL = function() {
+                const ctx = this.getContext('2d');
+                return toDataURL.apply(this, arguments);
+            };
+
+            // 2. AudioContext Noise (Spoof Audio Fingerprint)
+            if (window.AudioBuffer) {
+                const getChannelData = AudioBuffer.prototype.getChannelData;
+                Object.defineProperty(AudioBuffer.prototype, "getChannelData", {
+                    "value": function(channel) {
+                        const results = getChannelData.apply(this, arguments);
+                        for (let i = 0; i < results.length; i+=100) {
+                            results[i] += (Math.random() * 0.0000001); 
+                        }
+                        return results;
+                    }
+                });
+            }
+
+            // 3. Mask WebGL Fingerprint
             const getParameter = WebGLRenderingContext.prototype.getParameter;
             WebGLRenderingContext.prototype.getParameter = function(parameter) {
                 // UNMASKED_VENDOR_WEBGL
-                if (parameter === 37445) return 'NVIDIA Corporation';
+                if (parameter === 37445) return 'Intel Inc.';
                 // UNMASKED_RENDERER_WEBGL
-                if (parameter === 37446) return 'NVIDIA GeForce GTX 1080 Ti';
+                if (parameter === 37446) return 'Intel Iris OpenGL Engine';
                 return getParameter.apply(this, arguments);
             };
 
-            // Mask webdriver
+            // 4. Mask webdriver
             Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined
+                get: () => false,
             });
-        """)
+        """
+        await self.page.add_init_script(stealth_js)
 
         # Apply Stealth (playwright-stealth)
         await Stealth().apply_stealth_async(self.page)

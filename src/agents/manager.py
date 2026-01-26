@@ -2,10 +2,7 @@ from .base import BaseAgent
 import json
 from utils.agent_registry import list_available_agents
 from memory import Memory
-try:
-    from flow.flow_engine import flow_engine
-except ImportError:
-    from flow.flow_engine import flow_engine
+# from flow.flow_engine import flow_engine # Moved to local scope to avoid circular import
 import os
 
 class ManagerAgent(BaseAgent):
@@ -13,7 +10,8 @@ class ManagerAgent(BaseAgent):
         super().__init__(
             role="Manager & Orchestrator",
             goal="Oversee the outreach process, execute tasks via tools, and manage workflows.",
-            provider=provider
+            provider=provider,
+            tier='performance'
         )
         self.memory = Memory()
 
@@ -49,6 +47,26 @@ class ManagerAgent(BaseAgent):
             self.logger.warning(f"[Manager] Intent classification failed: {e}")
             return {"intent": "CHAT", "entity": "None", "reasoning": "Fallback due to error"}
 
+    def _clean_input(self, text):
+        """
+        Sanitizes user input to prevent basic prompt injection.
+        """
+        dangerous_phrases = [
+            "ignore previous instructions",
+            "system prompt",
+            "delete database",
+            "drop table",
+            "you are now",
+            "jailbreak"
+        ]
+        text_lower = text.lower()
+        for phrase in dangerous_phrases:
+            if phrase in text_lower:
+                self.logger.warning(f"[Security] Blocked dangerous phrase: {phrase}")
+                # We don't strip it blindly, we might flag it, but for a simple patch we replace spaces to break the phrase
+                text = text.replace(phrase, "[REDACTED]")
+        return text
+
     def think(self, user_input, intent_history=None, available_tools=None):
         """
         Decides on the next action based on user input, with strict validation and logging.
@@ -57,8 +75,11 @@ class ManagerAgent(BaseAgent):
         from workflow_manager import list_workflows
         from database import log_agent_decision
         
+        # 0. Sanitize Input
+        clean_input = self._clean_input(user_input)
+        
         # 1. Classify Intent
-        classification = self._classify_intent(user_input)
+        classification = self._classify_intent(clean_input)
         intent = classification.get("intent", "CHAT")
         entity = classification.get("entity", "")
         reasoning = classification.get("reasoning", "")
@@ -67,7 +88,7 @@ class ManagerAgent(BaseAgent):
 
         # --- GUARDRAILS ---
         # 1. WordPress Site Build
-        u_in = user_input.lower()
+        u_in = clean_input.lower()
         if ("build" in u_in or "install" in u_in) and ("site" in u_in or "wordpress" in u_in or "wp" in u_in):
             domain, directory = "lookoverhere.xyz", ""
             import re
@@ -77,19 +98,19 @@ class ManagerAgent(BaseAgent):
                 directory = match.group(2).lstrip('/') if match.group(2) else ""
             
             tool = "build_wordpress_site"
-            params = {"goal": user_input, "domain": domain, "directory": directory}
-            log_agent_decision("Manager", intent, user_input, tool, params, "Guardrail: Site Build")
+            params = {"goal": clean_input, "domain": domain, "directory": directory}
+            log_agent_decision("Manager", intent, clean_input, tool, params, "Guardrail: Site Build")
             return {"tool": tool, "params": params, "reply": f"Initiating WordPress build for {domain}..."}
 
         # 2. Affiliate Requests
         if "affiliate" in u_in:
             if "recruit" in u_in:
-                tool, params = "execute_workflow", {"workflow_name": "recruit_partners", "payload": {"goal": user_input}}
-                log_agent_decision("Manager", intent, user_input, tool, params, "Guardrail: Affiliate Recruitment")
+                tool, params = "execute_workflow", {"workflow_name": "recruit_partners", "payload": {"goal": clean_input}}
+                log_agent_decision("Manager", intent, clean_input, tool, params, "Guardrail: Affiliate Recruitment")
                 return {"tool": tool, "params": params, "reply": "Starting Affiliate Recruitment Workflow."}
             elif "setup" in u_in or "add" in u_in or "offer" in u_in:
-                tool, params = "execute_workflow", {"workflow_name": "setup_offer", "payload": {"goal": user_input}}
-                log_agent_decision("Manager", intent, user_input, tool, params, "Guardrail: Affiliate Offer Setup")
+                tool, params = "execute_workflow", {"workflow_name": "setup_offer", "payload": {"goal": clean_input}}
+                log_agent_decision("Manager", intent, clean_input, tool, params, "Guardrail: Affiliate Offer Setup")
                 return {"tool": tool, "params": params, "reply": "Starting Affiliate Offer Setup Workflow."}
         
         # 2. Prepare Context for LLM
@@ -108,7 +129,7 @@ class ManagerAgent(BaseAgent):
             guidance = "User wants ACTION. Use [execute_workflow] or [delegate_task]."
 
         system_prompt = (
-            "You are the Manager Agent (CONDUCTOR). Your job is to ORCHESTRATE, not just chat.\n"
+            "You are the Manager Agent (ORCHESTRATOR). Your job is to coordinate tasks effectively.\n"
             f"Current Intent: {intent} ({entity})\n"
             f"Guidance: {guidance}\n\n"
             "AVAILABLE TOOLS:\n"
@@ -122,11 +143,12 @@ class ManagerAgent(BaseAgent):
             f"Workflows: {workflows}\n"
             f"Memory: {memory}\n\n"
             "CRITICAL: Return strictly valid JSON. No markdown.\n"
-            "Schema: {\"tool\": \"tool_name\", \"params\": {\"arg\": \"val\"}, \"reply\": \"user_msg\"}"
+            "Schema: {\"tool\": \"tool_name\", \"params\": {\"arg\": \"val\"}, \"reply\": \"user_msg\"}\n\n"
+            "BOUNDARIES: You are the orchestrator. Do not invent new tools. Use only the provided list."
         )
 
         try:
-            response = self.provider.generate_json(f"{system_prompt}\n\nUser Input: {user_input}")
+            response = self.provider.generate_json(f"{system_prompt}\n\nUser Input: {clean_input}")
             if isinstance(response, list): response = response[0]
             
             # Validation
@@ -134,7 +156,7 @@ class ManagerAgent(BaseAgent):
             tool_params = response.get("params", {})
             
             # Persist Decision
-            log_agent_decision("Manager", intent, user_input, tool_name, tool_params, reasoning)
+            log_agent_decision("Manager", intent, clean_input, tool_name, tool_params, reasoning)
             
             return response
         except Exception as e:
@@ -192,6 +214,11 @@ class ManagerAgent(BaseAgent):
         """
         Executes a graph-based workflow from a JSON file.
         """
+        try:
+             from flow.flow_engine import flow_engine
+        except ImportError:
+             from flow.flow_engine import flow_engine
+
         if status_callback:
             status_callback(f"🤖 ManagerAgent processing flow: {workflow_name}")
 

@@ -6,6 +6,7 @@ from agents.linkedin import LinkedInAgent
 from playwright.async_api import async_playwright
 from database import get_platform_credentials, get_captcha_settings
 from utils.captcha_solver import CaptchaSolver
+from playwright_stealth import Stealth
 
 class PlatformHandler:
     async def post_content(self, title, content, links_to, credentials):
@@ -41,6 +42,11 @@ class PlaywrightBaseHandler(PlatformHandler):
             browser = await p.chromium.launch(headless=True)
             context = await browser.new_context()
             page = await context.new_page()
+            
+            # Apply Stealth & Hard Masking
+            await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            await Stealth().apply_stealth_async(page)
+            
             try:
                 # Attach solver to page object for convenience in logic_func
                 page.captcha_solver = solver

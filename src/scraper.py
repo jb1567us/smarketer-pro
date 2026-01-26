@@ -49,8 +49,16 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
              current_candidates = [current_base_url] + [u for u in urls_to_try if u != current_base_url]
 
         for attempt_url in current_candidates:
-            # Don't use proxy for localhost
-            initial_proxy = proxy if "localhost" not in attempt_url and "127.0.0.1" not in attempt_url else None
+            # Don't use proxy for localhost or internal docker addresses
+            # "searxng" is the docker hostname, which public proxies cannot resolve.
+            no_proxy_hosts = ["localhost", "127.0.0.1", "searxng"]
+            should_proxy = True
+            for host in no_proxy_hosts:
+                if host in attempt_url:
+                    should_proxy = False
+                    break
+            
+            initial_proxy = proxy if should_proxy else None
             
             # Try with proxy first (if applicable), then direct as fallback
             connection_modes = [(initial_proxy, "proxy")]
@@ -61,7 +69,7 @@ async def search_searxng(query, session, num_results=20, categories=None, engine
             
             for current_proxy, mode in connection_modes:
                 try:
-                    async with session.get(attempt_url, params=params, headers=headers, proxy=current_proxy, timeout=15) as response:
+                    async with session.get(attempt_url, params=params, headers=headers, proxy=current_proxy, timeout=30) as response:
                         if response.status == 200:
                             html_content = await response.text()
                             success_url = attempt_url

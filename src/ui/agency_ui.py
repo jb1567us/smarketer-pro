@@ -1,14 +1,15 @@
+
 import streamlit as st
 import subprocess
 import os
 import sys
 import time
 import json
+import pandas as pd
 from agents import ManagerAgent
 from ui.components import render_data_management_bar, render_page_chat, premium_header, render_job_controls, render_enhanced_table, safe_action_wrapper, confirm_action
-from database import get_leads, get_connection
-import pandas as pd
-import threading
+from database import get_leads, delete_lead
+from datetime import datetime
 
 def render_agency_ui():
     premium_header("🤖 Agency Orchestrator", "Direct control over the 3-Layer Agency Architecture: Directives -> Orchestrator -> Execution.")
@@ -83,17 +84,12 @@ def render_agency_ui():
                  return
              st.session_state['agency_mission_running'] = True
              st.session_state['agency_mission_logs'] = []
-             # Start in background thread? iterating generators in streamlit is tricky without blocking
-             # We will use st.spinner below instead of full thread separation for simplicity in this artifact, 
-             # OR adapt to use a generator that yields periodically.
-             # existing 'run_agency_process' uses subprocess which blocks. 
-             # We'll wrap it in the log viewer.
+             st.toast("Mission Initiated!", icon="🚀")
              st.rerun()
 
         def stop_mission():
              st.session_state['agency_mission_running'] = False
-             # If subprocess was accessible we'd kill it.
-             # For now just flag.
+             st.toast("Stopping Mission...", icon="🛑")
              st.rerun()
 
         render_job_controls(
@@ -108,27 +104,107 @@ def render_agency_ui():
          run_agency_process(query, criteria)
 
     st.divider()
-    st.subheader("📊 Mission Results (Recent Leads)")
+    st.subheader("📊 Mission Results & Lead Management")
     
-    # Date Filter
-    d_col1, d_col2 = st.columns([1, 4])
-    with d_col1:
+    # Filters & Search
+    f_col1, f_col2, f_col3 = st.columns([1, 2, 1])
+    with f_col1:
          days_back = st.number_input("Days Back", min_value=1, value=30, step=1)
+    with f_col2:
+         search_term = st.text_input("Search Leads", placeholder="Search by Company, Email, or Source...")
     
     # Show leads from DB
-    leads = get_leads(limit=100) # Fetch more, filter locally or update get_leads to support retention
-    # Filtering by date in python for now
+    leads = get_leads(limit=500) 
+    
     if leads:
          ldf = pd.DataFrame(leads)
-         # Ensure created_at is datetime
+         
+         # 1. Date Filter
          if 'created_at' in ldf.columns:
              ldf['created_at'] = pd.to_datetime(ldf['created_at'], errors='coerce')
              cutoff = pd.Timestamp.now() - pd.Timedelta(days=days_back)
              ldf = ldf[ldf['created_at'] > cutoff]
+         
+         # 2. Search Filter
+         if search_term and not ldf.empty:
+             term = search_term.lower()
+             ldf = ldf[ldf.apply(lambda row: 
+                 term in str(row.get('company_name', '')).lower() or 
+                 term in str(row.get('email', '')).lower() or
+                 term in str(row.get('source', '')).lower(), axis=1)]
+
+         # 3. Pagination & Display
+         if not ldf.empty:
+             # Pagination
+             ROWS_PER_PAGE = 10
+             total_rows = len(ldf)
+             total_pages = (total_rows - 1) // ROWS_PER_PAGE + 1
              
-         render_enhanced_table(ldf[['id', 'email', 'company_name', 'source', 'created_at']], key="agency_leads_table")
+             if 'agency_page' not in st.session_state: st.session_state['agency_page'] = 1
+             
+             # Adjust page if out of bounds
+             if st.session_state['agency_page'] > total_pages: st.session_state['agency_page'] = total_pages
+             
+             start_idx = (st.session_state['agency_page'] - 1) * ROWS_PER_PAGE
+             end_idx = start_idx + ROWS_PER_PAGE
+             
+             # Display Page
+             page_df = ldf.iloc[start_idx:end_idx].copy()
+             
+             # Add selection column for bulk actions if render_enhanced_table doesn't support it natively in this context
+             # We'll use a standard data_editor with selection for robustness
+             
+             # Action Toolbar
+             p_col1, p_col2, p_col3 = st.columns([2, 5, 2])
+             with p_col1:
+                 st.write(f"Showing {start_idx+1}-{min(end_idx, total_rows)} of {total_rows}")
+             with p_col3:
+                 # prev/next
+                 pn_c1, pn_c2 = st.columns(2)
+                 if pn_c1.button("◀", disabled=st.session_state['agency_page']==1):
+                     st.session_state['agency_page'] -= 1
+                     st.rerun()
+                 if pn_c2.button("▶", disabled=st.session_state['agency_page']==total_pages):
+                     st.session_state['agency_page'] += 1
+                     st.rerun()
+
+             # Table
+             page_df['Select'] = False
+             cols = ['Select', 'id', 'company_name', 'email', 'source', 'created_at']
+             # Reorder if columns exist
+             cols = [c for c in cols if c in page_df.columns or c == 'Select']
+             
+             edited_page = st.data_editor(
+                 page_df[cols],
+                 column_config={
+                     "Select": st.column_config.CheckboxColumn(required=True),
+                     "created_at": st.column_config.DatetimeColumn("Created"),
+                     "email": st.column_config.textColumn("Email"),
+                     "company_name": st.column_config.textColumn("Company"),
+                 },
+                 disabled=["id", "company_name", "email", "source", "created_at"],
+                 hide_index=True,
+                 key="agency_leads_editor"
+             )
+             
+             # Bulk Actions
+             selected_rows = edited_page[edited_page['Select'] == True]
+             
+             if not selected_rows.empty:
+                 ba_col1, ba_col2 = st.columns(2)
+                 with ba_col1:
+                     if st.button(f"🗑️ Delete {len(selected_rows)} Leads"):
+                         confirm_action("Confirm Delete", f"Permanently delete {len(selected_rows)} items?", 
+                                        lambda: [delete_lead(rid) for rid in selected_rows['id'].tolist()], 
+                                        key="bulk_del")
+                 with ba_col2:
+                     csv = selected_rows.drop(columns=['Select']).to_csv(index=False)
+                     st.download_button("📥 Export Selected", data=csv, file_name="selected_leads.csv", mime="text/csv")
+
+         else:
+             st.info("No leads match your search filters.")
     else:
-         st.info("No recent leads found. Launch a mission above!")
+         st.info("No leads found in database. Launch a mission above!")
 
     # 3. Page Level Chat
     render_page_chat(
@@ -139,10 +215,7 @@ def render_agency_ui():
 
 def run_agency_process(query, criteria):
     # This function blocks, but streams logs.
-    # In a real async app we'd spawn a thread.
-    
-    # Path to orchestrator.py
-    root_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     orch_path = os.path.join(root_dir, "orchestrator.py")
     
     cmd = [sys.executable, "-u", orch_path, query] 
@@ -163,7 +236,8 @@ def run_agency_process(query, criteria):
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
-            encoding='utf-8' 
+            encoding='utf-8',
+            errors='replace'
         )
         
         # Stream output

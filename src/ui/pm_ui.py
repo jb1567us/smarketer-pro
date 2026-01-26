@@ -1,12 +1,12 @@
 import streamlit as st
 import json
+import time
 from database import (
     get_strategy_presets, save_strategy_preset, delete_strategy_preset, update_strategy_preset
 )
 from agents import ProductManagerAgent
 from ui.agent_lab_ui import render_agent_chat
-from ui.components import premium_header, confirm_action, safe_action_wrapper, render_enhanced_table
-import time
+from ui.components import premium_header, confirm_action, safe_action_wrapper, render_page_chat
 
 def render_pm_ui():
     premium_header("🏢 Product Lab", "Conceptualize products and architect outreach strategies.")
@@ -18,11 +18,17 @@ def render_pm_ui():
     with col_pm1:
         if st.button("Generate Tech Spec", type="primary"):
             if pm_input:
-                with st.spinner("PM Agent is architecting..."):
+                def run_spec():
                     agent = ProductManagerAgent()
-                    spec = agent.think(pm_input)
-                    st.session_state['last_pm_spec'] = spec
-                    st.session_state['pm_context'] = pm_input
+                    return agent.think(pm_input)
+                
+                with st.spinner("PM Agent is architecting..."):
+                    spec = safe_action_wrapper(run_spec, "Tech Spec Generated")
+                    if spec:
+                        st.session_state['last_pm_spec'] = spec
+                        st.session_state['pm_context'] = pm_input
+            else:
+                st.error("Please provide a product idea.")
     
     with col_pm2:
         # === STRATEGY PRESETS UI ===
@@ -38,11 +44,11 @@ def render_pm_ui():
         # Actions Row
         p_col1, p_col2, p_col3 = st.columns(3)
         with p_col1:
-             if st.button("➕ New"): 
+             if st.button("➕ New", width="stretch"): 
                  st.session_state['pm_edit_mode'] = "new"
         with p_col2:
              if selected_preset_name != "Default":
-                 if st.button("✏️ Edit"):
+                 if st.button("✏️ Edit", width="stretch"):
                      st.session_state['pm_edit_mode'] = "edit"
         with p_col3:
              if selected_preset_name != "Default":
@@ -58,34 +64,30 @@ def render_pm_ui():
                  st.write(f"**{st.session_state['pm_edit_mode'].title()} Preset**")
                  
                  # Pre-fill
+                 def_name, def_desc, def_instr = "", "", ""
                  if st.session_state['pm_edit_mode'] == 'edit' and selected_preset_name != "Default":
                      curr = next(p for p in presets if p['name'] == selected_preset_name)
                      def_name = curr['name']
                      def_desc = curr['description']
                      def_instr = curr['instruction_template']
-                 else:
-                     def_name = ""
-                     def_desc = ""
-                     def_instr = ""
 
                  np_name = st.text_input("Name", value=def_name)
                  np_desc = st.text_input("Description", value=def_desc)
-                 np_instr = st.text_area("Template", value=def_instr, height=150, help="Use {niche} and {product_context}")
+                 np_instr = st.text_area("Template", value=def_instr, height=150, help="Use {niche} and {product_context} placeholders")
                  
                  c1, c2 = st.columns(2)
                  with c1:
                      if st.button("💾 Save", type="primary"):
                          if np_name and np_instr:
-                             if st.session_state['pm_edit_mode'] == 'edit':
-                                 # Update
-                                 pid = next(p['id'] for p in presets if p['name'] == selected_preset_name)
-                                 update_strategy_preset(pid, np_name, np_desc, np_instr)
-                             else:
-                                 # Create
-                                 save_strategy_preset(np_name, np_desc, np_instr)
+                             def save_preset():
+                                 if st.session_state['pm_edit_mode'] == 'edit':
+                                     pid = next(p['id'] for p in presets if p['name'] == selected_preset_name)
+                                     update_strategy_preset(pid, np_name, np_desc, np_instr)
+                                 else:
+                                     save_strategy_preset(np_name, np_desc, np_instr)
                              
+                             safe_action_wrapper(save_preset, "Preset Saved")
                              st.session_state['pm_edit_mode'] = None
-                             st.success("Saved!")
                              time.sleep(0.5)
                              st.rerun()
                          else: st.error("Name & Template required.")
@@ -97,20 +99,25 @@ def render_pm_ui():
         # Niche input (now dynamic)
         strat_niche = st.text_input("Target Niche", value="General", help="Used to contextualize the strategy")
 
-        if st.button("Generate Outreach Strategy"):
+        if st.button("Generate Outreach Strategy", width="stretch"):
             if pm_input:
-                with st.spinner("Analyzing market fit and sequence patterns..."):
+                def run_strat():
                     agent = ProductManagerAgent()
-                    
                     # Determine instructions
                     custom_instr = None
                     if selected_preset_name != "Default":
                         preset = next(p for p in presets if p['name'] == selected_preset_name)
                         custom_instr = preset['instruction_template']
                     
-                    strat = agent.generate_campaign_strategy(pm_input, niche=strat_niche, instruction_template=custom_instr)
-                    st.session_state['last_pm_strat'] = strat
-                    st.session_state['pm_context'] = pm_input
+                    return agent.generate_campaign_strategy(pm_input, niche=strat_niche, instruction_template=custom_instr)
+
+                with st.spinner("Analyzing market fit and sequence patterns..."):
+                    strat = safe_action_wrapper(run_strat, "Strategy Generated")
+                    if strat:
+                        st.session_state['last_pm_strat'] = strat
+                        st.session_state['pm_context'] = pm_input
+            else:
+                 st.error("Input required.")
 
     if 'last_pm_spec' in st.session_state:
         st.divider()
@@ -121,8 +128,6 @@ def render_pm_ui():
         spec_text = json.dumps(st.session_state['last_pm_spec'], indent=2)
         st.download_button("📥 Export Spec as JSON", spec_text, file_name="tech_spec.json", mime="application/json")
         
-        render_agent_chat('last_pm_spec', ProductManagerAgent(), 'pm_context')
-
     if 'last_pm_strat' in st.session_state:
         st.divider()
         st.markdown("### 🎯 Campaign Strategy")
@@ -132,15 +137,16 @@ def render_pm_ui():
         strat_text = json.dumps(st.session_state['last_pm_strat'], indent=2)
         st.download_button("📥 Export Strategy as JSON", strat_text, file_name="campaign_strategy.json", mime="application/json")
         
-        render_agent_chat('last_pm_strat', ProductManagerAgent(), 'pm_context')
-        
         st.markdown("### 🚀 Execution")
         
         def launch_hub():
              st.session_state['pending_strategy'] = st.session_state['last_pm_strat']
-             st.session_state['current_view'] = "Automation Hub"
+             st.session_state['current_view'] = "Automation Hub" # Assuming this view exists or similar logic
              st.toast("Redirecting to Automation Hub...")
              time.sleep(1)
              st.rerun()
 
-        confirm_action("🚀 Launch Campaign", "Send this strategy to the Automation Hub for execution?", launch_hub)
+        confirm_action("🚀 Launch Campaign", "Send this strategy to the Automation Hub for execution?", launch_hub, key="launch_strat_btn")
+
+    # Unified Chat
+    render_page_chat("Product Architect", ProductManagerAgent(), "Iterate on product specs and go-to-market strategies.")

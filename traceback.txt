@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/app/src/app.py", line 1880, in <module>
+    main()
+  File "/app/src/app.py", line 745, in main
+    success, cx_msg = asyncio.run(proxy_manager.disable_proxies())
+  File "/usr/local/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/local/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/app/src/proxy_manager.py", line 554, in disable_proxies
+    self.enabled = False
+AttributeError: can't set attribute 'enabled'
+

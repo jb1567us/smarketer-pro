@@ -1,20 +1,33 @@
+
 from database import get_connection, get_deals, get_tasks
 from proxy_manager import proxy_manager
 from datetime import datetime
 import streamlit as st
+import time
 from ui.components import premium_header, safe_action_wrapper
 
 def get_db_metrics():
     """Fetch quick metrics for the dashboard with safety wrapping."""
     def _fetch():
         conn = get_connection()
-        leads = pd.read_sql_query("SELECT count(*) as count FROM leads", conn).iloc[0]['count']
-        campaigns = pd.read_sql_query("SELECT count(*) as count FROM campaigns WHERE status='running'", conn).iloc[0]['count']
-        conn.close()
+        # Use try-except within the connection context
+        try:
+            leads = pd.read_sql_query("SELECT count(*) as count FROM leads", conn).iloc[0]['count']
+            campaigns = pd.read_sql_query("SELECT count(*) as count FROM campaigns WHERE status='running'", conn).iloc[0]['count']
+        except Exception:
+            leads = 0
+            campaigns = 0
+        finally:
+            conn.close()
         return leads, campaigns
     
-    metrics = safe_action_wrapper(_fetch, success_message=None)
-    return metrics if metrics else (0, 0)
+    # We use a primitive safe wrapper or just try/except here as we already defined _fetch
+    try:
+        import pandas as pd
+        metrics = _fetch()
+    except Exception:
+        metrics = (0, 0)
+    return metrics
 
 def render_dashboard():
     premium_header("🚀 Mission Control", f"System Status: ONLINE | {datetime.now().strftime('%A, %B %d, %I:%M %p')}")
@@ -27,29 +40,45 @@ def render_dashboard():
     with col2:
         # Mini System Health
         status_color = "green" if proxy_manager.enabled else "orange"
+        if proxy_manager.enabled:
+            st.success(f"Proxy System Active ({len(proxy_manager.proxies)} Nodes)")
+        else:
+            st.warning("Proxy System Inactive")
+            
         engine = st.session_state.get('automation_engine')
         is_running = engine and getattr(engine, 'is_running', False)
         
-        # Auto-refresh logic (Non-blocking improvement)
-        if is_running:
-            refresh = st.checkbox("Auto-refresh (30s)", value=False, key="dash_refresh")
-            if refresh:
-                # Instead of sleep(2), we only rerun if a significant interval has passed
-                # This is still a bit 'Streamlit-style' but less intrusive than 2 seconds sleep
-                last_refresh = st.session_state.get('last_dash_refresh', 0)
-                if time.time() - last_refresh > 30:
-                    st.session_state['last_dash_refresh'] = time.time()
-                    st.rerun()
+        # Auto-refresh logic 
+        refresh = st.checkbox("Auto-refresh (30s)", value=False, key="dash_refresh")
         
-        if st.button("🔄 Refresh Data", width="stretch"):
+        if refresh: 
+            st.caption("Auto-refresh ON")
+            last_refresh = st.session_state.get('last_dash_refresh', 0)
+            if time.time() - last_refresh > 30:
+                st.session_state['last_dash_refresh'] = time.time()
+                st.rerun()
+        
+        if st.button("🔄 Refresh Data", width="stretch", type="primary"):
             st.rerun()
 
     st.divider()
 
     # --- High Level Metrics ---
     leads_count, active_campaigns = get_db_metrics()
-    deals_val = sum(d['value'] for d in get_deals())
-    tasks_count = len(get_tasks(status='pending'))
+    
+    # Safe Deal Fetching
+    try:
+        deals = get_deals()
+        deals_val = sum(d.get('value', 0) for d in deals)
+    except:
+        deals_val = 0
+        
+    # Safe Task Fetching
+    try:
+        tasks = get_tasks(status='pending')
+        tasks_count = len(tasks)
+    except:
+        tasks_count = 0
     
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Total Leads", leads_count, delta="Database")

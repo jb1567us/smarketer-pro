@@ -4,16 +4,21 @@ import time
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from config import config
+from utils.db_writer import get_db_writer
 
-DB_PATH = "leads.db"
+DB_PATH = os.path.join("data", "leads.db")
 
 def get_connection():
     return sqlite3.connect(DB_PATH, timeout=30, check_same_thread=False)
 
 def init_db():
     """Initialize the database tables."""
+    # Initialization is heavy and synchronous, fine to keep direct connection for DDL
     conn = get_connection()
     c = conn.cursor()
+    
+    # Ensure DBWriter is warmed up
+    get_db_writer()
     
     # --- WORKSPACES (Multi-Tenancy) ---
     c.execute('''
@@ -23,6 +28,20 @@ def init_db():
             created_at INTEGER
         );
     ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at INTEGER
+        );
+    ''')
+    
+    # Migration: Ensure updated_at exists if table was pre-existing
+    try:
+        c.execute("ALTER TABLE settings ADD COLUMN updated_at INTEGER")
+    except:
+        pass
     
     # Ensure default workspace exists
     c.execute("INSERT OR IGNORE INTO workspaces (id, name, created_at) VALUES (1, 'Default Workspace', ?)", (int(time.time()),))
@@ -564,6 +583,30 @@ def init_db():
             created_at INTEGER
         );
     ''')
+    
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS proxy_sources (
+            url TEXT PRIMARY KEY,
+            type TEXT DEFAULT 'http',
+            last_checked INTEGER,
+            success_count INTEGER DEFAULT 0,
+            fail_count INTEGER DEFAULT 0,
+            consecutive_failures INTEGER DEFAULT 0,
+            content_hash TEXT,
+            is_active INTEGER DEFAULT 1,
+            added_at INTEGER
+        );
+    ''')
+    
+    # Migration: proxy_sources new columns
+    try:
+        c.execute("ALTER TABLE proxy_sources ADD COLUMN content_hash TEXT")
+    except:
+        pass
+    try:
+        c.execute("ALTER TABLE proxy_sources ADD COLUMN consecutive_failures INTEGER DEFAULT 0")
+    except:
+        pass
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS chat_messages (
@@ -635,6 +678,22 @@ def init_db():
             url TEXT,
             job_id TEXT,
             created_at INTEGER
+        );
+    ''')
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS influencer_candidates (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            handle TEXT,
+            platform TEXT,
+            url TEXT UNIQUE,
+            niche TEXT,
+            follower_count INTEGER,
+            bio_snippet TEXT,
+            engagement_rate REAL,
+            status TEXT DEFAULT 'new',
+            created_at INTEGER,
+            metadata TEXT
         );
     ''')
     conn.commit()
@@ -728,32 +787,14 @@ def update_session_title(session_id, title):
 
 def save_agent_work_product(agent_role, input_task, output_content, tags=None, start_time=None, completion_time=None, metadata=None, artifact_type="text"):
     """Saves an agent's work product to the database."""
-    conn = get_connection()
-    c = conn.cursor()
-    import json
-    tags_json = json.dumps(tags) if tags else "[]"
-    meta_json = json.dumps(metadata) if metadata else "{}"
-    
-    # Auto-serialize content if it's a list or dict
-    if isinstance(output_content, (list, dict)):
-        output_content = json.dumps(output_content, indent=2)
-    else:
-        output_content = str(output_content)
-
-    # Use current time if specific times aren't provided
-    if not completion_time:
-        completion_time = int(time.time())
-    if not start_time:
-        start_time = completion_time 
-        
-    c.execute('''
+    writer = get_db_writer()
+    query = '''
         INSERT INTO agent_work_products (agent_role, start_time, completion_time, input_task, output_content, tags, metadata, artifact_type, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (agent_role, start_time, completion_time, input_task, output_content, tags_json, meta_json, artifact_type, int(time.time())))
+    '''
+    params = (agent_role, start_time, completion_time, input_task, output_content, tags_json, meta_json, artifact_type, int(time.time()))
     
-    product_id = c.lastrowid
-    conn.commit()
-    conn.close()
+    product_id = writer.execute_write(query, params, wait=True)
     return product_id
 
 def get_agent_work_products(agent_role=None, limit=50):
@@ -854,21 +895,24 @@ def add_lead(url, email, source="search", category="default", industry=None, bus
     """
     Adds a lead to the database. Returns ID if added, None if duplicate.
     """
-    conn = get_connection()
-    c = conn.cursor()
+    writer = get_db_writer()
     ws_id = get_current_workspace_id(workspace_id)
+    
+    query = '''
+        INSERT INTO leads (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, created_at, workspace_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    '''
+    params = (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, int(time.time()), ws_id)
+    
     try:
-        c.execute('''
-            INSERT INTO leads (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, created_at, workspace_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (url, email, source, category, industry, business_type, confidence, relevance_reason, contact_person, company_name, address, phone_number, tech_stack, qualification_score, qualification_reason, int(time.time()), ws_id))
-        lead_id = c.lastrowid
-        conn.commit()
+        # DBWriter handles the commit and returns lastrowid
+        lead_id = writer.execute_write(query, params, wait=True)
         return lead_id
     except sqlite3.IntegrityError:
         return None
-    finally:
-        conn.close()
+    except Exception as e:
+        print(f"Error adding lead: {e}")
+        return None
 
 def lead_exists(email):
     """Checks if an email already exists in the DB."""
@@ -881,15 +925,25 @@ def lead_exists(email):
 
 def mark_contacted(email):
     """Updates the status of a lead to 'contacted'."""
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('''
+    writer = get_db_writer()
+    query = '''
         UPDATE leads 
         SET status = 'contacted', contacted_at = ? 
         WHERE email = ?
-    ''', (int(time.time()), email))
-    conn.commit()
-    conn.close()
+    '''
+    params = (int(time.time()), email)
+    writer.execute_write(query, params, wait=True)
+
+def update_enrollment_progress(enrollment_id, next_step_index, next_scheduled_at, status='active'):
+    """Updates enrollment status and schedules next touch."""
+    writer = get_db_writer()
+    query = '''
+        UPDATE sequence_enrollments 
+        SET current_step_index = ?, last_touch_at = ?, next_scheduled_at = ?, status = ?
+        WHERE id = ?
+    '''
+    params = (next_step_index, int(time.time()), next_scheduled_at, status, enrollment_id)
+    writer.execute_write(query, params, wait=True)
 
 def get_leads_by_status(status="new", workspace_id=None):
     """Retrieves all leads with a specific status, returning full details."""
@@ -954,14 +1008,14 @@ def delete_leads(lead_ids):
 
 def log_campaign_event(email, event_type, template_id=None, event_data=None, lead_id=None, campaign_id=None):
     """Logs an event (sent, open, click) for a lead."""
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('''
+    writer = get_db_writer()
+    query = '''
         INSERT INTO campaign_events (lead_email, template_id, event_type, event_data, timestamp, lead_id, campaign_id)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (email, template_id, event_type, event_data, int(time.time()), lead_id, campaign_id))
-    conn.commit()
-    conn.close()
+    '''
+    params = (email, template_id, event_type, event_data, int(time.time()), lead_id, campaign_id)
+    # Fire and forget for analytics to improve speed
+    writer.execute_write(query, params, wait=False)
 
 def save_pain_points(niche, points):
     """Saves a list of pain points for a niche."""
@@ -1863,7 +1917,7 @@ def save_proxies(proxy_list, reset=False):
     conn.commit()
     conn.close()
 
-def get_best_proxies(limit=50, min_anonymity=None):
+def get_best_proxies(limit=50, min_anonymity=None, min_success_count=0):
     """Retrieves proxies ordered by success rate and latency."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
@@ -1874,6 +1928,10 @@ def get_best_proxies(limit=50, min_anonymity=None):
     if min_anonymity:
         query += ' AND anonymity = ?'
         params.append(min_anonymity)
+        
+    if min_success_count > 0:
+        query += ' AND success_count >= ?'
+        params.append(min_success_count)
     
     # Order by success ratio (avoid div zero) and then low latency
     query += ' ORDER BY (CAST(success_count AS REAL) / (success_count + fail_count + 1)) DESC, latency ASC LIMIT ?'
@@ -1894,6 +1952,7 @@ def update_proxy_health(address, success=True, latency=None):
         c.execute('''
             UPDATE proxies 
             SET success_count = success_count + 1, 
+                fail_count = 0,
                 last_used_at = ?, 
                 last_checked_at = ?,
                 latency = COALESCE(?, latency),
@@ -2498,6 +2557,27 @@ def update_managed_account(account_id, platform, username, status):
     finally:
         conn.close()
 
+def save_setting(key, value):
+    """Saves a global setting."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)", (key, str(value), int(time.time())))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_setting(key, default=None):
+    """Retrieves a global setting."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("SELECT value FROM settings WHERE key = ?", (key,))
+        row = c.fetchone()
+        return row[0] if row else default
+    finally:
+        conn.close()
+
 def get_dashboard_stats():
     """Returns high-level stats for the Manager Dashboard."""
     conn = get_connection()
@@ -2523,5 +2603,498 @@ def get_dashboard_stats():
     except Exception as e:
         print(f"Error fetching stats: {e}")
         return {'leads_total': 0, 'system_health': 'Error', 'active_campaigns': 0}
+    finally:
+        conn.close()
+def add_proxy_source(url, source_type='http'):
+    """Adds a new proxy source URL."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('''
+            INSERT OR IGNORE INTO proxy_sources (url, type, added_at, last_checked) 
+            VALUES (?, ?, ?, 0)
+        ''', (url, source_type, int(time.time())))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_proxy_sources(active_only=True):
+    """Retrieves proxy sources."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    try:
+        if active_only:
+            c.execute("SELECT * FROM proxy_sources WHERE is_active=1")
+        else:
+            c.execute("SELECT * FROM proxy_sources")
+        return [dict(r) for r in c.fetchall()]
+    finally:
+        conn.close()
+
+def update_proxy_source_status(url, success, content_hash=None, yield_count=0):
+    """Updates the status/reputation of a proxy source."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        now = int(time.time())
+        
+        # Get current stats
+        c.execute("SELECT consecutive_failures, content_hash, last_checked FROM proxy_sources WHERE url=?", (url,))
+        row = c.fetchone()
+        if not row: return
+        
+        curr_fails, last_hash, last_checked = row
+        
+        # 1. Update Hash & Staleness
+        is_stale = False
+        if content_hash and last_hash == content_hash:
+            # Content hasn't changed. Check time.
+            if (now - last_checked) > (7 * 86400): # 7 days
+                print(f"[DB] Marking source STALE (Unchanged for 7 days): {url}")
+                is_stale = True
+        
+        # 2. Update Failures
+        new_fails = curr_fails
+        is_active = 1
+        
+        if success and yield_count > 0:
+            new_fails = 0 # Reset on success
+            c.execute("UPDATE proxy_sources SET success_count = success_count + 1 WHERE url=?", (url,))
+        else:
+            new_fails += 1
+            c.execute("UPDATE proxy_sources SET fail_count = fail_count + 1 WHERE url=?", (url,))
+            
+        if new_fails >= 3 or is_stale:
+            is_active = 0
+            print(f"[DB] Disabling source (Fails: {new_fails}, Stale: {is_stale}): {url}")
+            
+        # Execute Update
+        c.execute('''
+            UPDATE proxy_sources 
+            SET last_checked=?, consecutive_failures=?, content_hash=?, is_active=?
+            WHERE url=?
+        ''', (now, new_fails, content_hash or last_hash, is_active, url))
+        
+        conn.commit()
+    finally:
+        conn.close()
+
+# --- Influencer Candidates CRUD ---
+
+def save_influencer_candidate(data):
+    """Saves a single influencer candidate."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    try:
+        # Extract fields
+        handle = data.get('handle')
+        platform = data.get('platform')
+        url = data.get('url')
+        niche = data.get('niche')
+        try:
+             follower_count = int(data.get('expected_followers') or data.get('estimated_followers') or 0)
+        except:
+             follower_count = 0
+             
+        bio = data.get('bio_snippet') or data.get('description', '')
+        # Only insert if URL is unique
+        c.execute('''
+            INSERT OR IGNORE INTO influencer_candidates 
+            (handle, platform, url, niche, follower_count, bio_snippet, created_at, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (handle, platform, url, niche, follower_count, bio, int(time.time()), json.dumps(data)))
+        conn.commit()
+        return c.lastrowid
+    finally:
+        conn.close()
+
+def bulk_save_influencers(candidates):
+    """Bulk saves a list of influencer dictionaries."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    
+    count = 0
+    try:
+        for data in candidates:
+            handle = data.get('handle')
+            url = data.get('url')
+            if not url: continue
+            
+            platform = data.get('platform', 'unknown')
+            niche = data.get('niche', '')
+            
+            f_val = data.get('estimated_followers', 0)
+            try:
+                follower_count = int(f_val)
+            except:
+                follower_count = 0
+                
+            bio = data.get('bio_snippet', '')
+            
+            c.execute('''
+                INSERT OR IGNORE INTO influencer_candidates 
+                (handle, platform, url, niche, follower_count, bio_snippet, created_at, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (handle, platform, url, niche, follower_count, bio, int(time.time()), json.dumps(data)))
+            if c.rowcount > 0: count += 1
+            
+        conn.commit()
+        return count
+    finally:
+        conn.close()
+
+def update_influencer_candidate(candidate_id, updates):
+    """
+    Updates specific fields of an influencer candidate.
+    Allowed keys: handle, niche, follower_count, bio_snippet, status, notes
+    """
+    allowed_keys = ['handle', 'niche', 'follower_count', 'bio_snippet', 'status', 'notes', 'metadata']
+    clean_updates = {k: v for k, v in updates.items() if k in allowed_keys}
+    
+    if not clean_updates:
+        return False
+        
+    conn = get_connection()
+    c = conn.cursor()
+    
+    set_clause = ", ".join([f"{k} = ?" for k in clean_updates.keys()])
+    values = list(clean_updates.values())
+    values.append(candidate_id)
+    
+    try:
+        c.execute(f"UPDATE influencer_candidates SET {set_clause} WHERE id = ?", values)
+        conn.commit()
+        return c.rowcount > 0
+    except Exception as e:
+        print(f"Error updating candidate: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_influencer_candidates(limit=100, status='new', niche_filter=None):
+    """Retrieves influencer candidates."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    try:
+        query = "SELECT * FROM influencer_candidates WHERE status=?"
+        params = [status]
+        
+        if niche_filter:
+            query += " AND niche LIKE ?"
+            params.append(f"%{niche_filter}%")
+            
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        
+        c.execute(query, tuple(params))
+        return [dict(r) for r in c.fetchall()]
+    finally:
+        conn.close()
+
+def update_influencer_status(candidate_id, new_status):
+    """Updates the status of a candidate (e.g. new -> selected)."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE influencer_candidates SET status=? WHERE id=?", (new_status, candidate_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+def delete_influencer_candidate(candidate_id):
+    """Deletes a candidate."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM influencer_candidates WHERE id=?", (candidate_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def get_captcha_settings():
+    """
+    Retrieves captcha settings from config.yaml (preferred) or database.
+    """
+    # 1. Config First
+    if config.get("captcha"):
+        return config["captcha"]
+        
+    # 2. Database Fallback
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    try:
+        c.execute('SELECT provider, api_key, enabled FROM captcha_settings WHERE id = 1')
+        row = c.fetchone()
+        if row:
+            return dict(row)
+    except Exception as e:
+        print(f"DB Error getting captcha settings: {e}")
+    finally:
+        conn.close()
+        
+    return None
+
+# --- Influencer Candidates CRUD ---
+
+def add_influencer_candidate(data):
+    """
+    Adds a new influencer candidate to the database.
+    Retuns True if successful, False if duplicate (url) or error.
+    """
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute('''
+            INSERT INTO influencer_candidates (
+                handle, platform, url, niche, follower_count, bio_snippet, 
+                engagement_rate, status, created_at, metadata
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('handle'),
+            data.get('platform'),
+            data.get('url'),
+            data.get('niche'),
+            data.get('follower_count', 0),
+            data.get('bio_snippet'),
+            data.get('engagement_rate', 0.0),
+            data.get('status', 'new'),
+            int(time.time()),
+            data.get('metadata', '{}')
+        ))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        # Duplicate URL
+        return False
+    except Exception as e:
+        print(f"DB Error adding influencer candidate: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_influencer_candidates(limit=50, status=None, verification_status=None, niche=None, platform=None, offset=0):
+    """Retrieves influencer candidates with optional filters."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    
+    query = "SELECT * FROM influencer_candidates WHERE 1=1"
+    params = []
+    
+    if status:
+        query += " AND status = ?"
+        params.append(status)
+    
+    if niche:
+        query += " AND niche LIKE ?"
+        params.append(f"%{niche}%")
+
+    if platform:
+        query += " AND platform = ?"
+        params.append(platform)
+
+    query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+    
+    try:
+        c.execute(query, params)
+        results = [dict(r) for r in c.fetchall()]
+        return results
+    except Exception as e:
+        print(f"DB Error getting influencer candidates: {e}")
+        return []
+    finally:
+        conn.close()
+
+def update_influencer_candidate_status(candidate_id, new_status, metadata_update=None):
+    """Updates the status and optionally merges new metadata."""
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE influencer_candidates SET status = ? WHERE id = ?", (new_status, candidate_id))
+        
+        if metadata_update:
+            # Need to fetch existing metadata first to merge? Or just overwrite?
+            # Ideally merge, but for simplicity let's require full blob or handle merge in app logic.
+            # Here we will just assume the caller handles the merge logic if complex, 
+            # or we can do a simple merge if it's a JSON string.
+            pass # TODO: Implement metadata merge if needed
+            
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"DB Error updating influencer candidate: {e}")
+        return False
+    finally:
+        conn.close()
+
+def delete_influencer_candidates(candidate_ids):
+    """Deletes candidates by a list of IDs."""
+    if not candidate_ids: return False
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        placeholders = ','.join('?' * len(candidate_ids))
+        c.execute(f"DELETE FROM influencer_candidates WHERE id IN ({placeholders})", candidate_ids)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"DB Error deleting influencer candidates: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_influencer_stats():
+    """Returns counts of candidates grouped by status."""
+    conn = get_connection()
+    c = conn.cursor()
+    stats = {}
+    try:
+        c.execute("SELECT status, COUNT(*) FROM influencer_candidates GROUP BY status")
+        for row in c.fetchall():
+            stats[row[0]] = row[1]
+    except Exception as e:
+        print(f"DB Error getting influencer stats: {e}")
+    finally:
+        conn.close()
+
+# --- Unified Agent CRUD ---
+
+# 1. Leads (Researcher/Qualifier)
+def get_leads(limit=50, workspace_id=None):
+    """Retrieves leads for the current workspace."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    ws_id = get_current_workspace_id(workspace_id)
+    c.execute('SELECT * FROM leads WHERE workspace_id = ? ORDER BY created_at DESC LIMIT ?', (ws_id, limit))
+    results = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return results
+
+def delete_leads(lead_ids):
+    """Deletes leads by ID."""
+    if not lead_ids: return False
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        placeholders = ','.join('?' * len(lead_ids))
+        c.execute(f"DELETE FROM leads WHERE id IN ({placeholders})", lead_ids)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"DB Error deleting leads: {e}")
+        return False
+    finally:
+        conn.close()
+
+# 2. Creative Content (Copywriter/Designer/Video)
+def add_creative_content(data):
+    """Adds a creative asset."""
+    conn = get_connection()
+    c = conn.cursor()
+    import json
+    try:
+        c.execute('''
+            INSERT INTO creative_content (
+                agent_type, content_type, title, body, metadata, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('agent_type'),
+            data.get('content_type'),
+            data.get('title'),
+            data.get('body'),
+            data.get('metadata', '{}') if isinstance(data.get('metadata'), str) else json.dumps(data.get('metadata', {})),
+            int(time.time())
+        ))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"DB Error adding creative content: {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_creative_content(limit=50, agent_type=None):
+    """Retrieves creative content, optionally filtered by agent type."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    query = "SELECT * FROM creative_content"
+    params = []
+    if agent_type:
+        query += " WHERE agent_type = ?"
+        params.append(agent_type)
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    
+    try:
+        c.execute(query, params)
+        results = [dict(r) for r in c.fetchall()]
+        return results
+    except Exception as e:
+        print(f"DB Error getting creative content: {e}")
+        return []
+    finally:
+        conn.close()
+
+def delete_creative_content(ids):
+    """Deletes creative content by ID."""
+    if not ids: return False
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        placeholders = ','.join('?' * len(ids))
+        c.execute(f"DELETE FROM creative_content WHERE id IN ({placeholders})", ids)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"DB Error deleting creative content: {e}")
+        return False
+    finally:
+        conn.close()
+
+# 3. Agent Work Products (Generic)
+def get_agent_work_products(limit=50, agent_role=None):
+    """Retrieves generic work products."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    query = "SELECT * FROM agent_work_products"
+    params = []
+    if agent_role:
+        query += " WHERE agent_role = ?"
+        params.append(agent_role)
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    
+    try:
+        c.execute(query, params)
+        results = [dict(r) for r in c.fetchall()]
+        return results
+    except Exception as e:
+        print(f"DB Error getting work products: {e}")
+        return []
+    finally:
+        conn.close()
+
+def delete_agent_work_products(ids):
+    """Deletes work products by ID."""
+    if not ids: return False
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        placeholders = ','.join('?' * len(ids))
+        c.execute(f"DELETE FROM agent_work_products WHERE id IN ({placeholders})", ids)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"DB Error deleting work products: {e}")
+        return False
     finally:
         conn.close()

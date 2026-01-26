@@ -7,7 +7,8 @@ class CopywriterAgent(BaseAgent):
         super().__init__(
             role=role,
             goal=goal,
-            provider=provider
+            provider=provider,
+            tier='performance'
         )
         self.prompt_engine = PromptEngine()
 
@@ -96,12 +97,18 @@ class CopywriterAgent(BaseAgent):
             
             self.logger.info(f"  ⚠️ Draft score {score}/10. Refining based on suggestions...")
             
+            # Create lean context for critique to save tokens
+            lean_context = context
+            if isinstance(context, dict):
+                 # Filter out heavy fields like html_preview if present
+                 lean_context = {k:v for k,v in context.items() if k not in ['html_preview', 'raw_html', 'site_content']}
+            
             # 3. Refine
             refine_prompt = (
                 f"Refine the following cold email based on this critique: {critique.get('suggestions')}\n\n"
                 f"Original Subject: {draft.get('subject_line')}\n"
                 f"Original Body: {draft.get('body')}\n\n"
-                f"Context: {context}\n\n"
+                f"Context: {lean_context}\n\n"
                 "Return JSON: {'subject_line': str, 'body': str, 'personalization_explanation': str}"
             )
             draft = self.provider.generate_json(refine_prompt)

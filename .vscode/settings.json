@@ -3,5 +3,6 @@
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "go.goroot": "C:\\Users\\baron\\.litedock\\go_toolchain_v2\\go"
 }

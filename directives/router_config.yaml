@@ -1,0 +1,36 @@
+project:
+  name: "Smart Router Workspace"
+  performance_mode: "paid" # Options: 'paid', 'free'
+
+llm:
+  mode: "router"
+  # Default fallback if router fails or mode is single
+  provider: "gemini"
+  model_name: "gemini-1.5-flash"
+  
+  router:
+    strategy: "priority" # Options: 'priority', 'random'
+    candidates:
+      # --- Performance Tier ---
+      - provider: "gemini"
+        model_name: "gemini-1.5-pro"
+        tier: "performance"
+      
+      # --- Economy Tier ---
+      - provider: "gemini"
+        model_name: "gemini-1.5-flash"
+        tier: "economy"
+
+      # --- Free Tier (OpenRouter) ---
+      - provider: "openrouter"
+        model_name: "google/gemini-pro-1.5-exp:free"
+        tier: "economy"
+      
+      - provider: "openrouter"
+        model_name: "mistralai/mistral-7b-instruct:free"
+        tier: "economy"
+
+      # --- Local Tier (Ollama) ---
+      - provider: "ollama"
+        model_name: "llama3"
+        tier: "economy"

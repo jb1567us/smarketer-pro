@@ -2,7 +2,7 @@ from .researcher import ResearcherAgent
 import asyncio
 from typing import List, Dict
 import pandas as pd
-from src.social_scraper import SocialScraper
+from src.social_scraper import SocialScraper, parse_social_stats
 
 class InfluencerAgent(ResearcherAgent):
     def __init__(self, provider=None):
@@ -178,9 +178,21 @@ class InfluencerAgent(ResearcherAgent):
                 
                 # Check for captured follower count
                 raw_count = "0"
-                if scrape_data and 'captured_hidden_data' in scrape_data:
-                     raw_count = scrape_data['captured_hidden_data'].get('follower_count_raw', "0")
-                
+                if scrape_data:
+                     # 1. Primary: Standardized parsed stats (X-Ray or lightweight)
+                     if 'extracted_stats' in scrape_data and scrape_data['extracted_stats']:
+                          raw_count = scrape_data['extracted_stats'].get('followers', "0")
+                     
+                     # 2. Secondary: Captured hidden data (Browser specific)
+                     elif 'captured_hidden_data' in scrape_data:
+                          raw_count = scrape_data['captured_hidden_data'].get('follower_count_raw', "0")
+                          
+                     # 3. Tertiary: Generic stats string
+                     elif 'stats' in scrape_data and isinstance(scrape_data['stats'], str):
+                          # Try to parse it on the fly if it hasn't been parsed
+                          parsed = parse_social_stats(scrape_data['stats'])
+                          if parsed: raw_count = parsed.get('followers', "0")
+
                 validated_count = self._parse_follower_count(str(raw_count))
                 follower_count_str = str(raw_count)
                 
@@ -209,6 +221,14 @@ class InfluencerAgent(ResearcherAgent):
             }
             analyzed_influencers.append(profile_data)
             
+        # [AUTO-SAVE] Save to Database
+        try:
+            from src.database import bulk_save_influencers
+            saved_count = bulk_save_influencers(analyzed_influencers)
+            print(f"  [Influencer Scout] Auto-saved {saved_count} candidates to database.")
+        except Exception as e:
+            print(f"  [Influencer Scout] Auto-save failed: {e}")
+
         return analyzed_influencers
 
     async def mass_harvest(self, footprint, num_results=100, status_callback=None):
@@ -220,10 +240,9 @@ class InfluencerAgent(ResearcherAgent):
         print(f"DEBUG: InfluencerAgent mass_harvest called with footprint: {footprint}")
         
         # Override engines to ensures dorks are respected
-        # [UPDATE] User reported 0 results with google/bing forced.
-        # [UPDATE 2] User reminded that Google/Bing dislike dorks. 
-        # Switching to strictly Dork-Friendly engines.
-        engines = ['duckduckgo', 'yahoo', 'startpage', 'qwant', 'brave'] 
+        # [FIX] Re-enabling Google/Bing as we now have high-quality proxies (Strict Mode)
+        # Yahoo/Brave/Startpage/Qwant are persistently blocking (400/503).
+        engines = ['google', 'bing', 'duckduckgo'] 
         
         # We must reimplement the search call logic here.
         from scraper import search_searxng

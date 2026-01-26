@@ -15,33 +15,38 @@ VALID_PLATFORMS = ["twitter", "linkedin", "tiktok", "instagram", "reddit", "yout
 def parse_social_stats(text):
     """
     Robust regex parser for social media stats in search engine snippets.
-    Extracted from the 'content' field of SearXNG results.
+    Extracted from the 'content' field of SearXNG results or meta tags.
     """
     if not text: return None
     
     stats = {}
     # Patterns for Followers: "10K Followers", "2.5M followers", "500 followers"
     follower_patterns = [
-        r'([\d\.,KkMm]+?)\s+[Ff]ollowers',
-        r'[Ff]ollowers:\s*([\d\.,KkMm]+)',
-        r'([\d\.,KkMm]+?)\s+[Ss]ubscribers',
-        r'([\d\.,KkMm]+?)\s+abonnés' # French for TikTok/Insta
+        r'([\d\.,KkMmBb]+?)\s+[Ff]ollowers',
+        r'[Ff]ollowers:\s*([\d\.,KkMmBb]+)',
+        r'([\d\.,KkMmBb]+?)\s+[Ss]ubscribers',
+        r'([\d\.,KkMmBb]+?)\s+abonnés', # French
+        r'([\d\.,KkMmBb]+?)\s+[Ff]olger', # German
+        r'([\d\.,KkMmBb]+?)\s+seguidores', # Spanish/Portuguese
+        r'([\d\.,KkMmBb]+?)\s+Followers'
     ]
     
     for pattern in follower_patterns:
         match = re.search(pattern, text)
         if match:
-            stats["followers"] = match.group(1).upper()
+            # Clean up: remove trailing dots and uppercase
+            val = match.group(1).rstrip('.').upper()
+            stats["followers"] = val
             break
             
     # Patterns for Following/Posts if available
-    following_match = re.search(r'([\d\.,KkMm]+?)\s+[Ff]ollowing', text)
+    following_match = re.search(r'([\d\.,KkMmBb]+?)\s+[Ff]ollowing', text)
     if following_match:
-        stats["following"] = following_match.group(1).upper()
+        stats["following"] = following_match.group(1).rstrip('.').upper()
         
-    posts_match = re.search(r'([\d\.,KkMm]+?)\s+[Pp]osts', text)
+    posts_match = re.search(r'([\d\.,KkMmBb]+?)\s+[Pp]osts', text)
     if posts_match:
-        stats["posts"] = posts_match.group(1).upper()
+        stats["posts"] = posts_match.group(1).rstrip('.').upper()
 
     return stats if stats else None
 
@@ -68,9 +73,8 @@ class SocialScraper:
 
     async def smart_scrape(self, query_or_url, platform=None):
         """
-        The Dork-First Router.
-        1. Checks for existence via Search Dork.
-        2. If promising, opens Browser to scrape context.
+        The Parallel Router.
+        Executes X-Ray Dork and Lightweight HTTP Scrape simultaneously.
         """
         # 1. Normalize Input
         target_type = "url" if query_or_url.startswith("http") else "handle"
@@ -82,58 +86,78 @@ class SocialScraper:
             return {"error": "Could not detect platform. Please specify one."}
 
         print(f"  [SocialScraper] Targeted: {platform} ({target_type})")
-
-        # 2. Strategy: Filter First
-        dork_results = await self._try_dork_search(query_or_url, platform)
         
-        # [Phase 1] FAST-TRACK: If X-Ray already found high-confidence stats, 
-        # we can skip the browser entirely to save resources and avoid detection risk.
+        # 2. Prepare Parallel Tasks
+        tasks = []
+        
+        # Task A: Dork (Always useful for meta-data and verification)
+        dork_task = asyncio.create_task(self._try_dork_search(query_or_url, platform))
+        
+        # Task B: HTTP Scrape (Only if we have a direct URL or can construct one)
+        http_task = None
+        target_url = query_or_url
+        if target_type == "handle":
+            target_url = self._construct_url(platform, query_or_url)
+        
+        if target_url:
+             http_task = asyncio.create_task(self._try_lightweight_scrape(target_url))
+
+        # 3. Wait for results (Parallel)
+        print("  [SocialScraper] ⚡ Launching Dork & HTTP Scrape in parallel...")
+        
+        dork_results = None
+        http_results = None
+        
+        # Gather results
+        if http_task:
+            dork_results, http_results = await asyncio.gather(dork_task, http_task, return_exceptions=True)
+        else:
+            dork_results = await dork_task
+            
+        # Handle Exceptions from gather
+        if isinstance(dork_results, Exception): dork_results = None
+        if isinstance(http_results, Exception): http_results = None
+
+        # 4. Evaluator: Check for Fast-Track Success
+        
+        # Case A: X-Ray Fast Track (Snippet has stats)
         if dork_results and dork_results.get("extracted_stats"):
              print(f"  [SocialScraper] ⚡ X-Ray Fast-Track! Found stats in search snippet.")
-             return {
-                 **dork_results,
-                 "status": "success",
-                 "method": "xray_fast_track"
-             }
+             return {**dork_results, "status": "success", "method": "xray_fast_track"}
+             
+        # Case B: HTTP Scrape Success
+        if http_results and http_results.get("status") == "success":
+             print(f"  [SocialScraper] ✅ Lightweight scrape succeeded! Skipping browser.")
+             return http_results
 
-        # If Dork failed to find ANY indexed pages, it's likely a dead/private profile or bad query
-        # But we still might want to try browser if it's a direct URL
+        # 5. Fallback Decision: Browser?
         should_use_browser = False
         
         if target_type == "url":
-             should_use_browser = True # Always try browser for direct URLs if dork is ambiguous
+             should_use_browser = True
         elif dork_results and len(dork_results.get("results", [])) > 0:
-             should_use_browser = True # Dork found hits, so it's a real person
-             # We can try to extract a URL from the dork result to visit
-             # For now, if we only have a handle, we might need to construct the URL
-             if target_type == "handle":
-                query_or_url = self._construct_url(platform, query_or_url)
-
+             should_use_browser = True # Dork found hits, real person
+        
         if not should_use_browser:
-             return {
-                 "source": "dork_filter",
-                 "status": "skipped_low_relevance",
-                 "dork_data": dork_results
-             }
+              return {
+                  "source": "dork_filter",
+                  "status": "skipped_low_relevance",
+                  "dork_data": dork_results
+              }
 
-        # 2a. Strategy: Lightweight Scrape (Bypass Browser Tunnel Issues)
-        # Verify confirmed that aiohttp works with our proxies, so we should try this first.
-        low_cost_data = await self._try_lightweight_scrape(query_or_url)
-        if low_cost_data:
-             print(f"  [SocialScraper] ✅ Lightweight scrape succeeded! Skipping browser.")
-             return low_cost_data
-
-        # 3. Strategy: Throttled Browser (Only if lightweight failed)
+        # 6. Browser Execution (Throttled)
+        # Prioritize URL from HTTP attempt if valid, else fallback to dork result
+        browser_target = target_url if target_url else query_or_url
+        
         async with self.browser_semaphore:
             print(f"  [SocialScraper] Acquiring Browser Slot (Limit: 5)...")
-            browser_data = await self._try_browser_scrape(query_or_url)
+            browser_data = await self._try_browser_scrape(browser_target)
             
         if browser_data:
             return browser_data
             
-        # Fallback to just dork data if browser failed
+        # Final Fallback
         if dork_results:
-            # Enrich dork data with extracted stats if available
             return {**dork_results, "status": "partial_success"}
 
         return {"error": "All scraping methods failed.", "platform": platform}
@@ -171,8 +195,8 @@ class SocialScraper:
         # Retry loop for lightweight
         for attempt in range(3):
             # Explicitly request ELITE proxies for verification tasks
-            proxy = proxy_manager.get_proxy(tier='elite')
-            if not proxy: 
+            proxy_url = proxy_manager.get_proxy(tier='elite')
+            if not proxy_url: 
                 # If no proxy, we can try direct IF safe, otherwise fail
                 return None 
 
@@ -181,7 +205,7 @@ class SocialScraper:
                 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
                 
                 async with aiohttp.ClientSession(headers=headers) as session:
-                    async with session.get(url, proxy=proxy, timeout=10) as response:
+                    async with session.get(url, proxy=proxy_url, timeout=15) as response:
                         if response.status == 200:
                             text = await response.text()
                             
@@ -193,21 +217,28 @@ class SocialScraper:
                                 desc = meta.get("content", "")
                                 if "Followers" in desc:
                                     print(f"    -> Found stats: {desc[:50]}...")
+                                    stats = parse_social_stats(desc)
+                                    # Report success to boost this proxy's reputation
+                                    proxy_manager.report_result(proxy_url, success=True, latency=0.5) 
                                     return {
                                         "source": "lightweight_http",
-                                        "stats": desc,
+                                        "stats": desc, # Original string
+                                        "extracted_stats": stats, # Parsed dict
                                         "url": url,
                                         "status": "success"
                                     }
-                            # If we got 200 but no meta, might be a login page or captcha.
-                            # But often Instagram public profiles DO return og:meta even if some content is gated.
-                            # If we fail to find it, we proceed to browser.
+                            # If we successully connected but couldn't parse, it's still a "working" proxy technically,
+                            # but might be getting a login wall. We won't penalize it here.
                         else:
-                             # print(f"    -> Status {response.status}")
+                             # 429/403 means blocked
+                             if response.status in [429, 403]:
+                                 proxy_manager.report_result(proxy_url, success=False)
                              pass
 
             except Exception as e:
                 # print(f"    -> Error: {e}")
+                # Report connection failure
+                proxy_manager.report_result(proxy_url, success=False)
                 pass
                 
         return None
@@ -287,18 +318,18 @@ class SocialScraper:
             "https://www.reddit.com"
         ]
         
-        # Pick 1-2 random sites
-        sites = random.sample(warmup_sites, k=random.randint(1, 2))
+        # Pick 1 random site to save time, but ensure validity
+        sites = random.sample(warmup_sites, k=1)
         print(f"  [SocialScraper] 🔥 Performing Humanoid Warmup on {len(sites)} sites...")
         
         for site in sites:
             try:
-                await page.goto(site, wait_until='domcontentloaded', timeout=15000)
-                await asyncio.sleep(random.uniform(2, 5)) 
-                # Random scroll
-                await page.mouse.wheel(0, random.randint(200, 600))
-                await asyncio.sleep(random.uniform(1, 3))
-            except:
+                # Shorter timeout for warmup
+                await page.goto(site, wait_until='domcontentloaded', timeout=10000)
+                # print(f"    -> Warmup visited: {site}")
+                await asyncio.sleep(random.uniform(1, 3)) 
+            except Exception as e:
+                print(f"    -> Warmup failed for {site}: {e}")
                 continue
 
     async def _try_browser_scrape(self, url):
@@ -328,6 +359,7 @@ class SocialScraper:
                 try:
                     # Dynamic Proxy (Rotate each attempt)
                     proxy_cfg = None
+                    proxy_url = None
                     if attempt < max_retries:
                          proxy_url = proxy_manager.get_proxy(tier='elite')
                          if proxy_url:
@@ -370,7 +402,10 @@ class SocialScraper:
                     # Break if successful launch (we continue to nav below)
                     break
                 except Exception as e:
-                    print(f"  [SocialScraper] Proxy attempt failed: {e}")
+                    print(f"  [SocialScraper] Proxy attempt failed: {str(e)[:100]}")
+                    if proxy_url:
+                        proxy_manager.report_result(proxy_url, success=False)
+                        
                     last_error = e
                     if attempt == max_retries:
                         raise last_error
@@ -389,8 +424,16 @@ class SocialScraper:
                 page.on("response", handle_response)
 
             # Navigate
-            await page.goto(url, timeout=30000, wait_until="domcontentloaded")
+            # Increased timeout to 60s for slow proxies
+            await page.goto(url, timeout=60000, wait_until="domcontentloaded")
             await asyncio.sleep(2) # Initial render
+            
+            # [CAPTCHA CHECK]
+            if self.browser_manager:
+                solved = await self.browser_manager.solve_captcha_if_present()
+                if solved:
+                    print(f"  [SocialScraper] Captcha Solved! Reloading content...")
+                    await asyncio.sleep(2)
             
             # Scroll for lazy load (generic)
             for _ in range(3):

@@ -66,7 +66,7 @@ def render_data_management_bar(data, filename_prefix="export", on_delete=None, o
             data=json_str,
             file_name=f"{filename_prefix}_{int(time.time())}.json",
             mime="application/json",
-            use_container_width=True
+            width="stretch"
         )
     
     with col2:
@@ -79,26 +79,26 @@ def render_data_management_bar(data, filename_prefix="export", on_delete=None, o
                 data=csv,
                 file_name=f"{filename_prefix}_{int(time.time())}.csv",
                 mime="text/csv",
-                use_container_width=True
+                width="stretch"
             )
         except Exception:
-            st.button("📊 Export CSV", disabled=True, use_container_width=True)
+            st.button("📊 Export CSV", disabled=True, width="stretch")
 
     with col3:
         if on_import:
             uploaded_file = st.file_uploader("📥 Import Data", type=['json', 'csv'], label_visibility="collapsed")
             if uploaded_file is not None:
-                if st.button("Apply Import", use_container_width=True):
+                if st.button("Apply Import", width="stretch"):
                     on_import(uploaded_file)
         else:
-            st.button("📥 Import", disabled=True, use_container_width=True)
+            st.button("📥 Import", disabled=True, width="stretch")
 
     with col4:
         if on_delete:
-            if st.button("🗑️ Delete Selected", type="secondary", use_container_width=True):
+            if st.button("🗑️ Delete Selected", type="secondary", width="stretch"):
                 on_delete()
         else:
-            st.button("🗑️ Delete", disabled=True, use_container_width=True)
+            st.button("🗑️ Delete", disabled=True, width="stretch")
 
 def render_enhanced_table(df, key, selection_key=None):
     """
@@ -144,7 +144,7 @@ def render_enhanced_table(df, key, selection_key=None):
             )
         },
         disabled=[c for c in df.columns if c != 'Select'],
-        use_container_width=True
+        width="stretch"
     )
     
     return edited_df
@@ -169,9 +169,9 @@ def render_page_chat(context_description, agent_instance, context_data):
 
 def confirm_action(label, prompt, on_confirm, key=None, type="secondary"):
     """Standardized confirmation popover for destructive or important actions."""
-    with st.popover(label, use_container_width=True):
+    with st.popover(label, width="stretch"):
         st.warning(prompt)
-        if st.button("Confirm ✅", key=f"conf_{key or label}", type="primary", use_container_width=True):
+        if st.button("Confirm ✅", key=f"conf_{key or label}", type="primary", width="stretch"):
             on_confirm()
             st.rerun()
 
@@ -193,11 +193,11 @@ def render_job_controls(job_name, is_running, on_start, on_stop, progress=None, 
     cols = st.columns([1, 3])
     with cols[0]:
         if is_running:
-            if st.button(f"🛑 Stop {job_name}", key=f"stop_{job_name}", type="primary", use_container_width=True):
+            if st.button(f"🛑 Stop {job_name}", key=f"stop_{job_name}", type="primary", width="stretch"):
                 if on_stop: on_stop()
                 st.rerun()
         else:
-            if st.button(f"▶️ Start {job_name}", key=f"start_{job_name}", type="primary", use_container_width=True):
+            if st.button(f"▶️ Start {job_name}", key=f"start_{job_name}", type="primary", width="stretch"):
                 if on_start: on_start()
                 st.rerun()
     

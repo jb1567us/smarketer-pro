@@ -6,6 +6,7 @@ import os
 import subprocess
 from datetime import datetime
 import streamlit as st
+from collections import deque
 
 class AutomationEngine:
     _instance = None
@@ -14,13 +15,27 @@ class AutomationEngine:
         if cls._instance is None:
             cls._instance = super(AutomationEngine, cls).__new__(cls)
             cls._instance.jobs = {} # {job_id: {thread, status, logs, meta}}
-            cls._instance.logs = [] # Global logs for UI
+            cls._instance.logs = deque(maxlen=2000) # Ring buffer to prevent OOM
             cls._instance.lock = threading.Lock()
+            cls._instance.stop_event = threading.Event()
         return cls._instance
 
     def __init__(self):
         # Init called every time? Singleton handling usually prevents re-init or we check generic
         pass
+
+    def shutdown(self):
+        """Gracefully shuts down all running jobs."""
+        print("[AutomationEngine] Shutting down...")
+        self.stop_event.set()
+        
+        # Wait for threads to finish (timeout 2s)
+        for job_id, job in self.jobs.items():
+            if job['status'] == 'running':
+                job['status'] = 'stopping'
+                if job.get('thread') and job['thread'].is_alive():
+                    job['thread'].join(timeout=0.5)
+        print("[AutomationEngine] Shutdown complete.")
 
     def start_mission(self, strategy, manager_agent, workspace_id=1):
         """Starts a research mission job."""
@@ -28,16 +43,12 @@ class AutomationEngine:
         job_id = str(uuid.uuid4())[:8]
         
         with self.lock:
-            # Basic concurrency limit (optional, for now allow parallel)
-            # if any(j['status'] == 'running' for j in self.jobs.values()):
-            #     return None # Busy
-            
             job_meta = {
                 "id": job_id,
                 "type": "mission",
                 "name": strategy.get('strategy_name', 'Unnamed Mission'),
                 "status": "running",
-                "logs": [],
+                "logs": deque(maxlen=500), # Per-job log limit
                 "start_time": time.time(),
                 "workspace_id": workspace_id,
                 "progress": 0
@@ -72,7 +83,7 @@ class AutomationEngine:
                 "type": "workflow",
                 "name": f"Workflow: {workflow_id}",
                 "status": "running",
-                "logs": [],
+                "logs": deque(maxlen=500),
                 "start_time": time.time(),
                 "workspace_id": workspace_id,
                 "progress": 0
@@ -101,6 +112,9 @@ class AutomationEngine:
             def log_cb(msg):
                 self.custom_log(job_id, msg)
 
+            # We can't easily inject stop_event check INSIDE execute_workflow without changing that code too
+            # But the thread will check stop_event eventually or we can kill it
+            
             loop.run_until_complete(manager_agent.execute_workflow(
                 workflow_id, 
                 inputs, 
@@ -162,7 +176,7 @@ class AutomationEngine:
             self.custom_log(job_id, f"🎬 Conductor Sequence Active. Goal: {strategy.get('goal')}")
             
             for step in sequence:
-                if self.jobs[job_id]['status'] == 'stopped': break
+                if self.stop_event.is_set() or self.jobs[job_id]['status'] == 'stopped': break
                 
                 step_type = step.get('type')
                 
@@ -174,7 +188,7 @@ class AutomationEngine:
                     steps = extract_steps_from_workflow(wf_name)
                     
                     for s in steps:
-                        if self.jobs[job_id]['status'] == 'stopped': break
+                        if self.stop_event.is_set() or self.jobs[job_id]['status'] == 'stopped': break
                         s_tool = s.get('tool')
                         s_params = s.get('params', {})
                         self.custom_log(job_id, f"  └─ Step: {s.get('description', s_tool)}")
@@ -204,6 +218,11 @@ class AutomationEngine:
                             self.custom_log(job_id, f"✅ {agent_name} done.")
                     else:
                         self.custom_log(job_id, f"❌ Agent {agent_name} not found.")
+                
+                # Check stop signal between steps
+                if self.stop_event.is_set():
+                    self.custom_log(job_id, "🛑 Global shutdown signal received. Aborting sequence.")
+                    break
 
         else:
             # Legacy Search Loop
@@ -214,7 +233,7 @@ class AutomationEngine:
             self.custom_log(job_id, f"🎯 Strategy Loaded. {len(queries)} operational queries queued.")
             
             for q in queries:
-                if self.jobs[job_id]['status'] == 'stopped': break
+                if self.stop_event.is_set() or self.jobs[job_id]['status'] == 'stopped': break
                 
                 self.custom_log(job_id, f"🔎 Executing Search Phase: '{q}'")
                 
@@ -223,15 +242,6 @@ class AutomationEngine:
                     "icp_criteria": icp,
                     "limit": limit
                 }
-                
-                # We need to make sure run_mission uses the workspace_id for DB inserts
-                # ManagerAgent calls 'add_lead' somewhere. 
-                # Currently ManagerAgent doesn't accept workspace_id in run_mission args easily unless we inject it into plan?
-                # or we modify ManagerAgent.
-                # For now, we rely on the fact that database calls default to 1 if we can't pass it.
-                # But we want it to be the correct workspace.
-                # Solution: Add workspace_id to plan_override, and update ManagerAgent to respect it?
-                # Or use contextvar?
                 
                 res = await manager_agent.run_mission(
                     goal=f"Execute strategy for {q}", 
@@ -243,7 +253,10 @@ class AutomationEngine:
                 self.custom_log(job_id, f"✅ Batch Complete. Found {leads_count} qualified leads.")
                 
                 # Simple Manual Sleep for demo
-                time.sleep(2)
+                # Check periodically during sleep
+                for _ in range(4):
+                    if self.stop_event.is_set(): break
+                    time.sleep(0.5)
 
     def get_jobs(self):
         """Returns list of jobs."""
@@ -251,7 +264,8 @@ class AutomationEngine:
 
     def get_logs(self, job_id):
         if job_id in self.jobs:
-            return self.jobs[job_id]['logs']
+            # Deque doesn't support slicing well, convert to list
+            return list(self.jobs[job_id]['logs'])
         return []
 
     def stop_job(self, job_id):

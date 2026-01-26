@@ -13,7 +13,7 @@ search:
       engines:
       - bing
       - duckduckgo
-      - yahoo
+      # - yahoo
     tech:
       categories:
       - it
@@ -41,7 +41,7 @@ search:
       engines:
       - google news
       - bing news
-      - yahoo news
+      # - yahoo news
       - duckduckgo news
     social:
       categories:
@@ -98,7 +98,9 @@ project:
 proxies:
   enabled: true
   source_url: https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt
-  max_proxies: 1000
+  max_proxies: 10000
+  harvest_concurrency: 800
+  harvest_batch_size: 1000
   verification_url: http://httpbin.org/ip
 quality_gate:
   must_haves:
@@ -108,9 +110,14 @@ quality_gate:
   - personal blog without business intent
   - adult content
   - parked domain
+captcha:
+  provider: local-whisper
+  api_key: local
+  enabled: true
 llm:
   provider: gemini
   mode: router
+  auto_scan: true
   router:
     candidates:
     - provider: groq
@@ -121,6 +128,7 @@ llm:
       model_name: llama-3.1-8b-instant
     - provider: groq
       model_name: llama-3.3-70b-versatile
+      tier: performance
     - provider: groq
       model_name: meta-llama/llama-4-maverick-17b-128e-instruct
     - provider: groq
@@ -139,8 +147,10 @@ llm:
       model_name: openai/gpt-oss-safeguard-20b
     - provider: gemini
       model_name: gemini-1.5-flash
+      tier: economy
     - provider: gemini
       model_name: gemini-1.5-pro
+      tier: performance
     - provider: gemini
       model_name: gemini-flash-latest
     - provider: openrouter
@@ -149,6 +159,7 @@ llm:
       model_name: arcee-ai/trinity-mini:free
     - provider: openrouter
       model_name: google/gemini-2.0-flash-exp:free
+      tier: performance
     - provider: openrouter
       model_name: google/gemma-3-12b-it:free
     - provider: openrouter
@@ -185,11 +196,60 @@ llm:
       model_name: phi3:latest
     - provider: ollama
       model_name: phi3:mini
+    - provider: groq
+      model_name: allam-2-7b
+      tier: economy
+    - provider: groq
+      model_name: canopylabs/orpheus-arabic-saudi
+      tier: economy
+    - provider: groq
+      model_name: canopylabs/orpheus-v1-english
+      tier: economy
+    - provider: groq
+      model_name: moonshotai/kimi-k2-instruct
+      tier: performance
+    - provider: groq
+      model_name: moonshotai/kimi-k2-instruct-0905
+      tier: performance
+    - provider: groq
+      model_name: qwen/qwen3-32b
+      tier: economy
+    - provider: groq
+      model_name: whisper-large-v3
+      tier: performance
+    - provider: groq
+      model_name: whisper-large-v3-turbo
+      tier: performance
+    - provider: openrouter
+      model_name: cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      tier: economy
+    - provider: openrouter
+      model_name: liquid/lfm-2.5-1.2b-instruct:free
+      tier: economy
+    - provider: openrouter
+      model_name: liquid/lfm-2.5-1.2b-thinking:free
+      tier: economy
+    - provider: openrouter
+      model_name: meta-llama/llama-3.2-3b-instruct:free
+      tier: economy
+    - provider: openrouter
+      model_name: mistralai/mistral-small-3.1-24b-instruct:free
+      tier: economy
+    - provider: openrouter
+      model_name: nousresearch/hermes-3-llama-3.1-405b:free
+      tier: economy
+    - provider: huggingface
+      model_name: meta-llama/Meta-Llama-3-8B-Instruct
+      tier: economy
+    - provider: huggingface
+      model_name: mistralai/Mistral-7B-Instruct-v0.2
+      tier: performance
     strategy: priority
   model_name: gemini-flash-latest
   ollama_base_url: http://localhost:11434
+  last_auto_scan: 1769358406.2411833
 logging:
-  spawn_background_window: false
+  spawn_background_window: true
 image_gen:
   default_provider: pollination
   openai:
@@ -223,13 +283,8 @@ email:
   from_email: onboarding@resend.dev
   smart_routing:
     providers:
-    - sendpulse
-    - brevo
-    - mailjet
-    - netcore
-    - smtp2go
-    - sendgrid
-    - mailgun
+    - mailtrap
+    - mailersend
   smtp_server: smtp.gmail.com
   smtp_port: 587
   smtp_user: ${SMTP_USER}

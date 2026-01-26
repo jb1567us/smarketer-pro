@@ -3,7 +3,7 @@ import pandas as pd
 import asyncio
 import json
 from dsr_manager import DSRManager
-from agents import WordPressAgent
+from agents import WordPressAgent, ManagerAgent
 from database import (
     get_all_campaigns, get_campaign_leads, get_wp_sites, get_connection,
     delete_dsr, update_dsr_content
@@ -12,7 +12,6 @@ from ui.components import (
     render_enhanced_table, render_data_management_bar, render_page_chat,
     premium_header, confirm_action, safe_action_wrapper
 )
-from agents import ManagerAgent
 
 def render_dsr_page():
     premium_header("💼 Digital Sales Room (DSR) Manager", "Create, personalize, and deploy microsites for your high-value leads.")
@@ -29,53 +28,60 @@ def render_dsr_page():
         campaigns = get_all_campaigns()
         if not campaigns:
             st.info("No campaigns found. Create a campaign first.")
-            return
-
-        camp_options = {f"{c['name']} (ID: {c['id']})": c['id'] for c in campaigns}
-        selected_camp_label = st.selectbox("Select Campaign", list(camp_options.keys()))
-        selected_camp_id = camp_options[selected_camp_label]
-
-        # 2. Select Lead
-        leads = get_campaign_leads(selected_camp_id)
-        if not leads:
-            st.warning("No leads found in this campaign.")
         else:
-            lead_options = {f"{l['company_name']} - {l['contact_person']} ({l['email']})": l for l in leads}
-            selected_lead_label = st.selectbox("Select Target Lead", list(lead_options.keys()))
-            selected_lead = lead_options[selected_lead_label]
+            camp_options = {f"{c['name']} (ID: {c['id']})": c['id'] for c in campaigns}
+            selected_camp_label = st.selectbox("Select Campaign", list(camp_options.keys()))
+            selected_camp_id = camp_options[selected_camp_label]
 
-            st.divider()
-            
-            # Preview Lead Context
-            with st.expander("View Lead Context"):
-                st.json(selected_lead)
+            # 2. Select Lead
+            leads = get_campaign_leads(selected_camp_id)
+            if not leads:
+                st.warning("No leads found in this campaign.")
+            else:
+                lead_options = {f"{l['company_name']} - {l['contact_person']} ({l['email']})": l for l in leads}
+                selected_lead_label = st.selectbox("Select Target Lead", list(lead_options.keys()))
+                selected_lead = lead_options[selected_lead_label]
 
-            if st.button("🚀 Generate DSR Content", type="primary"):
-                with st.spinner("AI is crafting copy and designing assets..."):
-                    # Run generation
-                    result = asyncio.run(dsr_manager.generate_dsr_for_lead(selected_camp_id, selected_lead))
+                st.divider()
+                
+                # Preview Lead Context
+                with st.expander("View Lead Context"):
+                    st.json(selected_lead)
+
+                if st.button("🚀 Generate DSR Content", type="primary"):
+                    def run_gen():
+                         return asyncio.run(dsr_manager.generate_dsr_for_lead(selected_camp_id, selected_lead))
                     
-                    st.success("DSR Content Generated!")
-                    st.session_state['last_dsr_generated'] = result
-                    
+                    with st.spinner("AI is crafting copy and designing assets..."):
+                        result = safe_action_wrapper(run_gen, "DSR Content Generated!")
+                        if result:
+                            st.session_state['last_dsr_generated'] = result
+                            st.rerun()
+
     # Display Generated Result
     if 'last_dsr_generated' in st.session_state:
         with tab_gen:
             res = st.session_state['last_dsr_generated']
             st.divider()
-            st.subheader(f"Draft: {res['content']['copy'].get('headline', 'Untitled')}")
-            
-            c1, c2 = st.columns([1, 1])
-            with c1:
-                st.image(res['content']['hero_image'], caption="AI Generated Hero Image")
-            with c2:
-                st.markdown(f"**Headline:** {res['content']['copy'].get('headline')}")
-                st.markdown(f"**Sub:** {res['content']['copy'].get('sub_headline')}")
-                st.caption("Benefits:")
-                for b in res['content']['copy'].get('benefits', []):
-                    st.markdown(f"- {b}")
-            
-            st.info("Content saved as Draft. Go to 'Manage DSRs' to deploy.")
+            if 'content' in res:
+                st.subheader(f"Draft: {res['content']['copy'].get('headline', 'Untitled')}")
+                
+                c1, c2 = st.columns([1, 1])
+                with c1:
+                    if res['content'].get('hero_image'):
+                        st.image(res['content']['hero_image'], caption="AI Generated Hero Image")
+                    else:
+                        st.write("No image generated.")
+                with c2:
+                    st.markdown(f"**Headline:** {res['content']['copy'].get('headline')}")
+                    st.markdown(f"**Sub:** {res['content']['copy'].get('sub_headline')}")
+                    st.caption("Benefits:")
+                    for b in res['content']['copy'].get('benefits', []):
+                        st.markdown(f"- {b}")
+                
+                st.info("Content saved as Draft in 'Manage DSRs'.")
+            else:
+                st.error("Invalid response format.")
 
     with tab_manage:
         st.subheader("Manage & Deploy")
@@ -96,7 +102,8 @@ def render_dsr_page():
             # 2. Enhanced Table
             edited_dsrs = render_enhanced_table(dsrs[['id', 'title', 'status', 'created_at']], key="dsr_manage_table")
             
-            selected_ids = edited_dsrs[edited_dsrs['Select'] == True]['id'].tolist()
+            selected_ids = edited_dsrs[edited_dsrs['Select'] == True]['id'].tolist() if 'Select' in edited_dsrs.columns else []
+            
             if selected_ids:
                 with st.container(border=True):
                     st.write(f"Selected **{len(selected_ids)}** DSRs")
@@ -138,37 +145,42 @@ def render_dsr_page():
                             except Exception as e:
                                 st.error(f"Invalid JSON: {e}")
 
+                    # Deployment Section
                     if row['status'] == 'draft':
+                        st.divider()
+                        st.markdown("##### 🚀 Deployment Zone")
                         wp_sites = get_wp_sites()
                         if not wp_sites:
-                            st.error("No WP Sites connected.")
+                            st.error("No WP Sites connected. Go to 'WordPress Sites' tab.")
                         else:
                             site_opts = {s['url']: s for s in wp_sites}
                             sel_site = st.selectbox("Target WordPress Site", list(site_opts.keys()), key=f"site_{row['id']}")
                             
-                            if st.button("🚀 Deploy to Live Site", key=f"deploy_{row['id']}", type="primary", use_container_width=True):
+                            if st.button("Publish DSR Now", key=f"deploy_{row['id']}", type="primary", width="stretch"):
                                 site_data = site_opts[sel_site]
                                 wp_agent = WordPressAgent()
+                                
+                                def run_deploy():
+                                     return asyncio.run(dsr_manager.deploy_dsr(row['id'], wp_agent, site_data['id'], site_data))
+                                
                                 with st.spinner(f"Deploying to {sel_site}..."):
-                                    res = asyncio.run(dsr_manager.deploy_dsr(row['id'], wp_agent, site_data['id'], site_data))
-                                    if "success" in res:
+                                    res = safe_action_wrapper(run_deploy, "Deployment Processed")
+                                    if res and "success" in res:
                                         st.success(f"Published! [View Link]({res['url']})")
                                         st.balloons()
                                         st.rerun()
-                                    else:
+                                    elif res:
                                         st.error(f"Deployment Failed: {res.get('error')}")
 
     with tab_sites:
-        from ui.styles import load_css # Just to ensure env
-        # Reuse existing WP logic or just simple list
         st.subheader("Connected WordPress Sites")
         st.info("Manage your deployment targets here (credentials stored locally).")
         
         sites = get_wp_sites()
         if sites:
-            st.dataframe(pd.DataFrame(sites)[['url', 'username', 'id']], hide_index=True)
+            st.dataframe(pd.DataFrame(sites)[['url', 'username', 'id']], hide_index=True, width="stretch")
         else:
-            st.warning("No sites connected. Go to user settings or add one here.")
+            st.warning("No sites connected. Add them in Settings.")
 
     # 3. Page Level Chat
     render_page_chat(
@@ -176,4 +188,3 @@ def render_dsr_page():
         ManagerAgent(), 
         "Microsite Personalization and Deployment Control"
     )
-            
