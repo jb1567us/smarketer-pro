@@ -1,0 +1,61 @@
+{
+  "target": "prompt_engine",
+  "results": [
+    {
+      "template": "researcher/discovery_query_generator.j2",
+      "context": {
+        "niche": "SaaS",
+        "icp_role": "CTO",
+        "icp_pain_points": [],
+        "icp_desires": [],
+        "brand_voice": "Professional, Authoritative, yet Empathetic",
+        "product_name": null,
+        "product_benefits": [],
+        "extra_context": {}
+      },
+      "rendered": "SYSTEM:\nYou generate search-engine queries for B2B lead discovery.\nBe hyper-specific and avoid broad generic queries.\nReturn ONLY valid JSON that matches the provided schema.\nDo not include commentary or markdown.\n\nRules:\n- Every query must be explainable: include intent + what it should retrieve.\n- Use negative keywords to reduce noise.\n- Include at least:\n  (1) Broad discovery queries\n  (2) Verification queries (confirm fit)\n  (3) Contact-finding queries\n- If geo_allow exists, include geo tokens in most queries.\n- If industry_allow exists, include industry tokens in most queries.\n- Use advanced operators where useful: site:, intitle:, inurl:, \"quoted phrases\".\n- Include at least 3 \"pattern queries\" using ICP problem keywords + industry + geo.\n- Avoid queries that would likely return directories unless explicitly needed.\n\nUSER INPUT JSON:\n{ \"icp\": \"Founders\", \"offering\": \"AI\", \"constraints\": \"None\" }\n\nReturn JSON only."
+    },
+    {
+      "template": "copywriter/email_cold.j2",
+      "context": {
+        "niche": "SaaS",
+        "icp_role": "CTO",
+        "icp_pain_points": [],
+        "icp_desires": [],
+        "brand_voice": "Professional, Authoritative, yet Empathetic",
+        "product_name": null,
+        "product_benefits": [],
+        "extra_context": {}
+      },
+      "rendered": "[CRITICAL KERNEL CONTEXT]\nYou are writing for the 'SaaS' industry.\nTarget Audience (ICP): CTO\nKey Pain Points:\n\nDeepest Desires:\n\nBrand Voice: Professional, Authoritative, yet Empathetic\n\n\n[TASK]\nDraft a cold email to a CTO.\n\n[GUIDELINES]\n1. Hook them immediately with a specific problem related to SaaS (e.g. efficiency).\n2. Keep it under 150 words.\n3. Tone must be Professional, Authoritative, yet Empathetic.\n4. Call to Action: Soft ask\n\n[SPECIFIC INSTRUCTIONS]\nNo specific instructions.\n\nReturn JSON:\n{\n    \"subject_line\": \"...\",\n    \"body\": \"...\",\n    \"explanation\": \"Why this fits the ICP\"\n}"
+    },
+    {
+      "template": "manager/task_delegator.j2",
+      "context": {
+        "niche": "SaaS",
+        "icp_role": "CTO",
+        "icp_pain_points": [],
+        "icp_desires": [],
+        "brand_voice": "Professional, Authoritative, yet Empathetic",
+        "product_name": null,
+        "product_benefits": [],
+        "extra_context": {}
+      },
+      "rendered": "ERROR: Template 'manager/task_delegator.j2' not found."
+    },
+    {
+      "template": "influencer/scout.j2",
+      "context": {
+        "niche": "SaaS",
+        "icp_role": "CTO",
+        "icp_pain_points": [],
+        "icp_desires": [],
+        "brand_voice": "Professional, Authoritative, yet Empathetic",
+        "product_name": null,
+        "product_benefits": [],
+        "extra_context": {}
+      },
+      "rendered": "ERROR: Template 'influencer/scout.j2' not found."
+    }
+  ]
+}

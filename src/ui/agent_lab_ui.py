@@ -79,7 +79,8 @@ def render_agent_lab():
                 horizontal=True,
                 label_visibility="collapsed",
                 index=curr_index if st.session_state['active_lab_agent'] in agents_in_cat else 0,
-                key=f"cat_{i}_selector"
+                key=f"cat_{i}_selector",
+                help=f"Choose an agent from the {category} category."
             )
             
             # Update global state on selection
@@ -169,13 +170,28 @@ def render_agent_interaction_area(agent_name):
                 key=f"instr_{agent_name}"
             )
         
-        # Run Button (Single)
-        if st.button(f"Run {agent_name}", type="primary", key=f"run_{agent_name}", width="stretch"):
+
+        # CONTINUOUS HARVEST CONTROLS
+        continuous_mode = False
+        cycle_count = 1
+        
+        if agent_name == "Influencer Scout":
+            col_loop1, col_loop2 = st.columns(2)
+            with col_loop1:
+                continuous_mode = st.toggle("🔄 Continuous Harvest Mode", help="Run multiple cycles to gather more data.")
+            with col_loop2:
+                if continuous_mode:
+                    cycle_count = st.slider("Number of Cycles", 2, 100, 10, key=f"cycles_{agent_name}")
+
+        # Run Button (Single or Continuous)
+        btn_label = f"Run {agent_name} ({cycle_count} cycles)" if continuous_mode else f"Run {agent_name}"
+        
+        if st.button(btn_label, type="primary", key=f"run_{agent_name}", width="stretch"):
             if not context:
                 st.error("Please provide context to run the agent.")
             else:
                  # Logic Wrapper
-                 def _execute_agent():
+                 def _execute_agent_cycle(current_cycle=1, total_cycles=1):
                     # Prepend platform if applicable
                     final_context = context
                     if platform_selection:
@@ -186,12 +202,41 @@ def render_agent_interaction_area(agent_name):
                          if 'min_followers' in locals() and min_followers: final_context += f"Min Followers: {min_followers}\n"
                          if 'max_followers' in locals() and max_followers: final_context += f"Max Followers: {max_followers}\n"
                     
+                    if continuous_mode:
+                         final_context += f"\n[Cycle {current_cycle}/{total_cycles}] Continue scouting fresh candidates."
+
                     final_context += f"\n{context}"
 
-                    with st.spinner(f"{agent.role} is thinking..."):
-                         return agent.think(final_context, instructions=user_instructions if user_instructions else None)
+                    return agent.think(final_context, instructions=user_instructions if user_instructions else None)
                 
-                 response = safe_action_wrapper(_execute_agent, "Agent Execution")
+                 if continuous_mode:
+                     progress_bar = st.progress(0)
+                     status_box = st.empty()
+                     aggregated_response = []
+                     
+                     for i in range(cycle_count):
+                         status_box.write(f"🔄 Running Cycle {i+1}/{cycle_count}...")
+                         
+                         cycle_res = safe_action_wrapper(lambda: _execute_agent_cycle(i+1, cycle_count), f"Cycle {i+1} Complete")
+                         
+                         if cycle_res:
+                            # If result is a list (candidates), extend. If text, append.
+                            if isinstance(cycle_res, list):
+                                aggregated_response.extend(cycle_res)
+                            else:
+                                aggregated_response.append(f"Cycle {i+1}: {str(cycle_res)}")
+                         
+                         progress_bar.progress((i + 1) / cycle_count)
+                         # Small delay to allow potential background DB writes/rate limits to settle
+                         time.sleep(1)
+                     
+                     response = aggregated_response
+                     status_box.success(f"✅ Completed {cycle_count} harvest cycles!")
+                     
+                 else:
+                     # Standard Single Run
+                     with st.spinner(f"{agent.role} is thinking..."):
+                        response = safe_action_wrapper(lambda: _execute_agent_cycle(), "Agent Execution")
                  
                  if response:
                     st.session_state['last_lab_response'] = response
@@ -199,7 +244,7 @@ def render_agent_interaction_area(agent_name):
                     st.session_state['last_lab_context'] = context
                     st.session_state['last_lab_agent_name'] = agent_name 
                     st.balloons()
-                    st.success("Agent finished successfully!")
+                    # st.success("Agent finished successfully!")
                     time.sleep(1)
                     st.rerun()
 
@@ -226,7 +271,6 @@ def render_agent_interaction_area(agent_name):
                     if batch_file.name.endswith('.csv'):
                         rows = pandas.read_csv(batch_file).to_dict(orient='records')
                     else:
-                        import json
                         rows = json.load(batch_file)
                         if not isinstance(rows, list): raise ValueError("JSON must be a list")
                 except Exception as e:
@@ -356,7 +400,7 @@ def render_agent_interaction_area(agent_name):
                             for _, row in df_imp.iterrows():
                                 candidates_to_add.append(row.to_dict())
                         elif up_file.name.endswith('.json'):
-                            import json
+
                             data = json.load(up_file)
                             if isinstance(data, list):
                                 candidates_to_add = data
@@ -395,10 +439,24 @@ def render_agent_interaction_area(agent_name):
             # Selection Column
             inf_df.insert(0, "Select", False)
             
-            # Display
-            st.caption(f"Showing {len(inf_df)} candidates.")
-            
             # Editor (Editable)
+            # Use session state to persist changes across reruns (fixes checkmark loss)
+            
+            # 1. Toggle Select All
+            col_sel, col_stats = st.columns([1, 4])
+            with col_sel:
+                if st.checkbox("Select All", key="inf_select_all"):
+                    inf_df['Select'] = True
+                else:
+                    # If previously selected all, we might need to reset? 
+                    # Actually, standard behavior is if unchecked, default is False, 
+                    # but individual rows might be checked.
+                    # Simplified: If checked, force all True. If unchecked, respect data.
+                    pass
+            
+            with col_stats:
+                st.caption(f"Showing {len(inf_df)} candidates. Check boxes to delete.")
+
             edited_inf = st.data_editor(
                 inf_df,
                 column_config={
@@ -413,64 +471,32 @@ def render_agent_interaction_area(agent_name):
                 hide_index=True,
                 key="inf_editor_main",
                 width="stretch",
-                num_rows="fixed" 
+                num_rows="dynamic", # Allow adding/deleting visually
+                height=500 # Fixed height to ensure visibility of more than 4 items
             )
             
-            # Actions
+            # Capture selection
             selected_rows = edited_inf[edited_inf['Select'] == True]
+            selected_ids = selected_rows['id'].tolist()
             
-            # Calculate Changes (Naive check)
-            # For complex edits, we can assume the user wants to save what is in the editor if they click Save.
-            # But verifying row-by-row is safer for specific field updates.
-            
+            # Actions
             ac1, ac2, ac3, ac4 = st.columns(4)
             
             with ac1:
                 # CRUD: Save Changes
-                if st.button("💾 Save Edits", type="primary", key="save_edits_inf"):
-                    updated_count = 0
-                    current_data = inf_df.set_index('id')
-                    
-                    for index, row in edited_inf.iterrows():
-                        rid = row['id']
-                        # Compare critical fields
-                        original = current_data.loc[rid] if rid in current_data.index else None
-                        
-                        if original is not None:
-                            updates = {}
-                            if row['follower_count'] != original['follower_count']:
-                                updates['follower_count'] = row['follower_count']
-                            if row['niche'] != original['niche']:
-                                updates['niche'] = row['niche']
-                            
-                            # Update DB if changed
-                            # Note: We don't have a generic update_influencer_candidate yet, just status.
-                            # But wait, I only implemented update_status in the plan.
-                            # I better assume the plan only covered status updates or add a generic update?
-                            # Re-reading plan: "Implement update_influencer_candidate_status (Update)"
-                            # Ah, I might have missed generic field updates in the plan.
-                            # I will interpret 'update_influencer_candidate_status' as the primary update needed for workflow.
-                            # However, editing 'Niche' or 'Followers' in the grid implies those should save too.
-                            # I should probably quickly patch database.py to allow generic updates or just stick to status loop if strict.
-                            # For now, I'll comment out field updates to stick to the approved plan strictly, 
-                            # OR just use the status update function if I added generic logic? No I didn't.
-                            # Actually, sticking to the plan: I only have status update.
-                            # I will skip field updates for now to avoid breaking changes, or just support Status via button.
-                            pass
-
-                    st.info("Field editing not fully enabled in backend yet. Use Actions below.")
+                if st.button("💾 Save Edits", type="secondary", key="save_edits_inf"):
+                     # ... (Keep existing logic or update)
+                     st.info("Edit saving is currently limited to status updates.")
+                
+                if st.button("🗑️ Delete Selected", key="del_sel_inf", type="primary", disabled=selected_rows.empty):
+                    if delete_influencer_candidates(selected_ids):
+                        st.success(f"Deleted {len(selected_ids)} candidates.")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete candidates.")
                     
             with ac2:
-                 if st.button(f"🗑️ Delete ({len(selected_rows)})", key="del_inf_btn", disabled=selected_rows.empty):
-                     def _delete_flow():
-                         ids_to_del = selected_rows['id'].tolist()
-                         delete_influencer_candidates(ids_to_del)
-                         st.success(f"Deleted {len(ids_to_del)} candidates!")
-                         time.sleep(0.5)
-                         st.rerun()
-                     confirm_action("Confirm Delete", "Delete selected candidates?", _delete_flow, key="conf_del_inf")
-                
-            with ac3:
                  if st.button(f"🚀 Promote to Leads ({len(selected_rows)})", key="save_lead_btn", disabled=selected_rows.empty):
                      success_c = 0
                      for _, row in selected_rows.iterrows():
@@ -604,7 +630,6 @@ def render_agent_interaction_area(agent_name):
 
                             leads_to_add = pandas.read_csv(up_leads).to_dict(orient='records')
                         elif up_leads.name.endswith('.json'):
-                            import json
                             leads_to_add = json.load(up_leads)
                             if not isinstance(leads_to_add, list):
                                 st.error("JSON must be a list of objects.")
@@ -693,7 +718,6 @@ def render_agent_interaction_area(agent_name):
             up_cont = st.file_uploader("Upload JSON", type=['json'], key=f"cont_up_{agent_name}")
             if up_cont and st.button("Process Import", key=f"proc_cont_{agent_name}"):
                 try:
-                    import json
                     items = json.load(up_cont)
                     if isinstance(items, list):
                         c = 0
@@ -754,7 +778,6 @@ def render_agent_interaction_area(agent_name):
             up_log = st.file_uploader("Upload JSON", type=['json'], key=f"log_up_{agent_name}")
             if up_log and st.button("Process Import", key=f"proc_log_{agent_name}"):
                 try:
-                    import json
                     items = json.load(up_log)
                     if isinstance(items, list):
                         c = 0

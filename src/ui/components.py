@@ -86,7 +86,12 @@ def render_data_management_bar(data, filename_prefix="export", on_delete=None, o
 
     with col3:
         if on_import:
-            uploaded_file = st.file_uploader("📥 Import Data", type=['json', 'csv'], label_visibility="collapsed")
+            uploaded_file = st.file_uploader(
+                "📥 Import Data", 
+                type=['json', 'csv'], 
+                label_visibility="collapsed",
+                help="Upload a JSON or CSV file to import data."
+            )
             if uploaded_file is not None:
                 if st.button("Apply Import", width="stretch"):
                     on_import(uploaded_file)

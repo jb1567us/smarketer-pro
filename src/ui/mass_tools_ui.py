@@ -7,6 +7,7 @@ from database import add_lead, load_data, delete_lead, get_connection
 from agents import ResearcherAgent, SEOExpertAgent
 from agents.comment_agent import CommentAgent
 from workflow import run_outreach
+from global_search_harvester import GlobalSearchHarvester
 from config import config
 from ui.components import render_enhanced_table, render_data_management_bar, render_page_chat, premium_header, confirm_action, safe_action_wrapper
 import os
@@ -112,22 +113,45 @@ def render_mass_tools_page():
                 if h_keywords:
                     def run_harvester():
                         keywords = [k.strip() for k in h_keywords.split("\n") if k.strip()]
-                        harvester_status = st.status("Harvesting in progress...")
+                        
+                        # Prepare tasks for Global Harvester
+                        harvest_tasks = []
                         for kw in keywords:
-                            harvester_status.write(f"Scouting for: {kw}")
-                            asyncio.run(run_outreach(
-                                kw, 
-                                max_results=h_limit,
-                                status_callback=lambda m: harvester_status.write(f"  > {m}")
-                            ))
-                        harvester_status.update(label="Harvesting Complete!", state="complete")
-                        return len(keywords)
+                             harvest_tasks.append({
+                                 "query": kw,
+                                 "platform": "google",
+                                 "num_results": h_limit,
+                                 "retries": 0
+                             })
+                        
+                        harvester_status = st.status("Initializing Mass Harvester (High Concurrency)...")
+                        harvester_status.write(f"Preparing {len(harvest_tasks)} tasks...")
+                        
+                        # Initialize Harvester
+                        gh = GlobalSearchHarvester(input_data=harvest_tasks)
+                        
+                        # Run Async
+                        results = asyncio.run(gh.run())
+                        
+                        harvester_status.write(f"Harvested {len(results)} total links.")
+                        harvester_status.update(label="Mass Harvest Complete!", state="complete")
+                        return results
 
-                    res = safe_action_wrapper(run_harvester, "Harvest Complete")
+                    res = safe_action_wrapper(run_harvester, "Mass Harvest Complete")
                     if res:
-                         st.success(f"Harvested targets for {res} keywords. Check CRM Dashboard for new leads.")
+                         st.success(f"Harvested {len(res)} targets. Saved to data/harvested_results.csv")
+                         st.session_state['mass_harvest_results'] = res
                          time.sleep(1)
                          st.rerun()
+
+        # result display
+        if 'mass_harvest_results' in st.session_state and st.session_state['mass_harvest_results']:
+            st.divider()
+            st.subheader("Harvest Results")
+            results = st.session_state['mass_harvest_results']
+            df = pd.DataFrame(results)
+            if not df.empty:
+                render_enhanced_table(df, key="mass_res_table")
 
         # Show Recent Harvested (last 50 leads added via 'search')
         st.divider()

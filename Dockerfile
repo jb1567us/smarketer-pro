@@ -1,19 +1,20 @@
-# Base Image: Python 3.10 Slim (Official)
-FROM python:3.10-slim
+# Base Image: Official Playwright Image (includes Python + Browsers + Deps)
+# Using v1.40.0-jammy to match requirements.txt
+FROM mcr.microsoft.com/playwright/python:v1.40.0-jammy
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    PYTHONUNBUFFERED=1
 
 # working directory
+ENV REBUILD_DATE=2025-01-27
 WORKDIR /app
 
 # Install system dependencies
-# - curl/git: General utilities
-# - build-essential: For compiling python extensions if needed
 # - ffmpeg: Required for Whisper/Audio processing
 # - tor: For proxy rotation fallback
+# - espeak, portaudio: For audio tasks
+# Note: Docker/Git/Browsers are likely pre-installed or easier to manage here
 RUN apt-get update && apt-get install -y \
     curl \
     git \
@@ -21,15 +22,19 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     tor \
     espeak-ng \
+    portaudio19-dev \
+    python3-pyaudio \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY src/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright Browsers AND System Dependencies
-# This command installs the browsers + the Linux libs needed to run them
-RUN playwright install --with-deps chromium
+# Playwright bits:
+# Browsers are pre-installed in this image, so 'playwright install' is often skipped
+# BUT we explicitly running it ensures we have exactly what we need if the image differs slightly
+RUN playwright install chromium
 
 # Copy application source code
 # We copy everything else (respecting .dockerignore)

@@ -1,0 +1,9 @@
+{
+  "target": "proxy_manager_config_update",
+  "initial": "\n# SearXNG Settings\nserver:\n  port: 8080\n  \noutgoing:\n  request_timeout: 5.0\n  proxies:\n    all://:\n      - http://old-proxy:8080\n\nsearch:\n  safe_search: 0\n  formats:\n    - html\n",
+  "proxies_added": [
+    "1.1.1.1:8080",
+    "2.2.2.2:9090"
+  ],
+  "final": "\n# SearXNG Settings\nserver:\n  port: 8080\n  \noutgoing:\n  proxies:\n    all://:\n      - http://1.1.1.1:8080\n      - http://2.2.2.2:9090\n\n  request_timeout: 5.0\nsearch:\n  safe_search: 0\n  formats:\n    - html\n"
+}

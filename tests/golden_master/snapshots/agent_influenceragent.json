@@ -1,0 +1,22 @@
+{
+  "agent": "InfluencerAgent",
+  "input_context": "Find 5 yoga influencers in New York",
+  "llm_history": [
+    {
+      "prompt": "Extract search parameters from this request: 'Find 5 yoga influencers in New York'\nLook for 'Target Limit: X' (default 10), 'Min Followers: X', 'Max Followers: X'.\nReturn JSON strictly: {\"niche\": \"topic\", \"city\": \"city\", \"audience\": \"text\", \"platform\": \"instagram\", \"limit\": int, \"min_followers\": \"str_or_null\", \"max_followers\": \"str_or_null\"}",
+      "response": {
+        "niche": "yoga",
+        "city": "New York",
+        "audience": "yoga",
+        "platform": "instagram",
+        "limit": 5,
+        "min_followers": null,
+        "max_followers": null
+      },
+      "type": "json",
+      "kwargs": {}
+    }
+  ],
+  "output": [],
+  "type": "agent_decision"
+}

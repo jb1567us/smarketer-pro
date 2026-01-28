@@ -1,0 +1,34 @@
+{
+  "type": "social_parsing",
+  "results": [
+    {
+      "input": "10.5K Followers, 500 Following, 1M Likes - Yoga and Fitness Coach",
+      "output": {
+        "followers": "10.5K",
+        "following": "500"
+      }
+    },
+    {
+      "input": "Over 1,000,000 subs on YouTube! Business inquiries: test@gmail.com",
+      "output": null
+    },
+    {
+      "input": "250k followers | Tech & AI Enthusiast | Seattle based",
+      "output": {
+        "followers": "250K"
+      }
+    },
+    {
+      "input": "Follow for more! 12.3m followers on TikTok",
+      "output": {
+        "followers": "12.3M"
+      }
+    },
+    {
+      "input": "500 followers - Just starting out",
+      "output": {
+        "followers": "500"
+      }
+    }
+  ]
+}

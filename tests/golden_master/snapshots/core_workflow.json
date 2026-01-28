@@ -1,0 +1,33 @@
+{
+  "target": "workflow_engine",
+  "workflow": {
+    "id": "master_snap",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "trigger.manual"
+      },
+      {
+        "id": "n2",
+        "type": "action.search",
+        "params": {
+          "query": "test"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "n1",
+        "target": "n2"
+      }
+    ]
+  },
+  "logs": [
+    "\u2699\ufe0f Workflow Engine initializing: master_snap",
+    "\ud83d\udcdd Executing Node: trigger.manual (n1)",
+    "\u2705 Node n1 complete.",
+    "\ud83d\udcdd Executing Node: action.search (n2)",
+    "\u2705 Node n2 complete.",
+    "\ud83c\udfc1 Workflow Execution Fully Complete."
+  ]
+}

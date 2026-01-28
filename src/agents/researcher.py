@@ -137,6 +137,53 @@ class ResearcherAgent(BaseAgent):
             
         return analyzed
 
+    async def process_search_results(self, results):
+        """
+        Iterates through search results, visits each page using DirectBrowser, 
+        and extracts detailed info (emails, tech stack, etc).
+        """
+        from search_providers.direct_browser import DirectBrowser
+        from extractor import extract_emails_from_text
+        
+        # Use headless browser for scraping to match search stealth
+        browser = DirectBrowser(headless=True)
+        
+        enriched_leads = []
+        
+        for item in results:
+            url = item.get('url')
+            if not url: continue
+            
+            print(f"  [Researcher] 🔬 Deep Diving: {url}...")
+            try:
+                # 1. Fetch Content via Stealth Browser
+                html_content = await browser.get_page_content(url)
+                
+                if not html_content:
+                    print(f"  [Researcher] ⚠️ Failed to fetch content for {url}")
+                    continue
+                
+                # 2. Extract Signals
+                text_content = self._clean_html_for_llm(html_content, limit=20000)
+                
+                # Basic Extraction (Regex)
+                emails = extract_emails_from_text(text_content)
+                
+                # Store
+                item['details'] = {
+                    "emails": list(emails),
+                    "scraped_text_preview": text_content[:500],
+                    "status": "scraped"
+                }
+                enriched_leads.append(item)
+                
+            except Exception as e:
+                print(f"  [Researcher] Error processing {url}: {e}")
+                item['details'] = {"error": str(e)}
+                enriched_leads.append(item)
+                
+        return enriched_leads
+
     async def keyword_discovery(self, seeds, levels=1, sources=['google'], append_variants=False):
         """
         ScrapeBox-style Keyword Harvester. 
@@ -244,11 +291,10 @@ class ResearcherAgent(BaseAgent):
         if not limit:
             limit = config['search'].get('max_results', 50)
         
-        # Load default profile engines/categories to ensure we use Bing (Resilience)
-        # instead of failing on Google defaults
-        profile = config['search']['profiles'].get('default', {})
-        engines = profile.get('engines')
-        categories = profile.get('categories')
+        # [DISABLED] Legacy engine loading (DirectBrowser handles this)
+        # profile = config['search']['profiles'].get('default', {})
+        # engines = profile.get('engines')
+        # categories = profile.get('categories')
 
         async with aiohttp.ClientSession() as session:
             raw_results = await search_searxng(

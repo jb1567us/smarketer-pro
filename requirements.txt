@@ -12,6 +12,7 @@ playwright
 setuptools-rust
 psutil
 pytest
+pytest-asyncio
 fpdf2
 typer
 rich
@@ -27,3 +28,5 @@ boto3
 # force rebuild 3
 playwright-stealth
 fake-useragent
+mcp
+apscheduler

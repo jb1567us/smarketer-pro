@@ -30,42 +30,62 @@ class DBWriter:
         print(f"[DBWriter] Started background writer for {self.db_path}")
 
     def _get_connection(self):
-        return sqlite3.connect(self.db_path, timeout=30, check_same_thread=False)
+        conn = sqlite3.connect(self.db_path, timeout=60, check_same_thread=False)
+        # try:
+        #     conn.execute("PRAGMA journal_mode=WAL;")
+        #     conn.execute("PRAGMA synchronous=NORMAL;")
+        # except Exception as e:
+        #     print(f"[DBWriter] Warning: Failed to set WAL mode: {e}")
+        return conn
 
     def _process_queue(self):
         """
         Consumer loop that processes write requests sequentially.
+        Opens/Closes connection per task to avoid holding locks (Docker/WAL safety).
         """
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        
         while self.running:
             try:
-                # Block for up to 1s waiting for a task, so we can check self.running
+                # Block for up to 1s waiting for a task
                 task = self.write_queue.get(timeout=1.0)
             except queue.Empty:
                 continue
 
             query, params, future = task
+            conn = None
             
             try:
-                cursor.execute(query, params)
+                conn = self._get_connection()
+                cursor = conn.cursor()
+                
+                # Distinguish between single execute and executemany
+                is_batch = False
+                if isinstance(params, list) and len(params) > 0 and isinstance(params[0], (list, tuple)):
+                    is_batch = True
+                
+                if is_batch:
+                    cursor.executemany(query, params)
+                else:
+                    cursor.execute(query, params)
+                    
                 conn.commit()
+                
                 if future:
-                    # If it's an insert, return the lastrowid
-                    if query.strip().upper().startswith("INSERT"):
+                    if not is_batch and query.strip().upper().startswith("INSERT"):
                         future.set_result(cursor.lastrowid)
                     else:
                         future.set_result(True)
+                        
             except Exception as e:
                 print(f"❌ [DBWriter] Error executing query: {query[:50]}... -> {e}")
                 if future:
                     future.set_exception(e)
             finally:
+                if conn:
+                    try:
+                        conn.close()
+                    except: pass
                 self.write_queue.task_done()
         
-        # Cleanup
-        conn.close()
         print("[DBWriter] Stopped.")
 
     def execute_write(self, query, params=(), wait=True):
@@ -79,6 +99,21 @@ class DBWriter:
 
         future = Future() if wait else None
         self.write_queue.put((query, params, future))
+        
+        if wait:
+            return future.result()
+        return None
+
+    def execute_many_write(self, query, params_list, wait=True):
+        """
+        Submits a batch write (executemany) to the queue.
+        params_list: A list of tuples/lists.
+        """
+        if not self.running:
+            raise RuntimeError("DBWriter is stopped.")
+
+        future = Future() if wait else None
+        self.write_queue.put((query, params_list, future))
         
         if wait:
             return future.result()

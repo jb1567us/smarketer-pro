@@ -36,7 +36,11 @@ class VoiceManager:
         
         # Initialize STT
         self.recognizer = sr.Recognizer()
-        self.microphone = sr.Microphone()
+        try:
+            self.microphone = sr.Microphone()
+        except Exception as e:
+            print(f"[VoiceManager] ⚠️ Microphone initialization failed (No Audio Device?): {e}")
+            self.microphone = None
         
         # Optimize recognizer
         self.recognizer.energy_threshold = 300
@@ -93,6 +97,10 @@ class VoiceManager:
         if self.listen_stopper:
             return
             
+        if self.microphone is None:
+            print("[VoiceManager] Cannot start listening: No microphone available.")
+            return
+
         try:
             # Check if microphone is actually working by trying to enter context once
             # This catches the 'NoneType object has no attribute close' error from buggy drivers

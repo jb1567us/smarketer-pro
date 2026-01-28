@@ -13,7 +13,6 @@ search:
       engines:
       - bing
       - duckduckgo
-      # - yahoo
     tech:
       categories:
       - it
@@ -41,7 +40,6 @@ search:
       engines:
       - google news
       - bing news
-      # - yahoo news
       - duckduckgo news
     social:
       categories:
@@ -81,7 +79,7 @@ project:
       search: 2
       scrape: 2
     paid:
-      search: 10
+      search: 50
       scrape: 10
   exclude_patterns:
   - .gov
@@ -97,9 +95,10 @@ project:
   - pinterest
 proxies:
   enabled: true
+  tor_only: false
   source_url: https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt
-  max_proxies: 10000
-  harvest_concurrency: 800
+  max_proxies: 500
+  harvest_concurrency: 50
   harvest_batch_size: 1000
   verification_url: http://httpbin.org/ip
 quality_gate:
@@ -244,10 +243,16 @@ llm:
     - provider: huggingface
       model_name: mistralai/Mistral-7B-Instruct-v0.2
       tier: performance
+    - provider: openrouter
+      model_name: upstage/solar-pro-3:free
+      tier: economy
+    - provider: openrouter
+      model_name: arcee-ai/trinity-large-preview:free
+      tier: economy
     strategy: priority
   model_name: gemini-flash-latest
   ollama_base_url: http://localhost:11434
-  last_auto_scan: 1769358406.2411833
+  last_auto_scan: 1769632996.9376094
 logging:
   spawn_background_window: true
 image_gen:

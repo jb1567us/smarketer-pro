@@ -20,7 +20,8 @@ async def run_worker(verbose=False, force=False):
     watched_files = {
         os.path.abspath(__file__): os.path.getmtime(__file__),
         os.path.abspath(os.path.join(os.path.dirname(__file__), 'proxy_manager.py')): os.path.getmtime(os.path.join(os.path.dirname(__file__), 'proxy_manager.py')),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), 'config.py')): os.path.getmtime(os.path.join(os.path.dirname(__file__), 'config.py'))
+        os.path.abspath(os.path.join(os.path.dirname(__file__), 'config.py')): os.path.getmtime(os.path.join(os.path.dirname(__file__), 'config.py')),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), 'database.py')): os.path.getmtime(os.path.join(os.path.dirname(__file__), 'database.py'))
     }
 
     print(f"[{datetime.now()}] 👁️  Watching for code changes...")
@@ -58,6 +59,15 @@ async def run_worker(verbose=False, force=False):
                  
         except Exception as e:
             print(f"[{datetime.now()}] ⚠️ Error in worker loop: {e}")
+        
+        # [NEW] Automatic Proxy Pruning (Every ~60s)
+        # We use a simple modulo check on time or just a counter.
+        # Since loop runs every 10s, we can run it every 6th iteration or check timestamp.
+        if int(time.time()) % 60 < 15: # Run within the first 15s of every minute
+             try:
+                 await proxy_manager.prune_proxies()
+             except Exception as e:
+                 print(f"[{datetime.now()}] 🧹 Pruning failed: {e}")
         
         # [USER REQUEST] Continuous Mode: 10s loop (effectively continuously topping up)
         await asyncio.sleep(10)

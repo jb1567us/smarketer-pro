@@ -246,39 +246,39 @@ class WorkflowEngine:
                 status_callback(f"💥 Workflow Failed: {e}")
 
     def _save_execution_state(self, execution_id, workflow_id, status, state):
-        conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        cursor = conn.cursor()
-        cursor.execute('''
+        from utils.db_writer import get_db_writer
+        writer = get_db_writer()
+        query = '''
             INSERT OR REPLACE INTO workflow_executions 
             (execution_id, workflow_id, status, start_time, state_json)
             VALUES (?, ?, ?, ?, ?)
-        ''', (execution_id, workflow_id, status, datetime.now(), json.dumps(state, default=str)))
-        conn.commit()
-        conn.close()
+        '''
+        params = (execution_id, workflow_id, status, datetime.now(), json.dumps(state, default=str))
+        writer.execute_write(query, params, wait=False)
 
     def _update_status(self, execution_id, status, error=None):
-        conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        cursor = conn.cursor()
-        cursor.execute('''
+        from utils.db_writer import get_db_writer
+        writer = get_db_writer()
+        query = '''
             UPDATE workflow_executions 
             SET status = ?, end_time = ?, error_message = ?
             WHERE execution_id = ?
-        ''', (status, datetime.now(), error, execution_id))
-        conn.commit()
-        conn.close()
+        '''
+        params = (status, datetime.now(), error, execution_id)
+        writer.execute_write(query, params, wait=False)
 
     def _log_step(self, execution_id, step_id, node_type, input_data, output_data):
-        conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        cursor = conn.cursor()
-        cursor.execute('''
+        from utils.db_writer import get_db_writer
+        writer = get_db_writer()
+        query = '''
             INSERT INTO step_logs 
             (execution_id, step_id, node_type, status, input_json, output_json, timestamp)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (
+        '''
+        params = (
             execution_id, step_id, node_type, "SUCCESS",
             json.dumps(input_data, default=str),
             json.dumps(output_data, default=str),
             datetime.now()
-        ))
-        conn.commit()
-        conn.close()
+        )
+        writer.execute_write(query, params, wait=False)
