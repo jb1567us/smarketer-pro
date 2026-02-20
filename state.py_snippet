@@ -1,0 +1,10 @@
+
+    @rx.event(background=True)
+    async def start_poller(self):
+        """Background task to handle periodic polling."""
+        while self.is_polling:
+            import asyncio
+            async with self:
+                await self.poll_server_logs()
+                await self.poll_harvest_results()
+            await asyncio.sleep(2)
