@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import time
+import json
 from typing import List, Dict, Any
 
 # Database filename
@@ -351,10 +352,10 @@ def add_message(session_id: int, role: str, content: str):
     )
     conn.commit()
     conn.close()
-    import json
+
+def add_scheduled_post(source: str, platforms: List[str], content: str, scheduled_ts: int):
     conn = get_connection()
-    c = conn.cursor()
-    c.execute(
+    conn.execute(
         "INSERT INTO scheduled_posts (source, platforms, content, scheduled_ts, created_at) VALUES (?, ?, ?, ?, ?)",
         (source, json.dumps(platforms), content, scheduled_ts, int(time.time()))
     )
@@ -362,7 +363,6 @@ def add_message(session_id: int, role: str, content: str):
     conn.close()
 
 def get_scheduled_posts(status: str = 'pending') -> List[Dict[str, Any]]:
-    import json
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()

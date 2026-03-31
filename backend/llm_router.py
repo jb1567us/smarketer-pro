@@ -1,6 +1,7 @@
 import time
 import random
 import logging
+import asyncio
 from enum import Enum
 from typing import Dict, List, Any, Optional
 
@@ -90,7 +91,7 @@ class SmartRouter:
         """Simulation logic for the prototype."""
         # Randomly simulate failures for testing if needed, or stick to healthy path
         # In a real app, this would use aiohttp to hit OpenAI/Anthropic/Gemini
-        time.sleep(0.5) # Simulate latency
+        await asyncio.sleep(0.5)  # Simulate latency
         prefix = "[FALLBACK] " if is_fallback else ""
         return f"{prefix}Response from {provider.name} ({provider.models[0]})"
 
