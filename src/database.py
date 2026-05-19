@@ -62,6 +62,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS email_templates (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             niche TEXT,
             pain_point_id INTEGER,
             stage TEXT, -- intro, value, close
@@ -75,6 +76,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS campaign_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             lead_email TEXT,
             lead_id INTEGER,
             campaign_id INTEGER,
@@ -88,6 +90,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS creative_content (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             agent_type TEXT, -- Designer, Social Media, etc.
             content_type TEXT, -- image, text, json
             title TEXT,
@@ -100,6 +103,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS email_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             campaign_id INTEGER,
             lead_email TEXT,
             provider_id TEXT, -- e.g. 'mailjet', 'resend'
@@ -114,6 +118,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS wp_sites (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             name TEXT,
             url TEXT,
             username TEXT,
@@ -128,6 +133,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS digital_sales_rooms (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             campaign_id INTEGER,
             lead_id INTEGER,
             site_id INTEGER,
@@ -147,6 +153,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS sequences (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             campaign_id INTEGER,
             name TEXT,
             created_at INTEGER,
@@ -157,6 +164,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS sequence_steps (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             sequence_id INTEGER,
             step_number INTEGER,
             touch_type TEXT, -- email, linkedin, twitter
@@ -169,6 +177,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS sequence_enrollments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             lead_id INTEGER,
             sequence_id INTEGER,
             current_step_index INTEGER DEFAULT 0,
@@ -183,6 +192,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS campaigns (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             name TEXT,
             niche TEXT,
             product_name TEXT,
@@ -209,6 +219,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS deals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             lead_id INTEGER,
             title TEXT,
             value REAL,
@@ -223,6 +234,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             lead_id INTEGER,
             description TEXT,
             due_date INTEGER,
@@ -237,6 +249,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS scheduled_posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             agent_type TEXT,
             platforms TEXT, -- JSON list of platforms
             content TEXT,
@@ -250,6 +263,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS link_wheels (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             money_site_url TEXT,
             strategy TEXT,
             tier_plan_json TEXT,
@@ -262,6 +276,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS my_affiliate_programs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             program_name TEXT,
             login_url TEXT,
             username TEXT,
@@ -274,6 +289,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS my_affiliate_links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             program_id INTEGER,
             target_url TEXT,
             cloaked_slug TEXT, -- e.g. 'shopify' for /go/shopify
@@ -291,6 +307,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS partners (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             name TEXT,
             email TEXT UNIQUE,
             website TEXT,
@@ -304,6 +321,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS partner_contracts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             partner_id INTEGER,
             contract_type TEXT, -- CPA, RevShare
             terms TEXT, -- e.g "20" for 20%
@@ -317,6 +335,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS partner_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             partner_id INTEGER,
             event_type TEXT, -- click, sign_up, sale
             event_value REAL,
@@ -331,6 +350,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS payouts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             partner_id INTEGER,
             amount REAL,
             period_start INTEGER,
@@ -346,6 +366,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS strategy_presets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             name TEXT,
             description TEXT,
             instruction_template TEXT,
@@ -446,6 +467,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS custom_agents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             name TEXT,
             role TEXT,
             goal TEXT,
@@ -457,6 +479,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS managed_accounts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             platform_name TEXT,
             email TEXT,
             username TEXT,
@@ -472,6 +495,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS agent_work_products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             agent_role TEXT,
             start_time INTEGER,
             completion_time INTEGER,
@@ -521,6 +545,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS registration_tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             platform TEXT,
             url TEXT,
             details TEXT, -- JSON string
@@ -532,6 +557,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS registration_macros (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             platform TEXT UNIQUE,
             steps TEXT, -- JSON string
             created_at INTEGER,
@@ -559,6 +585,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS chat_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             title TEXT,
             created_at INTEGER
         );
@@ -567,6 +594,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS chat_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             session_id INTEGER,
             role TEXT,
             content TEXT,
@@ -589,6 +617,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS agent_decisions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workspace_id INTEGER DEFAULT 1,
             agent_role TEXT,
             intent TEXT,
             user_input TEXT,
@@ -612,7 +641,17 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO workspaces (id, name, created_at) VALUES (1, 'Default Workspace', ?)", (int(time.time()),))
     
     # Workspace Migration for existing tables
-    tables_needing_workspace = ['leads', 'campaigns', 'deals', 'tasks', 'creative_content']
+    tables_needing_workspace = [
+        'leads', 'campaigns', 'deals', 'tasks', 'creative_content',
+        'email_templates', 'campaign_events', 'email_logs', 'sequences', 
+        'sequence_steps', 'sequence_enrollments', 'custom_agents', 
+        'strategy_presets', 'scheduled_posts', 'chat_sessions', 
+        'agent_decisions', 'agent_work_products', 'wp_sites', 
+        'digital_sales_rooms', 'link_wheels', 'my_affiliate_programs', 
+        'my_affiliate_links', 'partners', 'partner_contracts', 
+        'partner_events', 'payouts', 'managed_accounts', 'registration_tasks', 
+        'registration_macros'
+    ]
     for table in tables_needing_workspace:
         try:
             c.execute(f'SELECT workspace_id FROM {table} LIMIT 1')
@@ -651,11 +690,11 @@ def create_workspace(name):
         conn.close()
 
 
-def create_chat_session(title="New Chat"):
+def create_chat_session(title="New Chat", workspace_id=1):
     """Creates a new chat session and returns its ID."""
     conn = get_connection()
     c = conn.cursor()
-    c.execute('INSERT INTO chat_sessions (title, created_at) VALUES (?, ?)', (title, int(time.time())))
+    c.execute('INSERT INTO chat_sessions (workspace_id, title, created_at) VALUES (?, ?, ?)', (workspace_id, title, int(time.time())))
     session_id = c.lastrowid
     conn.commit()
     conn.close()
@@ -695,25 +734,25 @@ def get_chat_history(session_id):
     conn.close()
     return results
 
-def get_chat_sessions(limit=10):
+def get_chat_sessions(limit=10, workspace_id=1):
     """Returns the most recent chat sessions."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute('SELECT * FROM chat_sessions ORDER BY created_at DESC LIMIT ?', (limit,))
+    c.execute('SELECT * FROM chat_sessions WHERE workspace_id = ? ORDER BY created_at DESC LIMIT ?', (workspace_id, limit))
     results = [dict(r) for r in c.fetchall()]
     conn.close()
     return results
 
-def update_session_title(session_id, title):
+def update_session_title(session_id, title, workspace_id=1):
     """Updates the title of a chat session."""
     conn = get_connection()
     c = conn.cursor()
-    c.execute('UPDATE chat_sessions SET title = ? WHERE id = ?', (title, session_id))
+    c.execute('UPDATE chat_sessions SET title = ? WHERE id = ? AND workspace_id = ?', (title, session_id, workspace_id))
     conn.commit()
     conn.close()
 
-def save_agent_work_product(agent_role, input_task, output_content, tags=None, start_time=None, completion_time=None, metadata=None, artifact_type="text"):
+def save_agent_work_product(agent_role, input_task, output_content, tags=None, start_time=None, completion_time=None, metadata=None, artifact_type="text", workspace_id=1):
     """Saves an agent's work product to the database."""
     conn = get_connection()
     c = conn.cursor()
@@ -734,25 +773,25 @@ def save_agent_work_product(agent_role, input_task, output_content, tags=None, s
         start_time = completion_time 
         
     c.execute('''
-        INSERT INTO agent_work_products (agent_role, start_time, completion_time, input_task, output_content, tags, metadata, artifact_type, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (agent_role, start_time, completion_time, input_task, output_content, tags_json, meta_json, artifact_type, int(time.time())))
+        INSERT INTO agent_work_products (workspace_id, agent_role, start_time, completion_time, input_task, output_content, tags, metadata, artifact_type, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (workspace_id, agent_role, start_time, completion_time, input_task, output_content, tags_json, meta_json, artifact_type, int(time.time())))
     
     product_id = c.lastrowid
     conn.commit()
     conn.close()
     return product_id
 
-def get_agent_work_products(agent_role=None, limit=50):
+def get_agent_work_products(agent_role=None, limit=50, workspace_id=1):
     """Retrieves agent work products, optionally filtered by role."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     
     if agent_role:
-        c.execute('SELECT * FROM agent_work_products WHERE agent_role = ? ORDER BY created_at DESC LIMIT ?', (agent_role, limit))
+        c.execute('SELECT * FROM agent_work_products WHERE workspace_id = ? AND agent_role = ? ORDER BY created_at DESC LIMIT ?', (workspace_id, agent_role, limit))
     else:
-        c.execute('SELECT * FROM agent_work_products ORDER BY created_at DESC LIMIT ?', (limit,))
+        c.execute('SELECT * FROM agent_work_products WHERE workspace_id = ? ORDER BY created_at DESC LIMIT ?', (workspace_id, limit))
         
     results = [dict(r) for r in c.fetchall()]
     conn.close()
@@ -857,24 +896,26 @@ def add_lead(url, email, source="search", category="default", industry=None, bus
     finally:
         conn.close()
 
-def lead_exists(email):
+def lead_exists(email, workspace_id=None):
     """Checks if an email already exists in the DB."""
     conn = get_connection()
     c = conn.cursor()
-    c.execute('SELECT 1 FROM leads WHERE email = ?', (email,))
+    ws_id = get_current_workspace_id(workspace_id)
+    c.execute('SELECT 1 FROM leads WHERE email = ? AND workspace_id = ?', (email, ws_id))
     result = c.fetchone()
     conn.close()
     return result is not None
 
-def mark_contacted(email):
+def mark_contacted(email, workspace_id=None):
     """Updates the status of a lead to 'contacted'."""
     conn = get_connection()
     c = conn.cursor()
+    ws_id = get_current_workspace_id(workspace_id)
     c.execute('''
         UPDATE leads 
         SET status = 'contacted', contacted_at = ? 
-        WHERE email = ?
-    ''', (int(time.time()), email))
+        WHERE email = ? AND workspace_id = ?
+    ''', (int(time.time()), email, ws_id))
     conn.commit()
     conn.close()
 
@@ -889,24 +930,26 @@ def get_leads_by_status(status="new", workspace_id=None):
     conn.close()
     return [dict(r) for r in results]
 
-def get_lead_by_id(lead_id):
+def get_lead_by_id(lead_id, workspace_id=None):
     """Retrieves a single lead by its ID."""
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute('SELECT * FROM leads WHERE id = ?', (lead_id,))
+    ws_id = get_current_workspace_id(workspace_id)
+    c.execute('SELECT * FROM leads WHERE id = ? AND workspace_id = ?', (lead_id, ws_id))
     result = c.fetchone()
     conn.close()
     return dict(result) if result else None
 
-def update_lead_enrichment(lead_id, enrichment_data):
+def update_lead_enrichment(lead_id, enrichment_data, workspace_id=None):
     """Updates lead with enriched intelligence."""
     conn = get_connection()
     c = conn.cursor()
+    ws_id = get_current_workspace_id(workspace_id)
     c.execute('''
         UPDATE leads 
         SET linkedin_url = ?, twitter_url = ?, instagram_url = ?, intent_signals = ?, company_bio = ?, tech_stack = ?
-        WHERE id = ?
+        WHERE id = ? AND workspace_id = ?
     ''', (
         enrichment_data.get('linkedin_url'),
         enrichment_data.get('twitter_url'),
@@ -914,28 +957,32 @@ def update_lead_enrichment(lead_id, enrichment_data):
         enrichment_data.get('intent_signals'),
         enrichment_data.get('company_bio'),
         enrichment_data.get('tech_stack'),
-        lead_id
+        lead_id,
+        ws_id
     ))
     conn.commit()
     conn.close()
 
-def clear_all_leads():
-    """Deletes ALL leads from the database. Dangerous!"""
+def clear_all_leads(workspace_id=None):
+    """Deletes ALL leads from the database for workspace. Dangerous!"""
     conn = get_connection()
     c = conn.cursor()
-    c.execute('DELETE FROM leads')
+    ws_id = get_current_workspace_id(workspace_id)
+    c.execute('DELETE FROM leads WHERE workspace_id = ?', (ws_id,))
     conn.commit()
     conn.close()
 
-def delete_leads(lead_ids):
+def delete_leads(lead_ids, workspace_id=None):
     """Deletes specific leads by ID list."""
     if not lead_ids:
         return
     conn = get_connection()
     c = conn.cursor()
+    ws_id = get_current_workspace_id(workspace_id)
     # Safe parameter substitution for list
     placeholders = ','.join(['?'] * len(lead_ids))
-    c.execute(f'DELETE FROM leads WHERE id IN ({placeholders})', lead_ids)
+    params = list(lead_ids) + [ws_id]
+    c.execute(f'DELETE FROM leads WHERE id IN ({placeholders}) AND workspace_id = ?', params)
     conn.commit()
     conn.close()
 

@@ -147,6 +147,102 @@ def load_css():
             background-image: linear-gradient(90deg, var(--primary-color), #60a5fa);
         }
 
+        /* TOP NAVIGATION BAR */
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+            padding: 0.5rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+        }
+        .nav-item {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            color: var(--text-color);
+            text-decoration: none;
+        }
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* TASK LIST STYLING */
+        .task-card {
+            background: var(--secondary-background-color);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #3b82f6; /* Default Blue */
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        .task-card:hover {
+            transform: scale(1.02);
+        }
+        .task-completed { border-left-color: #10b981; }
+        .task-failed { border-left-color: #ef4444; }
+        .task-running { border-left-color: #f59e0b; }
+
+        /* FLOATING AGENT CHAT BUTTON */
+        .floating-chat-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .floating-chat-btn:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            background: #2563eb;
+        }
+
+        /* STATUS DOTS */
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-online { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-busy { background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+        .status-offline { background-color: #94a3b8; }
+
+        .agent-status-tag {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(128,128,128,0.2);
+        }
+
         </style>
     """, unsafe_allow_html=True)
     

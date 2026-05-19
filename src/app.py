@@ -88,6 +88,7 @@ from ui.pm_ui import render_pm_ui
 from ui.dsr_ui import render_dsr_page
 from ui.hosting_ui import render_hosting_dashboard
 from ui.manager_ui import render_manager_ui
+from ui.pipeline_ui import render_pipeline_visualizer
 from model_fetcher import fetch_models_for_provider, scan_all_free_providers
 from config import config, reload_config
 from proxy_manager import proxy_manager
@@ -191,12 +192,95 @@ def get_system_usage():
     ram = psutil.virtual_memory().percent
     return cpu, ram
 
+def render_top_navbar(active_workspace_name="Default Workspace"):
+    """Renders a custom horizontal navigation bar at the top of the main area."""
+    
+    # Custom HTML for a premium navbar
+    st.markdown(f"""
+        <div class="top-navbar">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="font-weight: 800; color: #3b82f6; font-size: 1.1rem; letter-spacing: -0.5px;">SMARKETER<span style="color: var(--text-color); opacity: 0.6;">PRO</span></div>
+                <div style="height: 20px; width: 1px; background: rgba(128,128,128,0.2);"></div>
+                <div style="display: flex; gap: 5px;">
+                    <a href="?view=Dashboard" class="nav-item {{'active' if st.session_state.get('current_view', '') == 'Dashboard' else ''}}">🏠 Dashboard</a>
+                    <a href="?view=Campaigns" class="nav-item {{'active' if st.session_state.get('current_view', '') == 'Campaigns' else ''}}">🚀 Campaigns</a>
+                    <a href="?view=Task Queue" class="nav-item {{'active' if st.session_state.get('current_view', '') == 'Task Queue' else ''}}">📋 Tasks</a>
+                    <a href="?view=Pipeline Visualizer" class="nav-item {{'active' if st.session_state.get('current_view', '') == 'Pipeline Visualizer' else ''}}">📂 Pipeline</a>
+                    <a href="?view=Analytics" class="nav-item {{'active' if st.session_state.get('current_view', '') == 'Analytics' else ''}}">📊 Stats</a>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="agent-status-tag" title="System Agent Status">
+                    <span class="status-dot status-online" title="Manager Agent: Online & Ready"></span>
+                    <span style="margin-right: 12px; opacity: 0.8;" title="Manager Agent: Online & Ready">Manager</span>
+                    <span class="status-dot status-busy" title="Researcher Agent: Processing Tasks"></span>
+                    <span style="opacity: 0.8;" title="Researcher Agent: Processing Tasks">Researcher</span>
+                </div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: #3b82f6; background: rgba(59, 130, 246, 0.1); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);" title="Current Active Workspace">
+                    {active_workspace_name}
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+def render_floating_chat():
+    """Renders a floating action button for quick agent interaction."""
+    # This is a visual component; actual interaction would need a Streamlit listener or view change.
+    st.markdown("""
+        <div class="floating-chat-btn">
+            💬
+        </div>
+    """, unsafe_allow_html=True)
+
 def main():
     st.set_page_config(page_title="B2B Outreach Agent", layout="wide", page_icon="🚀")
     init_logging()
     reload_config()
     load_css()
     init_db()
+
+    # --- URL STATE MANAGEMENT ---
+    # 1. Initialize from URL if fresh session
+    if 'current_view' not in st.session_state:
+        if "view" in st.query_params:
+            st.session_state['current_view'] = st.query_params["view"]
+        else:
+            st.session_state['current_view'] = "Dashboard"
+    
+    # 1.5. Check for URL updates even if already initialized (for navbar links)
+    if "view" in st.query_params and st.query_params["view"] != st.session_state.get('last_query_view'):
+        st.session_state['current_view'] = st.query_params["view"]
+        st.session_state['last_query_view'] = st.query_params["view"]
+
+    # 2. Sync URL to State (ensure URL reflects current view)
+    try:
+        if "view" not in st.query_params or st.query_params["view"] != st.session_state['current_view']:
+            st.query_params["view"] = st.session_state['current_view']
+    except Exception:
+        pass
+
+    if 'last_view' not in st.session_state:
+        st.session_state['last_view'] = st.session_state['current_view']
+
+    # --- WORKSPACE INITIALIZATION BEFORE NAVBAR ---
+    from database import get_workspaces, create_workspace
+    workspaces = get_workspaces()
+    if not workspaces:
+        create_workspace("Default Workspace")
+        workspaces = get_workspaces()
+        
+    ws_map = {w['name']: w['id'] for w in workspaces}
+    
+    if 'active_workspace_id' not in st.session_state:
+        first_id = list(ws_map.values())[0] if ws_map else 1
+        st.session_state['active_workspace_id'] = ws_map.get('Default Workspace', first_id)
+        
+    curr_ws_id = st.session_state['active_workspace_id']
+    active_workspace_name = next((name for name, wid in ws_map.items() if wid == curr_ws_id), "Default Workspace")
+
+    render_top_navbar(active_workspace_name)
+    render_floating_chat()
     st.title("🚀 Smarketer Pro: CRM & Growth OS")
     
     # Global App Mode
@@ -227,46 +311,10 @@ def main():
                              st.rerun()
                          st.divider()
 
-    # --- UNIFIED NAVIGATION ---
-    # --- URL STATE MANAGEMENT ---
-    # 1. Initialize from URL if fresh session
-    if 'current_view' not in st.session_state:
-        if "view" in st.query_params:
-            st.session_state['current_view'] = st.query_params["view"]
-        else:
-            st.session_state['current_view'] = "Dashboard"
-
-    # 2. Sync URL to State (ensure URL reflects current view)
-    # This ensures that when we switch views via buttons/dropdowns, the URL updates
-    try:
-        if "view" not in st.query_params or st.query_params["view"] != st.session_state['current_view']:
-            st.query_params["view"] = st.session_state['current_view']
-    except Exception:
-        pass # Handle case where query params might be immutable in some edge contexts or test runs
-
-    if 'last_view' not in st.session_state:
-        st.session_state['last_view'] = st.session_state['current_view']
-
     with st.sidebar:
         st.header("Navigation")
         
         # --- WORKSPACE SELECTOR ---
-        from database import get_workspaces, create_workspace
-        workspaces = get_workspaces()
-        if not workspaces:
-            create_workspace("Default Workspace")
-            workspaces = get_workspaces()
-            
-        ws_map = {w['name']: w['id'] for w in workspaces}
-        
-        # Initialize session state for workspace
-        if 'active_workspace_id' not in st.session_state:
-            # Default to the first one found if 'Default Workspace' is missing for some reason
-            first_id = list(ws_map.values())[0] if ws_map else 1
-            st.session_state['active_workspace_id'] = ws_map.get('Default Workspace', first_id)
-            
-        # Determine current index
-        curr_ws_id = st.session_state['active_workspace_id']
         try:
             curr_index = list(ws_map.values()).index(curr_ws_id)
         except ValueError:
@@ -291,7 +339,7 @@ def main():
 
         # Unified Search/Jump
         if app_mode == "B2B":
-            menu_unified = ["Dashboard", "CRM Dashboard", "Campaigns", "Pipeline (Deals)", "Tasks", "Reports", "Settings"]
+            menu_unified = ["Dashboard", "CRM Dashboard", "Campaigns", "Pipeline (Deals)", "Pipeline Visualizer", "Tasks", "Task Queue", "Reports", "Settings"]
             if show_labs:
                 menu_unified += [
                     "--- LABS ---", 
@@ -321,6 +369,9 @@ def main():
         
         choice = st.selectbox("Jump to Section", menu_unified, key="nav_select")
 
+
+    # --- RENDER TOP NAVBAR ---
+    render_top_navbar()
 
     choice = st.session_state['current_view']
     
@@ -431,6 +482,71 @@ def main():
 
     elif choice == "CRM Dashboard":
         render_crm_dashboard()
+
+    elif choice == "Task Queue":
+        st.header("📋 Global Task Queue")
+        st.caption("Shared mission control for all active agents and background operations.")
+        
+        # Stats
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Pending", 5)
+        c2.metric("Running", 2)
+        c3.metric("Completed", 124)
+        c4.metric("Failed", 3)
+        
+        st.divider()
+        
+        # Task List (Mock for now, will connect to DB soon)
+        tasks = [
+            {"id": "T1", "name": "LinkedIn Prospecting", "agent": "SDR Agent", "status": "running", "progress": 45},
+            {"id": "T2", "name": "Email Template Optimization", "agent": "Copywriter", "status": "completed", "progress": 100},
+            {"id": "T3", "name": "CRM Sync", "agent": "Manager", "status": "pending", "progress": 0},
+            {"id": "T4", "name": "Lead Enrichment", "agent": "Researcher", "status": "failed", "progress": 12},
+        ]
+        
+        for t in tasks:
+            status_class = f"task-{t['status']}"
+            with st.container():
+                st.markdown(f"""
+                    <div class="task-card {status_class}">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong>{t['name']}</strong>
+                            <span>{t['agent']}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; margin-top: 5px;">Status: {t['status'].title()} | Progress: {t['progress']}%</div>
+                    </div>
+                """, unsafe_allow_html=True)
+                if t['status'] == 'running':
+                    st.progress(t['progress'] / 100)
+
+    elif choice == "Pipeline Visualizer":
+        st.header("📂 Advanced Pipeline Visualizer")
+        st.caption("Dynamic visualization of your sales funnel and agent-driven conversions.")
+        
+        # Interactive Canvas Placeholder
+        st.info("🎨 Rendering Interactive Pipeline Flow...")
+        
+        # Mock Visualization with Mermaid
+        st.markdown("""
+        ```mermaid
+        graph LR
+            A[Leads Found] -->|Researcher| B(Enriched)
+            B -->|SDR Agent| C{Qualified?}
+            C -->|Yes| D[Proposal Sent]
+            C -->|No| E[Nurture Track]
+            D -->|Negotiator| F((Closed Won))
+        ```
+        """, unsafe_allow_html=True)
+        
+        st.divider()
+        st.subheader("Live Agent Activity")
+        col_v1, col_v2 = st.columns(2)
+        with col_v1:
+            st.write("📈 **Researcher Agent** is currently harvesting 50 new leads from LinkedIn.")
+            st.progress(65)
+        with col_v2:
+            st.write("📧 **SDR Agent** is personalizing 12 follow-up emails.")
+            st.progress(30)
 
     elif choice == "Pipeline (Deals)":
         st.header("📂 Sales Pipeline")
@@ -1402,6 +1518,9 @@ def main():
 
     elif choice == "Product Lab":
         render_pm_ui()
+
+    elif choice == "Pipeline Visualizer":
+        render_pipeline_visualizer()
 
     elif choice == "Strategy Laboratory":
         st.header("🔬 Strategy Laboratory")

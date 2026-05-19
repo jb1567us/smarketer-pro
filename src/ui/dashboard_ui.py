@@ -96,40 +96,48 @@ def render_dashboard():
     st.markdown("""
         <style>
         .nav-card {
-            background-color: var(--secondary-background-color);
-            border: 1px solid rgba(128, 128, 128, 0.2);
-            border-radius: 12px;
+            background-color: rgba(30, 30, 40, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            border-left: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
             padding: 1.5rem;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             margin-bottom: 1rem;
             height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
         .nav-card:hover {
             transform: translateY(-5px);
-            border-color: var(--primary-color);
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-            background-color: rgba(37, 99, 235, 0.05);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.3), 0 0 15px rgba(139, 92, 246, 0.2);
+            background-color: rgba(45, 40, 60, 0.6);
         }
         .nav-card i {
-            font-size: 2rem;
+            font-size: 2.2rem;
             margin-bottom: 1rem;
             display: block;
+            background: -webkit-linear-gradient(45deg, #A78BFA, #F472B6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         .nav-card h4 {
             margin: 0.5rem 0;
-            color: var(--text-color);
+            color: #E2E8F0;
+            font-weight: 600;
         }
         .nav-card p {
             font-size: 0.85rem;
-            color: var(--text-color);
-            opacity: 0.7;
+            color: #94A3B8;
             margin: 0;
+            line-height: 1.4;
         }
         </style>
     """, unsafe_allow_html=True)
